@@ -51,27 +51,34 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend-app
+        env:
+          COMPOSER_MEMORY_LIMIT: -1
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: App env & key
         working-directory: backend-app
         run: |
           cp .env.example .env
-          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
-          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
-          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=app/' .env
-          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=app/' .env
-          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=app/' .env
+          {
+            echo "DB_CONNECTION=mysql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_DATABASE=app"
+            echo "DB_USERNAME=app"
+            echo "DB_PASSWORD=app"
+          } >> .env
           php artisan key:generate
 
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
             mysqladmin ping -h 127.0.0.1 -proot --silent && break
-            echo "Waiting for MySQL..."
             sleep 1
           done
+
+      - name: Check Artisan
+        working-directory: backend-app
+        run: php artisan --version
 
       - name: Migrate
         working-directory: backend-app
@@ -130,27 +137,34 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend-admin
+        env:
+          COMPOSER_MEMORY_LIMIT: -1
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: App env & key
         working-directory: backend-admin
         run: |
           cp .env.example .env
-          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
-          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
-          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
-          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=admin_db/' .env
-          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=app/' .env
-          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=app/' .env
+          {
+            echo "DB_CONNECTION=mysql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_DATABASE=admin_db"
+            echo "DB_USERNAME=app"
+            echo "DB_PASSWORD=app"
+          } >> .env
           php artisan key:generate
 
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
             mysqladmin ping -h 127.0.0.1 -proot --silent && break
-            echo "Waiting for MySQL..."
             sleep 1
           done
+
+      - name: Check Artisan
+        working-directory: backend-admin
+        run: php artisan --version
 
       - name: Migrate
         working-directory: backend-admin
@@ -162,11 +176,11 @@ jobs:
 
       - name: PHPStan
         working-directory: backend-admin
-        run: ./vendor/bin/phpstan analyse || true  # فعالش کن وقتی phpstan رو تنظیم کردی
+        run: ./vendor/bin/phpstan analyse || true
 
       - name: PHPUnit (testing env)
         working-directory: backend-admin
-        run: php artisan test --env=testing || true  # وقتی تست‌ها رو اضافه کردی remove کن
+        run: php artisan test --env=testing || true
 
   frontend-app:
     name: Frontend (App)
