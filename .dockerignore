@@ -1,0 +1,22 @@
+# کلی
+.git
+**/.git
+**/.idea
+**/.vscode
+*.log
+*.env
+*.env.*
+node_modules
+dist
+coverage
+
+# backend
+backend/vendor
+backend/storage/logs
+backend/storage/framework/cache
+backend/storage/framework/sessions
+backend/storage/framework/views
+
+# frontend (بعداً که ساختیم)
+frontend/node_modules
+frontend/dist
