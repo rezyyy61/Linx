@@ -3,9 +3,7 @@ parameters:
     - app
   level: 5
   treatPhpDocTypesAsCertain: false
-  tmpDir: storage/framework/cache/phpstan
-
   reportUnmatchedIgnoredErrors: false
-
   ignoreErrors:
     - identifier: missingType.iterableValue
+  tmpDir: /tmp/phpstan
