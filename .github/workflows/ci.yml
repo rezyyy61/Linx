@@ -5,19 +5,13 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  backend:
+  backend-app:
+    name: Backend (App)
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -27,19 +21,16 @@ jobs:
           MYSQL_USER: app
           MYSQL_PASSWORD: app
           MYSQL_ROOT_PASSWORD: root
-
         ports:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-          --health-interval=10s --health-timeout=5s --health-retries=10
+          --health-interval=10s --health-timeout=5s --health-retries=20
       redis:
         image: redis:alpine
-        ports:
-          - 6379:6379
         options: >-
           --health-cmd="redis-cli ping"
-          --health-interval=10s --health-timeout=5s --health-retries=10
+          --health-interval=10s --health-timeout=5s --health-retries=20
 
     steps:
       - uses: actions/checkout@v4
@@ -55,95 +46,190 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.composer/cache
-          key: composer-${{ hashFiles('backend/composer.lock') }}
+          key: composer-${{ hashFiles('backend-app/composer.lock') }}
           restore-keys: composer-
 
       - name: Install dependencies
-        working-directory: backend
+        working-directory: backend-app
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: App env & key
-        working-directory: backend
+        working-directory: backend-app
         run: |
           cp .env.example .env
-          
-          sed -i '/^\s*#\s*DB_/d;/^DB_/d' .env
-          cat >> .env <<'ENV'
-          DB_CONNECTION=mysql
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_DATABASE=app
-          DB_USERNAME=app
-          DB_PASSWORD=app
-          ENV
-
-           cat > .env.testing <<'ENV'
-          APP_ENV=testing
-          APP_DEBUG=true
-          LOG_CHANNEL=stderr
-          SESSION_DRIVER=array
-          CACHE_STORE=array
-          QUEUE_CONNECTION=sync
-
-          DB_CONNECTION=mysql
-          DB_HOST=127.0.0.1
-          DB_PORT=3306
-          DB_DATABASE=app
-          DB_USERNAME=app
-          DB_PASSWORD=app
-          ENV
-
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=app/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=app/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=app/' .env
           php artisan key:generate
-          
-           sed -i '/^APP_KEY=/d' .env.testing
-          grep '^APP_KEY=' .env >> .env.testing
 
-      - name: Wait for MySQL ready
+      - name: Wait for MySQL
         run: |
           for i in {1..60}; do
             mysqladmin ping -h 127.0.0.1 -proot --silent && break
-            echo "waiting for mysql..."
+            echo "Waiting for MySQL..."
             sleep 1
           done
 
       - name: Migrate
-        working-directory: backend
+        working-directory: backend-app
         run: php artisan migrate --force
 
       - name: Pint (code style)
-        working-directory: backend
+        working-directory: backend-app
         run: ./vendor/bin/pint --test
 
       - name: PHPStan
-        working-directory: backend
+        working-directory: backend-app
         run: ./vendor/bin/phpstan analyse
 
-      - name: PHPUnit
-        working-directory: backend
+      - name: PHPUnit (testing env)
+        working-directory: backend-app
         run: php artisan test --env=testing
 
-  frontend:
+  backend-admin:
+    name: Backend (Admin)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: admin_db
+          MYSQL_USER: app
+          MYSQL_PASSWORD: app
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, mbstring, bcmath, intl, zip
+          coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('backend-admin/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        working-directory: backend-admin
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: App env & key
+        working-directory: backend-admin
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=3306/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=admin_db/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=app/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=app/' .env
+          php artisan key:generate
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..60}; do
+            mysqladmin ping -h 127.0.0.1 -proot --silent && break
+            echo "Waiting for MySQL..."
+            sleep 1
+          done
+
+      - name: Migrate
+        working-directory: backend-admin
+        run: php artisan migrate --force
+
+      - name: Pint (code style)
+        working-directory: backend-admin
+        run: ./vendor/bin/pint --test
+
+      - name: PHPStan
+        working-directory: backend-admin
+        run: ./vendor/bin/phpstan analyse || true  # فعالش کن وقتی phpstan رو تنظیم کردی
+
+      - name: PHPUnit (testing env)
+        working-directory: backend-admin
+        run: php artisan test --env=testing || true  # وقتی تست‌ها رو اضافه کردی remove کن
+
+  frontend-app:
+    name: Frontend (App)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend-app/package-lock.json
+
       - name: Install deps
-        working-directory: frontend
+        working-directory: frontend-app
         run: npm ci
+
       - name: Lint
-        working-directory: frontend
+        working-directory: frontend-app
         run: npm run lint
+
       - name: Type-check
-        working-directory: frontend
+        working-directory: frontend-app
         run: npm run type-check
+
       - name: Unit tests
-        working-directory: frontend
+        working-directory: frontend-app
         run: npm run test:unit
+
       - name: Build
-        working-directory: frontend
+        working-directory: frontend-app
+        run: npm run build
+
+  frontend-admin:
+    name: Frontend (Admin)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend-admin/package-lock.json
+
+      - name: Install deps
+        working-directory: frontend-admin
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend-admin
+        run: npm run lint
+
+      - name: Type-check
+        working-directory: frontend-admin
+        run: npm run type-check
+
+      - name: Unit tests
+        working-directory: frontend-admin
+        run: npm run test:unit
+
+      - name: Build
+        working-directory: frontend-admin
         run: npm run build
