@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/php/Dockerfile
+    user: "${UID}:${GID}"
     environment:
       APP_ENV: local
     working_dir: /var/www/html
@@ -66,6 +67,7 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/php/Dockerfile
+    user: "${UID}:${GID}"
     working_dir: /var/www/html
     depends_on:
       db:
@@ -81,6 +83,7 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/php/Dockerfile
+    user: "${UID}:${GID}"
     working_dir: /var/www/html
     depends_on:
       db:
