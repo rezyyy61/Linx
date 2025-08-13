@@ -69,6 +69,17 @@ jobs:
           } >> .env
           php artisan key:generate
 
+      - name: Testing env & key
+        working-directory: backend-app
+        run: |
+          cp .env .env.testing
+          sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing || echo "APP_ENV=testing" >> .env.testing
+          sed -i 's/^LOG_CHANNEL=.*/LOG_CHANNEL=stderr/' .env.testing || echo "LOG_CHANNEL=stderr" >> .env.testing
+          sed -i 's/^SESSION_DRIVER=.*/SESSION_DRIVER=array/' .env.testing || echo "SESSION_DRIVER=array" >> .env.testing
+          sed -i 's/^CACHE_STORE=.*/CACHE_STORE=array/' .env.testing || echo "CACHE_STORE=array" >> .env.testing
+          sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/' .env.testing || echo "QUEUE_CONNECTION=sync" >> .env.testing
+          php artisan key:generate --env=testing
+
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
@@ -154,6 +165,17 @@ jobs:
             echo "DB_PASSWORD=app"
           } >> .env
           php artisan key:generate
+
+      - name: Testing env & key
+        working-directory: backend-admin
+        run: |
+          cp .env .env.testing
+          sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing || echo "APP_ENV=testing" >> .env.testing
+          sed -i 's/^LOG_CHANNEL=.*/LOG_CHANNEL=stderr/' .env.testing || echo "LOG_CHANNEL=stderr" >> .env.testing
+          sed -i 's/^SESSION_DRIVER=.*/SESSION_DRIVER=array/' .env.testing || echo "SESSION_DRIVER=array" >> .env.testing
+          sed -i 's/^CACHE_STORE=.*/CACHE_STORE=array/' .env.testing || echo "CACHE_STORE=array" >> .env.testing
+          sed -i 's/^QUEUE_CONNECTION=.*/QUEUE_CONNECTION=sync/' .env.testing || echo "QUEUE_CONNECTION=sync" >> .env.testing
+          php artisan key:generate --env=testing
 
       - name: Wait for MySQL
         run: |
