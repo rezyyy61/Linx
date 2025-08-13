@@ -27,11 +27,16 @@ jobs:
           MYSQL_USER: app
           MYSQL_PASSWORD: app
           MYSQL_ROOT_PASSWORD: root
+
+        ports:
+          - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -hmysql -proot"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
           --health-interval=10s --health-timeout=5s --health-retries=10
       redis:
         image: redis:alpine
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd="redis-cli ping"
           --health-interval=10s --health-timeout=5s --health-retries=10
@@ -65,7 +70,7 @@ jobs:
           sed -i '/^\s*#\s*DB_/d;/^DB_/d' .env
           cat >> .env <<'EOF'
           DB_CONNECTION=mysql
-          DB_HOST=mysql
+          DB_HOST=127.0.0.1
           DB_PORT=3306
           DB_DATABASE=app
           DB_USERNAME=app
@@ -79,8 +84,9 @@ jobs:
           SESSION_DRIVER=array
           CACHE_STORE=array
           QUEUE_CONNECTION=sync
+
           DB_CONNECTION=mysql
-          DB_HOST=mysql
+          DB_HOST=127.0.0.1
           DB_PORT=3306
           DB_DATABASE=app
           DB_USERNAME=app
@@ -92,7 +98,8 @@ jobs:
       - name: Wait for MySQL ready
         run: |
           for i in {1..60}; do
-            mysqladmin ping -hmysql -proot --silent && break
+            mysqladmin ping -h 127.0.0.1 -proot --silent && break
+            echo "waiting for mysql..."
             sleep 1
           done
 
@@ -114,33 +121,26 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install deps
         working-directory: frontend
         run: npm ci
-
       - name: Lint
         working-directory: frontend
         run: npm run lint
-
       - name: Type-check
         working-directory: frontend
         run: npm run type-check
-
       - name: Unit tests
         working-directory: frontend
         run: npm run test:unit
-
       - name: Build
         working-directory: frontend
         run: npm run build
