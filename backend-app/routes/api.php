@@ -9,7 +9,7 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/ping', function () {
     return response()->json([
-        'ok'   => true,
+        'ok' => true,
         'time' => now()->toIso8601String(),
     ]);
 });
