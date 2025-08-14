@@ -108,7 +108,12 @@ services:
     user: "node"
     working_dir: /app
     volumes:
-      - ./frontend-app:/app
+      - type: bind
+        source: ./frontend-app
+        target: /app
+      - type: bind
+        source: ./frontend-app/node_modules
+        target: /app/node_modules
     command: sh -lc "npm ci || npm i && npm run dev -- --host"
     ports:
       - "5173:5173"
@@ -146,7 +151,12 @@ services:
     user: "node"
     working_dir: /app
     volumes:
-      - ./frontend-admin:/app
+      - type: bind
+        source: ./frontend-admin
+        target: /app
+      - type: bind
+        source: ./frontend-admin/node_modules
+        target: /app/node_modules
     command: sh -lc "npm ci || npm i && npm run dev -- --host"
     ports:
       - "5174:5173"
