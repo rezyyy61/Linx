@@ -2,10 +2,17 @@
 FROM php:8.3-fpm-alpine
 
 # System deps
-RUN apk add --no-cache bash git curl unzip icu-dev libzip-dev oniguruma-dev openssl $PHPIZE_DEPS
+RUN apk add --no-cache \
+  bash git curl unzip openssl \
+  icu-dev libzip-dev oniguruma-dev \
+  $PHPIZE_DEPS
 
 # PHP extensions needed by Laravel
 RUN docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache
+
+# PHP Redis extension
+RUN pecl install redis \
+  && docker-php-ext-enable redis
 
 # Install Composer (from official image)
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
