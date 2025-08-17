@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable implements Mediable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasMedia;
+    use HasFactory, HasMedia, Notifiable;
 
     /**
      * The attributes that are mass assignable.
