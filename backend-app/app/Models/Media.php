@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $size
  * @property string|null $mime
  * @property \Illuminate\Support\Carbon|null $created_at
- *
  * @property int|null $duration
  * @property int|null $width
  * @property int|null $height

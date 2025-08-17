@@ -64,6 +64,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     {
         Gate::define('viewHorizon', function ($user = null) {
             $allowedEmails = $this->csvToList((string) config('horizon.allowed_emails', ''));
+
             return $user && ! empty($allowedEmails) && in_array($user->email, $allowedEmails, true);
         });
     }

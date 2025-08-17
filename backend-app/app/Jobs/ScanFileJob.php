@@ -84,6 +84,7 @@ class ScanFileJob implements ShouldQueue
             $media->save();
             Log::warning('Infected file removed', ['id' => $media->id, 'key' => $media->key, 'reason' => $reason]);
             event(new MediaRejected($media->id, $media->key, $reason));
+
             return;
         }
 

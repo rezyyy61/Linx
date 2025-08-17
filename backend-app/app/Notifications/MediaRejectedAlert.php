@@ -3,9 +3,9 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\SlackMessage;
+use Illuminate\Notifications\Notification;
 
 class MediaRejectedAlert extends Notification
 {
@@ -20,8 +20,13 @@ class MediaRejectedAlert extends Notification
     public function via($notifiable): array
     {
         $ch = [];
-        if (config('alerts.mail'))          $ch[] = 'mail';
-        if (config('alerts.slack_webhook')) $ch[] = 'slack';
+        if (config('alerts.mail')) {
+            $ch[] = 'mail';
+        }
+        if (config('alerts.slack_webhook')) {
+            $ch[] = 'slack';
+        }
+
         return $ch;
     }
 
@@ -40,10 +45,9 @@ class MediaRejectedAlert extends Notification
             ->error()
             ->content('🚫 Media REJECTED by AV')
             ->to(config('alerts.slack_channel'))
-            ->attachment(fn ($a) =>
-            $a->title("media #{$this->mediaId}")
+            ->attachment(fn ($a) => $a->title("media #{$this->mediaId}")
                 ->fields([
-                    'key'    => $this->key,
+                    'key' => $this->key,
                     'reason' => $this->reason,
                 ])
             );

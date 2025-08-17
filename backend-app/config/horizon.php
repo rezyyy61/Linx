@@ -206,10 +206,10 @@ return [
         ], static fn ($v, $k) => $v !== null && $k !== null, ARRAY_FILTER_USE_BOTH),
     ],
 
-    'enabled'           => env('HORIZON_ENABLED', true),
-    'ip_allow'          => env('HORIZON_IP_ALLOW', ''),
-    'allowed_emails'    => env('HORIZON_ALLOWED_EMAILS', ''),
+    'enabled' => env('HORIZON_ENABLED', true),
+    'ip_allow' => env('HORIZON_IP_ALLOW', ''),
+    'allowed_emails' => env('HORIZON_ALLOWED_EMAILS', ''),
     'slack_webhook_url' => env('HORIZON_SLACK_WEBHOOK_URL'),
-    'slack_channel'     => env('HORIZON_SLACK_CHANNEL', '#general'),
-    'notify_mail'       => env('HORIZON_NOTIFY_MAIL'),
+    'slack_channel' => env('HORIZON_SLACK_CHANNEL', '#general'),
+    'notify_mail' => env('HORIZON_NOTIFY_MAIL'),
 ];

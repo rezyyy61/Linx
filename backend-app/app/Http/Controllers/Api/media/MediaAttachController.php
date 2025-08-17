@@ -17,9 +17,9 @@ class MediaAttachController extends Controller
     {
         $validated = $request->validate([
             'model_type' => 'required|string', // eg: App\\Models\\Post
-            'model_id'   => 'required|integer',
+            'model_id' => 'required|integer',
             'collection' => 'nullable|string',
-            'order'      => 'nullable|integer',
+            'order' => 'nullable|integer',
         ]);
 
         /** @var class-string<Model> $class */
@@ -32,7 +32,6 @@ class MediaAttachController extends Controller
             abort(400, 'Model is not mediable');
         }
         /** @var Mediable $model */
-
         $this->mediaService->attachMedia(
             $model,
             $media,
@@ -47,7 +46,7 @@ class MediaAttachController extends Controller
     {
         $validated = $request->validate([
             'model_type' => 'required|string',
-            'model_id'   => 'required|integer',
+            'model_id' => 'required|integer',
             'collection' => 'nullable|string',
         ]);
 
@@ -61,7 +60,6 @@ class MediaAttachController extends Controller
             abort(400, 'Model is not mediable');
         }
         /** @var Mediable $model */
-
         $this->mediaService->detachMedia(
             $model,
             $media,

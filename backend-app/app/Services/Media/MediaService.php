@@ -7,7 +7,6 @@ use App\Enums\MediaStatus;
 use App\Enums\MediaType;
 use App\Jobs\ScanFileJob;
 use App\Models\Media;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -101,7 +100,6 @@ class MediaService
         return $media;
     }
 
-
     /***
      * @param Mediable $model
      * @param Media $media
@@ -127,11 +125,6 @@ class MediaService
         });
     }
 
-    /**
-     * @param Mediable $model
-     * @param Media $media
-     * @param string|null $collection
-     */
     public function detachMedia(Mediable $model, Media $media, ?string $collection = null): void
     {
         $relation = $model->media();

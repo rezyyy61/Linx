@@ -7,7 +7,6 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Queue\Events\JobFailed;
-use Throwable;
 
 class JobFailedAlert extends Notification
 {
@@ -59,8 +58,8 @@ class JobFailedAlert extends Notification
                 $attachment->title($name)
                     ->fields([
                         'Connection' => $e->connectionName,
-                        'Queue'      => $e->job->getQueue(),
-                        'Exception'  => $e->exception->getMessage(),
+                        'Queue' => $e->job->getQueue(),
+                        'Exception' => $e->exception->getMessage(),
                     ]);
             });
     }

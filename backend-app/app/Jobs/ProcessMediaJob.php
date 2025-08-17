@@ -148,6 +148,7 @@ class ProcessMediaJob implements ShouldQueue
                 $media->save();
                 Log::error('Processing produced no outputs', ['id' => $media->id, 'kind' => $kind]);
                 event(new MediaProcessingFailed($media->id, $media->key, 'no-output-produced'));
+
                 return;
             }
 
