@@ -1,0 +1,7 @@
+App\Jobs\ExplodeJob::dispatch();
+exit
+\Mail::raw('سلام! این یه تست هست.', function($m) {
+    $m->to('test@example.com')->subject('Test Mail');
+});
+
+App\Jobs\ExplodeJob::dispatch(); exit
