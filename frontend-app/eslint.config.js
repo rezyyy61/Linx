@@ -27,7 +27,16 @@ export default [
       parserOptions: { ecmaVersion: "latest", sourceType: "module" }
     },
     plugins: { "@typescript-eslint": ts },
-    rules: {}
+    rules: {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["error", {
+        vars: "all",
+        args: "after-used",
+        ignoreRestSiblings: true,
+        varsIgnorePattern: "^_",
+        argsIgnorePattern: "^_"
+      }]
+    }
   },
 
   {
