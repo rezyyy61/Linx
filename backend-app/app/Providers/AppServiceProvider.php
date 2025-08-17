@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Queue::failing(function (JobFailed $event) {
-            if ($mail = config('alerts.mail')){
+            if ($mail = config('alerts.mail')) {
                 Notification::route('mail', $mail)->notify(new JobFailedAlert($event));
             }
             if ($hook = config('alerts.slack_webhook')) {

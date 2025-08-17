@@ -11,7 +11,9 @@ class SendMediaRejectedAlert implements ShouldQueue
 {
     public function handle(MediaRejected $event): void
     {
-        if (!config('alerts.notify.media_rejected')) return;
+        if (! config('alerts.notify.media_rejected')) {
+            return;
+        }
 
         if ($mail = config('alerts.mail')) {
             Notification::route('mail', $mail)->notify(

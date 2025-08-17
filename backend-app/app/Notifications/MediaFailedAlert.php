@@ -20,8 +20,13 @@ class MediaFailedAlert extends Notification
     public function via($notifiable): array
     {
         $ch = [];
-        if (config('alerts.mail'))          $ch[] = 'mail';
-        if (config('alerts.slack_webhook')) $ch[] = 'slack';
+        if (config('alerts.mail')) {
+            $ch[] = 'mail';
+        }
+        if (config('alerts.slack_webhook')) {
+            $ch[] = 'slack';
+        }
+
         return $ch;
     }
 
@@ -40,10 +45,9 @@ class MediaFailedAlert extends Notification
             ->warning()
             ->content('⚠️ Media processing FAILED (no exception)')
             ->to(config('alerts.slack_channel'))
-            ->attachment(fn ($a) =>
-            $a->title("media #{$this->mediaId}")
+            ->attachment(fn ($a) => $a->title("media #{$this->mediaId}")
                 ->fields([
-                    'key'    => $this->key,
+                    'key' => $this->key,
                     'reason' => $this->reason,
                 ])
             );

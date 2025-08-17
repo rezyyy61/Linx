@@ -11,7 +11,9 @@ class SendMediaFailedAlert implements ShouldQueue
 {
     public function handle(MediaProcessingFailed $event): void
     {
-        if (!config('alerts.notify.media_failed')) return;
+        if (! config('alerts.notify.media_failed')) {
+            return;
+        }
 
         if ($mail = config('alerts.mail')) {
             Notification::route('mail', $mail)->notify(

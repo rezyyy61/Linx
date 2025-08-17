@@ -11,7 +11,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 class EventServiceProvider extends ServiceProvider
 {
     protected $listen = [
-        MediaRejected::class         => [SendMediaRejectedAlert::class],
+        MediaRejected::class => [SendMediaRejectedAlert::class],
         MediaProcessingFailed::class => [SendMediaFailedAlert::class],
     ];
 }
