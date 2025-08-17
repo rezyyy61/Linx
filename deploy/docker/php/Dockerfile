@@ -4,11 +4,12 @@ FROM php:8.3-fpm-alpine
 # System deps
 RUN apk add --no-cache \
   bash git curl unzip openssl \
-  icu-dev libzip-dev oniguruma-dev \
+  icu-dev libzip-dev oniguruma-dev zlib-dev linux-headers \
   $PHPIZE_DEPS
 
+
 # PHP extensions needed by Laravel
-RUN docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache
+RUN docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache sockets pcntl
 
 # PHP Redis extension
 RUN pecl install redis \
