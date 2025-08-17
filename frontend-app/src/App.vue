@@ -1,10 +1,32 @@
-<script setup lang="ts">
-import MediaUpload from './components/MediaUpload.vue'
-</script>
-
 <template>
-  <main style="padding:24px" class="border-gray-800">
-    <h1>Linx — Media Upload Test</h1>
-    <MediaUpload />
-  </main>
+  <a
+    href="#app-content"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2
+    focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:shadow"
+  >
+    Skip to content
+  </a>
+
+  <RouterView v-slot="{ Component }">
+    <transition
+      name="fade"
+      mode="out-in"
+    >
+      <component
+        :is="Component"
+        id="app-content"
+      />
+    </transition>
+  </RouterView>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 150ms ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

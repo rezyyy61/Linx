@@ -113,14 +113,28 @@ async function upload() {
   <div class="uploader border-gray-800">
     <h2>Media Upload (S3 presigned)</h2>
 
-    <input type="file" @change="pickFile" />
+    <input
+      type="file"
+      @change="pickFile"
+    >
 
-    <button :disabled="!file" @click="upload">Upload</button>
+    <button
+      :disabled="!file"
+      @click="upload"
+    >
+      Upload
+    </button>
 
-    <div v-if="step !== 'idle'" class="status">
+    <div
+      v-if="step !== 'idle'"
+      class="status"
+    >
       <p><strong>Step:</strong> {{ step }}</p>
       <div v-if="step === 'uploading'">
-        <progress :value="progress" max="100"></progress> {{ progress }}%
+        <progress
+          :value="progress"
+          max="100"
+        /> {{ progress }}%
       </div>
       <pre class="log">{{ log }}</pre>
     </div>
