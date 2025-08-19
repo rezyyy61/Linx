@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "login": "Login",
+    "register": "Register",
+    "go": "Go",
+    "about": "About",
+    "contact": "Contact",
+    "title": "Preferences",
+    "theme": "Theme",
+    "language": "Language"
+  },
+
+  "feedbar": {
+    "feed": "Feed",
+    "parties": "Parties",
+    "books": "Books",
+    "media": "Media",
+    "campaigns": "Campaigns",
+    "profiles": "Profiles",
+    "events": "Events",
+    "announcements": "Announcements"
+  },
+
+  "home": {
+    "hero": {
+      "title": "Welcome to Linxx",
+      "subtitle": "A modern social platform for people and political parties. Create, connect, and campaign.",
+      "ctaGetStarted": "Get Started",
+      "ctaSignIn": "Sign In",
+      "ctaLearnMore": "Learn More",
+      "greeting": "Hi, {name}",
+      "ctaDashboard": "Dashboard",
+      "ctaLogout": "Logout"
+    }
+  },
+
+  "auth": {
+    "register": {
+      "heroTitle": "Welcome to Linxx",
+      "title": "Create your Linxx account",
+      "subtitle": "It takes less than a minute. Use a strong, unique password.",
+      "oauth": {
+        "google": "Continue with Google",
+        "facebook": "Continue with Facebook"
+      },
+      "or": "or",
+      "name": { "label": "Full name", "placeholder": "Your full name" },
+      "email": { "label": "Email", "placeholder": "you@example.com" },
+      "password": { "label": "Password", "placeholder": "••••••••" },
+      "confirm": { "label": "Confirm password", "placeholder": "••••••••" },
+      "capsLock": "Caps Lock is ON",
+      "strength": {
+        "label": "Strength",
+        "veryWeak": "Very weak",
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      },
+      "submit": "Create account",
+      "loading": "Creating…",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "alert": {
+        "success": "Account created. Please check your email to verify."
+      },
+      "errors": {
+        "summaryTitle": "Please fix the following:",
+        "name": "Please enter your full name (min 2 characters).",
+        "email": "Please enter a valid email address.",
+        "passwordLen": "Use at least 8 characters.",
+        "passwordMismatch": "Passwords don't match."
+      }
+    }
+  }
+}

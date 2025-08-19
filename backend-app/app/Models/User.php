@@ -28,4 +28,9 @@ class User extends Authenticatable implements Mediable, MustVerifyEmail
             'password' => 'hashed',
         ];
     }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
 }

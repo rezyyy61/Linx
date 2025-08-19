@@ -1,0 +1,76 @@
+{
+  "nav": {
+    "login": "ورود",
+    "register": "ثبت‌نام",
+    "go": "جستجو",
+    "about": "درباره",
+    "contact": "تماس",
+    "title": "تنظیمات",
+    "theme": "حالت نمایش",
+    "language": "زبان"
+  },
+
+  "feedbar": {
+    "feed": "فید",
+    "parties": "احزاب",
+    "books": "کتاب‌ها",
+    "media": "رسانه",
+    "campaigns": "کمپین‌ها",
+    "profiles": "پروفایل‌ها",
+    "events": "رویدادها",
+    "announcements": "اعلان‌ها"
+  },
+
+  "home": {
+    "hero": {
+      "title": "به لینکس خوش آمدید",
+      "subtitle": "پلتفرم اجتماعی مدرن برای افراد و احزاب سیاسی. بسازید، ارتباط بگیرید و کمپین اجرا کنید.",
+      "ctaGetStarted": "شروع کنید",
+      "ctaSignIn": "ورود",
+      "ctaLearnMore": "بیشتر بدانید",
+      "greeting": "سلام، {name}",
+      "ctaDashboard": "داشبورد",
+      "ctaLogout": "خروج"
+    }
+  },
+
+  "auth": {
+    "register": {
+      "heroTitle": "به لینکس خوش آمدی",
+      "title": "ایجاد حساب لینکس",
+      "subtitle": "کمتر از یک دقیقه طول می‌کشد. از یک گذرواژهٔ قوی و منحصربه‌فرد استفاده کن.",
+      "oauth": {
+        "google": "ادامه با گوگل",
+        "facebook": "ادامه با فیسبوک"
+      },
+      "or": "یا",
+      "name": { "label": "نام و نام خانوادگی", "placeholder": "نام کامل شما" },
+      "email": { "label": "ایمیل", "placeholder": "you@example.com" },
+      "password": { "label": "گذرواژه", "placeholder": "••••••••" },
+      "confirm": { "label": "تکرار گذرواژه", "placeholder": "••••••••" },
+      "capsLock": "Caps Lock روشن است",
+      "strength": {
+        "label": "قدرت",
+        "veryWeak": "بسیار ضعیف",
+        "weak": "ضعیف",
+        "fair": "متوسط",
+        "good": "خوب",
+        "strong": "قوی"
+      },
+      "submit": "ساخت حساب",
+      "loading": "در حال ساخت…",
+      "haveAccount": "از قبل حساب داری؟",
+      "signInLink": "وارد شو",
+      "alert": {
+        "success": "حساب ایجاد شد. لطفاً ایمیل‌تان را برای تأیید بررسی کنید."
+      },
+      "errors": {
+        "summaryTitle": "لطفاً موارد زیر را برطرف کن:",
+        "name": "لطفاً نام کامل را وارد کن (حداقل ۲ کاراکتر).",
+        "email": "لطفاً یک ایمیل معتبر وارد کن.",
+        "passwordLen": "حداقل ۸ کاراکتر استفاده کن.",
+        "passwordMismatch": "گذرواژه‌ها یکسان نیستند."
+      }
+    }
+  }
+}
