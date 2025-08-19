@@ -1,2 +1,2 @@
-export const CampaignsPage = () => import("./Page.vue");
+export const CampaignsPage = () => import("./CampaignsPage.vue");
 export default CampaignsPage;

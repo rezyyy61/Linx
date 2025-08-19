@@ -1,2 +1,2 @@
-export const MediaPage = () => import("./Page.vue");
+export const MediaPage = () => import("./MediaPage.vue");
 export default MediaPage;

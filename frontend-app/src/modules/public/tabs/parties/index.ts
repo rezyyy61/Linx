@@ -1,2 +1,2 @@
-export const PartiesPage = () => import("./Page.vue");
+export const PartiesPage = () => import("./PartiesPage.vue");
 export default PartiesPage;
