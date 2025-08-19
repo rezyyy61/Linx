@@ -1,2 +1,2 @@
-export const ProfilesPage = () => import("./Page.vue");
+export const ProfilesPage = () => import("./ProfilePage.vue");
 export default ProfilesPage;

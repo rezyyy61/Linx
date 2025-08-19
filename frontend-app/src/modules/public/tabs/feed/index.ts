@@ -1,2 +1,2 @@
-export const FeedPage = () => import("./Page.vue");
+export const FeedPage = () => import("./FeedPage.vue");
 export default FeedPage;
