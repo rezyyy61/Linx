@@ -1,28 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
-import { useRouter } from "vue-router"
 import { useI18n } from "vue-i18n"
 import { Icon } from "@iconify/vue"
 import BrandLogo from "@/components/shared/BrandLogo.vue"
 import PreferencesMenu from "@/components/shared/PreferencesMenu.vue"
 import { useAuthStore } from "@/stores/auth/auth"
-import UserMenu from "@/components/shared/UserMenu.vue";
+import UserMenu from "@/components/shared/UserMenu.vue"
 
 const { t } = useI18n()
-const router = useRouter()
 const menuOpen = ref(false)
-const userOpen = ref(false)
 
 const auth = useAuthStore()
 const isAuth = computed(() => auth.isAuthenticated)
-const user = computed(() => auth.user)
-const initials = computed(() => (user.value?.name || "U").split(" ").map(p => p[0]).join("").slice(0,2).toUpperCase())
 
-function toggleMenu() { menuOpen.value = !menuOpen.value }
-function toggleUser() { userOpen.value = !userOpen.value }
-async function signOut() { await auth.logout(); userOpen.value = false; router.push({ name: "home" }) }
+onMounted(async () => {
+  if (!auth.bootstrapDone && !auth.loading) {
+    await auth.bootstrap()
+  }
+})
 
-onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.bootstrap() })
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value
+}
 </script>
 
 <template>
@@ -30,7 +29,9 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
     dir="ltr"
     class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200 dark:bg-gray-900/80"
   >
-    <div class="max-w-screen-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+    <div
+      class="max-w-screen-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3"
+    >
       <RouterLink
         to="/"
         class="flex items-center gap-3"
@@ -43,22 +44,38 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
           v-slot="{ isActive }"
           to="/about"
         >
-          <span :class="['inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm', isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800']">
+          <span
+            :class="[
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm',
+              isActive
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
+            ]"
+          >
             <Icon
               icon="mdi:information-outline"
               class="h-4 w-4"
-            /> {{ t('nav.about') }}
+            />
+            {{ t("nav.about") }}
           </span>
         </RouterLink>
         <RouterLink
           v-slot="{ isActive }"
           to="/contact"
         >
-          <span :class="['inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm', isActive ? 'text-red-600 dark:text-red-400' : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800']">
+          <span
+            :class="[
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm',
+              isActive
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
+            ]"
+          >
             <Icon
               icon="mdi:email-outline"
               class="h-4 w-4"
-            /> {{ t('nav.contact') }}
+            />
+            {{ t("nav.contact") }}
           </span>
         </RouterLink>
       </div>
@@ -70,7 +87,7 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
           v-if="isAuth"
           class="relative"
         >
-          <UserMenu v-if="isAuth" />
+          <UserMenu />
         </div>
 
         <div
@@ -84,7 +101,8 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
             <Icon
               icon="mdi:login"
               class="h-4 w-4"
-            /> {{ t("nav.login") }}
+            />
+            {{ t("nav.login") }}
           </RouterLink>
           <RouterLink
             to="/auth/register"
@@ -93,7 +111,8 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
             <Icon
               icon="mdi:account-plus-outline"
               class="h-4 w-4"
-            /> {{ t("nav.register") }}
+            />
+            {{ t("nav.register") }}
           </RouterLink>
         </div>
 
@@ -111,21 +130,26 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
       </div>
     </div>
 
-    <div :class="['md:hidden border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900', menuOpen ? 'block' : 'hidden']">
+    <div
+      :class="[
+        'md:hidden border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900',
+        menuOpen ? 'block' : 'hidden'
+      ]"
+    >
       <div class="px-4 py-3 grid gap-2">
         <RouterLink
           to="/about"
           class="rounded-md px-3 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800"
-          @click="menuOpen=false"
+          @click="menuOpen = false"
         >
-          {{ t('nav.about') }}
+          {{ t("nav.about") }}
         </RouterLink>
         <RouterLink
           to="/contact"
           class="rounded-md px-3 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800"
-          @click="menuOpen=false"
+          @click="menuOpen = false"
         >
-          {{ t('nav.contact') }}
+          {{ t("nav.contact") }}
         </RouterLink>
         <div
           v-if="!isAuth"
@@ -134,16 +158,16 @@ onMounted(async () => { if (!auth.bootstrapDone && !auth.loading) await auth.boo
           <RouterLink
             to="/auth/login"
             class="rounded-md border border-gray-300 bg-white px-3 py-2 text-center text-sm hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-            @click="menuOpen=false"
+            @click="menuOpen = false"
           >
-            {{ t('nav.login') }}
+            {{ t("nav.login") }}
           </RouterLink>
           <RouterLink
             to="/auth/register"
             class="rounded-md bg-red-600 px-3 py-2 text-center text-sm text-white hover:bg-red-700"
-            @click="menuOpen=false"
+            @click="menuOpen = false"
           >
-            {{ t('nav.register') }}
+            {{ t("nav.register") }}
           </RouterLink>
         </div>
       </div>

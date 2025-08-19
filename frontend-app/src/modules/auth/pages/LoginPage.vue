@@ -26,7 +26,7 @@ const alertMsg = ref<string | null>(
 const form = reactive({ email: "", password: "", remember: true })
 
 // ---------------- Validation ----------------
-const emailRegex = /^(?:[a-zA-Z0-9_'^&+\-])+(?:\.(?:[a-zA-Z0-9_'^&+\-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+const emailRegex = /^(?:[a-zA-Z0-9_'^&+-])+(?:\.(?:[a-zA-Z0-9_'^&+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
 const emailValid = computed(() => emailRegex.test(form.email.trim()))
 const passwordValid = computed(() => form.password.trim().length >= 6)
 const formValid = computed(() => emailValid.value && passwordValid.value)
