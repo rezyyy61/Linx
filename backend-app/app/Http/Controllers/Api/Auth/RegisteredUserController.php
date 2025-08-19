@@ -6,13 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\Auth\RegisterService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class RegisteredUserController extends Controller
 {
-    public function __construct(private RegisterService $register)
-    {
-    }
+    public function __construct(private RegisterService $register) {}
 
     public function store(RegisterRequest $request): JsonResponse
     {

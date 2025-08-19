@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
-//Route::prefix('api')->group(function () {
+// Route::prefix('api')->group(function () {
 //    Route::prefix('auth')->group(function () {
 //        Route::post('register', [RegisteredUserController::class, 'store'])->middleware('guest');
 //        Route::post('login', [AuthenticatedSessionController::class, 'store'])->middleware('guest');
@@ -22,4 +22,4 @@ Route::view('/', 'welcome');
 //            ->middleware(['signed', 'throttle:6,1'])
 //            ->name('verification.verify');
 //    });
-//});
+// });

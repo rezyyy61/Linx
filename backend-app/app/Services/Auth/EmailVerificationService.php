@@ -3,10 +3,10 @@
 namespace App\Services\Auth;
 
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\Auth\Authenticatable;
 
 class EmailVerificationService
 {

@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class EmailVerificationNotificationController extends Controller
 {
-    public function __construct(private EmailVerificationService $service)
-    {
-    }
+    public function __construct(private EmailVerificationService $service) {}
 
     public function __invoke(Request $request): JsonResponse
     {

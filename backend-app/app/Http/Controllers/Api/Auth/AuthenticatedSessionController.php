@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private AuthService $auth)
-    {
-    }
+    public function __construct(private AuthService $auth) {}
 
     public function store(LoginRequest $request): JsonResponse
     {
@@ -27,6 +25,7 @@ class AuthenticatedSessionController extends Controller
             if (isset($result['code'])) {
                 $payload['code'] = $result['code'];
             }
+
             return response()->json($payload, (int) $result['http']);
         }
 
@@ -41,6 +40,7 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): JsonResponse
     {
         $this->auth->logout($request);
+
         return response()->json(['ok' => true]);
     }
 }
