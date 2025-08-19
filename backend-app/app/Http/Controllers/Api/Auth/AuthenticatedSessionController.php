@@ -3,76 +3,44 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function __construct(private AuthService $auth)
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+    }
 
-        $this->ensureIsNotRateLimited($request);
+    public function store(LoginRequest $request): JsonResponse
+    {
+        $email = (string) $request->input('email');
+        $password = (string) $request->input('password');
+        $remember = (bool) $request->boolean('remember');
 
-        if (! Auth::attempt($request->only('email', 'password'), true)) {
-            RateLimiter::hit($this->throttleKey($request), 60);
+        $result = $this->auth->login($request, $email, $password, $remember);
 
-            return response()->json(['message' => 'Invalid credentials'], 422);
+        if (isset($result['error'])) {
+            $payload = ['message' => $result['error']];
+            if (isset($result['code'])) {
+                $payload['code'] = $result['code'];
+            }
+            return response()->json($payload, (int) $result['http']);
         }
 
-        RateLimiter::clear($this->throttleKey($request));
-        $request->session()->regenerate();
-
-        $user = $request->user();
-
-        if (! $user->hasVerifiedEmail()) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            $user->sendEmailVerificationNotification();
-
-            return response()->json([
-                'code' => 'email_unverified',
-                'message' => 'Email not verified.',
-            ], 403);
-        }
-
-        return response()->json(['user' => $user]);
+        return response()->json(['user' => $result['user']], (int) $result['http']);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $request->user()]);
+        return response()->json(['user' => $this->auth->me($request)]);
     }
 
     public function destroy(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
+        $this->auth->logout($request);
         return response()->json(['ok' => true]);
-    }
-
-    // ---- Helpers
-    private function throttleKey(Request $request): string
-    {
-        return Str::lower((string) $request->input('email')).'|'.$request->ip();
-    }
-
-    private function ensureIsNotRateLimited(Request $request): void
-    {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey($request), 5)) {
-            return;
-        }
-
-        abort(429, 'Too many login attempts. Try again later.');
     }
 }
