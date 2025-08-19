@@ -15,9 +15,11 @@ class PasswordResetService
     {
         try {
             Password::broker()->sendResetLink(['email' => $email]);
+
             return ['http' => 202, 'message' => 'reset_link_sent'];
         } catch (\Throwable $e) {
             Log::error('password.forgot', ['email' => $email, 'ip' => $request->ip(), 'error' => $e->getMessage()]);
+
             return ['http' => 500, 'message' => 'mail_send_failed'];
         }
     }
@@ -39,6 +41,7 @@ class PasswordResetService
             return ['http' => 422, 'message' => 'invalid_token'];
         } catch (\Throwable $e) {
             Log::error('password.reset', ['email' => $data['email'] ?? null, 'ip' => $request->ip(), 'error' => $e->getMessage()]);
+
             return ['http' => 500, 'message' => 'reset_failed'];
         }
     }

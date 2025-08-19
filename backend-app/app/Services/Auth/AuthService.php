@@ -2,11 +2,11 @@
 
 namespace App\Services\Auth;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Contracts\Auth\Authenticatable;
 
 class AuthService
 {
@@ -15,6 +15,7 @@ class AuthService
         $this->ensureLoginNotRateLimited($email, (string) $request->ip());
         if (! Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
             RateLimiter::hit($this->loginKey($email, (string) $request->ip()), 60);
+
             return ['http' => 422, 'error' => 'Invalid credentials'];
         }
 
@@ -27,6 +28,7 @@ class AuthService
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             $user->sendEmailVerificationNotification();
+
             return ['http' => 403, 'error' => 'Email not verified.', 'code' => 'email_unverified'];
         }
 

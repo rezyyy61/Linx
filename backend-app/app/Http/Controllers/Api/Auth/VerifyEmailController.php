@@ -9,9 +9,7 @@ use Illuminate\Http\RedirectResponse;
 
 class VerifyEmailController extends Controller
 {
-    public function __construct(private EmailVerificationService $service)
-    {
-    }
+    public function __construct(private EmailVerificationService $service) {}
 
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {

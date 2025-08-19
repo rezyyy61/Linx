@@ -22,8 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/email/verification-notification', EmailVerificationNotificationController::class)->middleware('throttle:6,1');
 });
 
-Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)->middleware(['signed','auth'])->name('verification.verify');
-
+Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)->middleware(['signed', 'auth'])->name('verification.verify');
 
 Route::prefix('media')->group(function () {
     Route::post('presigned', [MediaController::class, 'createPresignedUrl']);
