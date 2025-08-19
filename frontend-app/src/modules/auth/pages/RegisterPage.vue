@@ -28,7 +28,7 @@ const form = reactive({
 })
 
 // ---------------- Validation ----------------
-const emailRegex = /^(?:[a-zA-Z0-9_'^&+\-])+(?:\.(?:[a-zA-Z0-9_'^&+\-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+const emailRegex = /^(?:[a-zA-Z0-9_'^&+-])+(?:\.(?:[a-zA-Z0-9_'^&+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
 const nameValid = computed(() => form.name.trim().length >= 2)
 const emailValid = computed(() => emailRegex.test(form.email.trim()))
 const passwordValid = computed(() => form.password.length >= 8)

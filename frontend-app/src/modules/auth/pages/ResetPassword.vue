@@ -279,7 +279,6 @@ async function onSubmit() {
                 >Confirm password</label>
                 <button
                   type="button"
-                  :aria-label="show confirm password"
                   :aria-pressed="showConfirm"
                   class="abs-eye"
                   @click="showConfirm = !showConfirm"

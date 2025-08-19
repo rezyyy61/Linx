@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted, nextTick } from "vue"
-import { useRouter, useRoute, RouterLink } from "vue-router"
+ 
+import { useRoute, RouterLink } from "vue-router"
 import { useAuthStore } from "@/stores/auth/auth"
 import type { AxiosError } from "axios"
 import { Icon } from "@iconify/vue"
 
-const router = useRouter()
+// const _router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 
@@ -16,7 +17,7 @@ const touched = reactive({ email: false })
 const alertMsg = ref<string | null>(null)
 const form = reactive({ email: "" })
 
-const emailRegex = /^(?:[a-zA-Z0-9_'^&+\-])+(?:\.(?:[a-zA-Z0-9_'^&+\-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
+const emailRegex = /^(?:[a-zA-Z0-9_'^&+-])+(?:\.(?:[a-zA-Z0-9_'^&+-])+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/
 const emailValid = computed(() => emailRegex.test(form.email.trim()))
 
 function clientErrors() {
