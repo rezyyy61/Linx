@@ -8,7 +8,7 @@
       :class="p.classes"
       :disabled="disabled"
       :aria-label="$t(`auth.oauth.${p.key}`)"
-      @click="$emit('click', p.key)"
+      @click="emit('click', p.key)"
     >
       <span class="absolute inset-y-0 left-4 inline-flex items-center">
         <Icon
@@ -35,11 +35,15 @@ const props = withDefaults(defineProps<{
   providers: () => ['google', 'facebook', 'apple']
 })
 
+const emit = defineEmits<{ click: [provider: Provider] }>()
+
 const provs = computed<Provider[]>(() =>
-  props.providers.length ? props.providers : ['google', 'facebook', 'apple']
+  props.providers?.length ? props.providers : ['google', 'facebook', 'apple']
 )
 
-const items = computed(() => {
+type Item = { key: Provider; icon: string; classes: string }
+
+const items = computed<Item[]>(() => {
   const base = 'ring-1'
   const map: Record<Provider, { icon: string; classes: string }> = {
     google:   { icon: 'logos:google-icon', classes: `${base} ring-gray-300 bg-white text-gray-900 hover:bg-gray-50 focus-visible:ring-indigo-500 dark:ring-gray-300 dark:bg-white` },
@@ -49,6 +53,4 @@ const items = computed(() => {
   }
   return provs.value.map((key) => ({ key, ...map[key] }))
 })
-
-defineEmits<{ (): void }>()
 </script>

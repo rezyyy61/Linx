@@ -1,7 +1,6 @@
 <script setup lang="ts">
 defineOptions({ name: 'RegisterPage' })
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AuthLayout from '../components/AuthLayout.vue'
 import AuthOAuthButtons from '../components/AuthOAuthButtons.vue'
@@ -16,7 +15,6 @@ import { handleApiError } from '../lib/notify/handleApiError'
 import { useNotify } from '../lib/notify/useNotify'
 
 const { t, locale } = useI18n()
-const router = useRouter()
 const auth = useAuthStore()
 const notify = useNotify()
 const submitting = ref(false)

@@ -91,7 +91,9 @@ async function resendVerification() {
     try {
       const j = await res.json()
       if (j?.message && j.message.length < 160) msg = j.message
-    } catch {}
+    } catch {
+      // intentionally ignore: response body may not be JSON; keep default msg
+    }
     notify.error({
       title: t('common.error'),
       description: msg,
