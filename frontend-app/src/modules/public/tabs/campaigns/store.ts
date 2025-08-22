@@ -12,6 +12,6 @@ export const useCampaignsStore = defineStore("campaigns", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

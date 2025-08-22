@@ -11,11 +11,14 @@
       >
         <component :is="Component" />
       </transition>
+      <UiNotifications />
     </RouterView>
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import UiNotifications from '@/modules/auth/components/ui/UiNotifications.vue'
+</script>
 
 <style>
 .fade-enter-active,

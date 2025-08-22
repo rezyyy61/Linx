@@ -12,6 +12,6 @@ export const useBooksStore = defineStore("books", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

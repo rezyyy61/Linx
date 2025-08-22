@@ -12,6 +12,6 @@ export const useProfilesStore = defineStore("profiles", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

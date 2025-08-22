@@ -12,6 +12,6 @@ export const useFeedStore = defineStore("feed", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

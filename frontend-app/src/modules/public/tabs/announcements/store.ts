@@ -12,6 +12,6 @@ export const useAnnouncementsStore = defineStore("announcements", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

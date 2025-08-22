@@ -12,6 +12,6 @@ export const usePartiesStore = defineStore("parties", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

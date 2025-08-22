@@ -12,6 +12,6 @@ export const useMediaStore = defineStore("media", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

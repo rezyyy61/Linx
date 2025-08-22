@@ -1,2 +1,4 @@
 // Placeholder API for campaigns
-export async function fetchCampaignsList() { return []; }
+export async function fetchCampaignsList() {
+  return [];
+}

@@ -1,32 +1,55 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
-import { RouterLink, useRouter } from "vue-router"
-import { Icon } from "@iconify/vue"
-import { useAuthStore } from "@/stores/auth/auth"
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { RouterLink, useRouter } from "vue-router";
+import { Icon } from "@iconify/vue";
+import { useAuthStore } from "@/stores/auth/auth";
 
-const router = useRouter()
-const auth = useAuthStore()
-const userOpen = ref(false)
-const root = ref<HTMLElement | null>(null)
+const router = useRouter();
+const auth = useAuthStore();
+const userOpen = ref(false);
+const root = ref<HTMLElement | null>(null);
 
-const user = computed(() => auth.user)
-const initials = computed(() => (user.value?.name || "U").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase())
-const avatar = computed<string>(() => (user.value as any)?.avatar_url || "")
+const user = computed(() => auth.user);
+const initials = computed(() =>
+  (user.value?.name || "U")
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase(),
+);
+const avatar = computed<string>(() => (user.value as any)?.avatar_url || "");
 
-function toggleUser() { userOpen.value = !userOpen.value }
-async function signOut() { await auth.logout(); userOpen.value = false; router.push({ name: "home" }) }
-function onClickOutside(e: MouseEvent) { if (root.value && !root.value.contains(e.target as Node)) userOpen.value = false }
-function onEsc(e: KeyboardEvent) { if (e.key === "Escape") userOpen.value = false }
+function toggleUser() {
+  userOpen.value = !userOpen.value;
+}
+async function signOut() {
+  await auth.logout();
+  userOpen.value = false;
+  router.push({ name: "home" });
+}
+function onClickOutside(e: MouseEvent) {
+  if (root.value && !root.value.contains(e.target as Node))
+    userOpen.value = false;
+}
+function onEsc(e: KeyboardEvent) {
+  if (e.key === "Escape") userOpen.value = false;
+}
 
 onMounted(() => {
-  document.addEventListener("click", onClickOutside)
-  document.addEventListener("keydown", onEsc)
-})
+  document.addEventListener("click", onClickOutside);
+  document.addEventListener("keydown", onEsc);
+});
 onBeforeUnmount(() => {
-  document.removeEventListener("click", onClickOutside)
-  document.removeEventListener("keydown", onEsc)
-})
-watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false })
+  document.removeEventListener("click", onClickOutside);
+  document.removeEventListener("keydown", onEsc);
+});
+watch(
+  () => router.currentRoute.value.fullPath,
+  () => {
+    userOpen.value = false;
+  },
+);
 </script>
 
 <template>
@@ -60,7 +83,9 @@ watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false }
         role="menu"
       >
         <div class="px-4 py-3 border-b border-gray-100 dark:border-zinc-800">
-          <p class="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
+          <p
+            class="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate"
+          >
             {{ user?.name }}
           </p>
           <p class="text-xs text-gray-600 dark:text-zinc-400 truncate">
@@ -73,7 +98,7 @@ watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false }
             <RouterLink
               to="/dashboard"
               class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800"
-              @click="userOpen=false"
+              @click="userOpen = false"
             >
               <Icon
                 icon="mdi:view-dashboard-outline"
@@ -86,7 +111,7 @@ watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false }
             <RouterLink
               to="/settings"
               class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 dark:hover:bg-zinc-800"
-              @click="userOpen=false"
+              @click="userOpen = false"
             >
               <Icon
                 icon="mdi:cog-outline"
@@ -114,6 +139,16 @@ watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false }
 </template>
 
 <style scoped>
-.menu-enter-active, .menu-leave-active { transition: opacity 120ms ease, transform 120ms ease; transform-origin: top right; }
-.menu-enter-from, .menu-leave-to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+.menu-enter-active,
+.menu-leave-active {
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  transform-origin: top right;
+}
+.menu-enter-from,
+.menu-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
 </style>

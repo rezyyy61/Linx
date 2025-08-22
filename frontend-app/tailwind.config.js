@@ -1,6 +1,7 @@
 /** @type {import("tailwindcss").Config} */
 export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     container: { center: true, padding: "1rem" },
     extend: {
@@ -26,7 +27,7 @@ export default {
       },
       colors: {
         brand: {
-          50:  "#fef2f2",
+          50: "#fef2f2",
           100: "#fee2e2",
           200: "#fecaca",
           300: "#fca5a5",
@@ -42,4 +43,4 @@ export default {
     },
   },
   plugins: [],
-}
+};
