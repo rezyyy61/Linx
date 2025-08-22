@@ -15,28 +15,31 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.es2021
-      }
-    }
+        ...globals.es2021,
+      },
+    },
   },
 
   {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: "latest", sourceType: "module" }
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
     },
     plugins: { "@typescript-eslint": ts },
     rules: {
       "no-unused-vars": "off",
-      "@typescript-eslint/no-unused-vars": ["error", {
-        vars: "all",
-        args: "after-used",
-        ignoreRestSiblings: true,
-        varsIgnorePattern: "^_",
-        argsIgnorePattern: "^_"
-      }]
-    }
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          vars: "all",
+          args: "after-used",
+          ignoreRestSiblings: true,
+          varsIgnorePattern: "^_",
+          argsIgnorePattern: "^_",
+        },
+      ],
+    },
   },
 
   {
@@ -46,10 +49,10 @@ export default [
       parserOptions: {
         parser: tsParser,
         ecmaVersion: "latest",
-        sourceType: "module"
-      }
+        sourceType: "module",
+      },
     },
     plugins: { vue, "@typescript-eslint": ts },
-    rules: {}
-  }
+    rules: {},
+  },
 ];

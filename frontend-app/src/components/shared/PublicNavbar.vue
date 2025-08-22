@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
-import { useI18n } from "vue-i18n"
-import { Icon } from "@iconify/vue"
-import BrandLogo from "@/components/shared/BrandLogo.vue"
-import PreferencesMenu from "@/components/shared/PreferencesMenu.vue"
-import { useAuthStore } from "@/stores/auth/auth"
-import UserMenu from "@/components/shared/UserMenu.vue"
+import { ref, computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
+import { Icon } from "@iconify/vue";
+import BrandLogo from "@/components/shared/BrandLogo.vue";
+import PreferencesMenu from "@/components/shared/PreferencesMenu.vue";
+import { useAuthStore } from "@/stores/auth/auth";
+import UserMenu from "@/components/shared/UserMenu.vue";
 
-const { t } = useI18n()
-const menuOpen = ref(false)
+const { t } = useI18n();
+const menuOpen = ref(false);
 
-const auth = useAuthStore()
-const isAuth = computed(() => auth.isAuthenticated)
+const auth = useAuthStore();
+const isAuth = computed(() => auth.isAuthenticated);
 
 onMounted(async () => {
   if (!auth.bootstrapDone && !auth.loading) {
-    await auth.bootstrap()
+    await auth.bootstrap();
   }
-})
+});
 
 function toggleMenu() {
-  menuOpen.value = !menuOpen.value
+  menuOpen.value = !menuOpen.value;
 }
 </script>
 
@@ -49,7 +49,7 @@ function toggleMenu() {
               'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm',
               isActive
                 ? 'text-red-600 dark:text-red-400'
-                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800',
             ]"
           >
             <Icon
@@ -68,7 +68,7 @@ function toggleMenu() {
               'inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm',
               isActive
                 ? 'text-red-600 dark:text-red-400'
-                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-zinc-200 dark:hover:bg-zinc-800',
             ]"
           >
             <Icon
@@ -133,7 +133,7 @@ function toggleMenu() {
     <div
       :class="[
         'md:hidden border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900',
-        menuOpen ? 'block' : 'hidden'
+        menuOpen ? 'block' : 'hidden',
       ]"
     >
       <div class="px-4 py-3 grid gap-2">

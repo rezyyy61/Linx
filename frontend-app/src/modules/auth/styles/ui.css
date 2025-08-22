@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .input {
+    @apply block w-full rounded-xl border border-gray-300/90 bg-white/90 px-3 py-3 text-sm text-gray-900 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[color:rgb(var(--brand))] focus:border-[color:rgb(var(--brand))] disabled:opacity-60 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-900/90 dark:text-zinc-100;
+  }
+  .float-label {
+    @apply pointer-events-none absolute left-10 top-1 text-xs text-gray-500 dark:text-zinc-400;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-[color:rgb(var(--brand))] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:rgb(var(--brand))] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed dark:focus-visible:ring-offset-zinc-900;
+  }
+  .error {
+    @apply mt-1 text-xs text-red-600 dark:text-red-400;
+  }
+  .abs-eye {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:rgb(var(--brand))] dark:text-zinc-400 dark:hover:bg-zinc-800;
+  }
+  .bg-surface {
+    @apply bg-gradient-to-br from-white via-white to-gray-50 dark:from-zinc-950 dark:via-zinc-950 dark:to-black;
+  }
+}

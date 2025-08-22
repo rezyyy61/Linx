@@ -1,2 +1,4 @@
 // Placeholder API for parties
-export async function fetchPartiesList() { return []; }
+export async function fetchPartiesList() {
+  return [];
+}

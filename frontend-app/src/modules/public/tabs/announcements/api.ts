@@ -1,2 +1,4 @@
 // Placeholder API for announcements
-export async function fetchAnnouncementsList() { return []; }
+export async function fetchAnnouncementsList() {
+  return [];
+}

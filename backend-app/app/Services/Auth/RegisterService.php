@@ -25,7 +25,6 @@ class RegisterService
         $request->session()->regenerate();
 
         event(new Registered($user));
-        $user->sendEmailVerificationNotification();
 
         RateLimiter::clear($this->registerKey($data['email'], (string) $request->ip()));
 

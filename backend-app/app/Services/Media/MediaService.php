@@ -37,7 +37,6 @@ class MediaService
         $signDisk = 's3_public';
         $key = $this->generateKey($extension);
 
-        // رکورد را با دیسک داخلی ذخیره کن
         $media = Media::create([
             'disk' => $storageDisk,
             'key' => $key,
@@ -91,7 +90,7 @@ class MediaService
             $media->mime = $disk->mimeType($media->key);
         }
 
-        $media->status = MediaStatus::UPLOADED; // فازهای بعدی: scan/processing → ready
+        $media->status = MediaStatus::UPLOADED;
         $media->fill($extra);
         $media->save();
 

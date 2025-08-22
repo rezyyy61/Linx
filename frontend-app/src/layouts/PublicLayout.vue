@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PublicNavbar from "@/components/shared/PublicNavbar.vue"
+import PublicNavbar from "@/components/shared/PublicNavbar.vue";
 </script>
 
 <template>

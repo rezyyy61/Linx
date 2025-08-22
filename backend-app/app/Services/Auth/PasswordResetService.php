@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -14,7 +15,10 @@ class PasswordResetService
     public function sendLink(Request $request, string $email): array
     {
         try {
-            Password::broker()->sendResetLink(['email' => $email]);
+            $status = Password::broker()->sendResetLink(['email' => $email]);
+            if ($status !== Password::RESET_LINK_SENT) {
+                Log::warning('password.forgot.status', ['email' => $email, 'status' => $status]);
+            }
 
             return ['http' => 202, 'message' => 'reset_link_sent'];
         } catch (\Throwable $e) {
@@ -28,7 +32,7 @@ class PasswordResetService
     {
         try {
             $status = Password::reset($data, function (User $user, string $password) {
-                $user->password = $password;
+                $user->password = Hash::make($password);
                 $user->setRememberToken(Str::random(60));
                 $user->save();
                 event(new PasswordReset($user));

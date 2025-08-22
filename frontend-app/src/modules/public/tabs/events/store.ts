@@ -12,6 +12,6 @@ export const useEventsStore = defineStore("events", {
       } finally {
         this.loading = false;
       }
-    }
-  }
+    },
+  },
 });

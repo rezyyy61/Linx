@@ -1,2 +1,4 @@
 // Placeholder API for feed
-export async function fetchFeedList() { return []; }
+export async function fetchFeedList() {
+  return [];
+}
