@@ -1,110 +1,116 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
 
 type PresignResponse = {
-  id: number
-  upload_url: string
-  key: string
-}
+  id: number;
+  upload_url: string;
+  key: string;
+};
 
-const file = ref<File | null>(null)
-const progress = ref<number>(0)
-const step = ref<'idle' | 'presigned' | 'uploading' | 'finalized' | 'error'>('idle')
-const log = ref<string>('')
+const file = ref<File | null>(null);
+const progress = ref<number>(0);
+const step = ref<"idle" | "presigned" | "uploading" | "finalized" | "error">(
+  "idle",
+);
+const log = ref<string>("");
 
-const apiBase = import.meta.env.VITE_API_BASE as string
+const apiBase = import.meta.env.VITE_API_BASE as string;
 function pickFile(e: Event) {
-  const input = e.target as HTMLInputElement
-  file.value = input.files?.[0] ?? null
-  progress.value = 0
-  step.value = 'idle'
-  log.value = ''
+  const input = e.target as HTMLInputElement;
+  file.value = input.files?.[0] ?? null;
+  progress.value = 0;
+  step.value = "idle";
+  log.value = "";
 }
 
-async function createPresigned(extension: string, type: string): Promise<PresignResponse> {
+async function createPresigned(
+  extension: string,
+  type: string,
+): Promise<PresignResponse> {
   const res = await fetch(`${apiBase}/media/presigned`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({ extension, type }),
-  })
+  });
   if (!res.ok) {
-    throw new Error(`Presign failed: ${res.status} ${await res.text()}`)
+    throw new Error(`Presign failed: ${res.status} ${await res.text()}`);
   }
-  return res.json()
+  return res.json();
 }
 
 async function finalize(id: number, title?: string) {
   const res = await fetch(`${apiBase}/media/${id}/finalize`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify({ title }),
-  })
+  });
   if (!res.ok) {
-    throw new Error(`Finalize failed: ${res.status} ${await res.text()}`)
+    throw new Error(`Finalize failed: ${res.status} ${await res.text()}`);
   }
-  return res.json()
+  return res.json();
 }
 
-
-function guessTypeByMime(mime: string): 'image' | 'video' | 'audio' | 'document' {
-  if (mime.startsWith('image/')) return 'image'
-  if (mime.startsWith('video/')) return 'video'
-  if (mime.startsWith('audio/')) return 'audio'
-  return 'document'
+function guessTypeByMime(
+  mime: string,
+): "image" | "video" | "audio" | "document" {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  if (mime.startsWith("audio/")) return "audio";
+  return "document";
 }
 
 async function upload() {
   try {
-    if (!file.value) return
-    const f = file.value
+    if (!file.value) return;
+    const f = file.value;
 
-    const ext = (f.name.split('.').pop() || '').toLowerCase() || 'bin'
-    const type = guessTypeByMime(f.type)
-    log.value = `→ presign for .${ext} (${type})`
-    step.value = 'presigned'
+    const ext = (f.name.split(".").pop() || "").toLowerCase() || "bin";
+    const type = guessTypeByMime(f.type);
+    log.value = `→ presign for .${ext} (${type})`;
+    step.value = "presigned";
 
     // 1) presigned URL
-    const presign = await createPresigned(ext, type)
-    log.value += `\n✔ got URL`
+    const presign = await createPresigned(ext, type);
+    log.value += `\n✔ got URL`;
 
     // 2) PUT مستقیم با progress — XMLHttpRequest چون fetch progress نداره
-    step.value = 'uploading'
+    step.value = "uploading";
     await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('PUT', presign.upload_url, true)
-      if (f.type) xhr.setRequestHeader('Content-Type', f.type)
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", presign.upload_url, true);
+      if (f.type) xhr.setRequestHeader("Content-Type", f.type);
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
-          progress.value = Math.round((e.loaded / e.total) * 100)
+          progress.value = Math.round((e.loaded / e.total) * 100);
         }
-      }
+      };
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          progress.value = 100
-          resolve()
+          progress.value = 100;
+          resolve();
         } else {
-          reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`))
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`));
         }
-      }
-      xhr.onerror = () => reject(new Error('Upload network error'))
-      xhr.send(f)
-    })
-    log.value += `\n✔ uploaded to MinIO`
+      };
+      xhr.onerror = () => reject(new Error("Upload network error"));
+      xhr.send(f);
+    });
+    log.value += `\n✔ uploaded to MinIO`;
 
     // 3) finalize
-    const media = await finalize(presign.id, f.name)
-    log.value += `\n✔ finalized (media id=${media.id})`
-    step.value = 'finalized'
+    const media = await finalize(presign.id, f.name);
+    log.value += `\n✔ finalized (media id=${media.id})`;
+    step.value = "finalized";
   } catch (err: any) {
-    step.value = 'error'
-    log.value += `\n✖ ${err?.message || err}`
-    console.error(err)
+    step.value = "error";
+    log.value += `\n✖ ${err?.message || err}`;
+    console.error(err);
   }
 }
 </script>
@@ -140,4 +146,3 @@ async function upload() {
     </div>
   </div>
 </template>
-

@@ -1,0 +1,14 @@
+:root {
+  --color-brand: 99 102 241;     /* indigo-500 */
+  --color-surface: 255 255 255;
+  --color-foreground: 17 24 39;  /* gray-900 */
+}
+
+:root.dark {
+  --color-brand: 129 140 248;
+  --color-surface: 9 9 11;
+  --color-foreground: 243 244 246;
+}
+
+:root[dir='rtl'] { --dir-start: right; --dir-end: left; }
+:root[dir='ltr'] { --dir-start: left;  --dir-end: right; }
