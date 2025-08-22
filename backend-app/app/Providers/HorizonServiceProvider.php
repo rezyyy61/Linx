@@ -13,7 +13,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     {
         parent::boot();
 
-        // ── Route notifications (یک‌بار در بوت، نه داخل auth)
         $slackHook = (string) config('horizon.slack_webhook_url', '');
         if ($slackHook !== '') {
             $channel = (string) config('horizon.slack_channel', '#general');
@@ -32,12 +31,10 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
                 return false;
             }
 
-            // محیط local همیشه مجاز
             if (app()->environment('local')) {
                 return true;
             }
 
-            // اجازه بر اساس IP/CIDR
             $allowedRanges = $this->csvToList((string) config('horizon.ip_allow', ''));
             if (! empty($allowedRanges)) {
                 $ip = $request->ip();
@@ -48,7 +45,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
                 }
             }
 
-            // اجازه بر اساس ایمیل‌های مجاز
             if (auth()->check()) {
                 $allowedEmails = $this->csvToList((string) config('horizon.allowed_emails', ''));
                 if (! empty($allowedEmails) && in_array(auth()->user()->email, $allowedEmails, true)) {
@@ -70,8 +66,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     }
 
     /**
-     * تبدیل CSV به آرایه‌ی trim‌شده (خالی‌ها حذف می‌شن)
-     *
      * @return array<int, string>
      */
     private function csvToList(string $csv): array

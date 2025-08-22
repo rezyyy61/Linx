@@ -1,0 +1,205 @@
+{
+  "nav": {
+    "login": "Login",
+    "register": "Register",
+    "go": "Go",
+    "about": "About",
+    "contact": "Contact",
+    "title": "Preferences",
+    "theme": "Theme",
+    "language": "Language"
+  },
+  "prefs": { "title": "Preferences" },
+
+  "feedbar": {
+    "feed": "Feed",
+    "parties": "Parties",
+    "books": "Books",
+    "media": "Media",
+    "campaigns": "Campaigns",
+    "profiles": "Profiles",
+    "events": "Events",
+    "announcements": "Announcements"
+  },
+
+  "home": {
+    "hero": {
+      "title": "Welcome to Linxx",
+      "subtitle": "A modern social platform for people and political parties. Create, connect, and campaign.",
+      "ctaGetStarted": "Get Started",
+      "ctaSignIn": "Sign In",
+      "ctaLearnMore": "Learn More",
+      "greeting": "Hi, {name}",
+      "ctaDashboard": "Dashboard",
+      "ctaLogout": "Logout"
+    }
+  },
+
+  "errors": {
+    "title": "Error",
+    "generic": "Something went wrong. Please try again.",
+    "unauthorizedTitle": "Sign-in required",
+    "unauthorized": "Please sign in to continue."
+  },
+
+  "auth": {
+    "brand": {
+      "secureBy": "Secure by Linxx"
+    },
+    "ui": {
+      "darkModeHint": "Tip: you can switch between Light and Dark any time."
+    },
+    "oauth": {
+      "title": "Continue with",
+      "subtitle": "You can use a social account",
+      "hint": "We’ll never post without your permission.",
+      "google": "Continue with Google",
+      "facebook": "Continue with Facebook",
+      "apple": "Continue with Apple"
+    },
+    "login": {
+      "headline": "Welcome back",
+      "subhead": "Sign in to continue.",
+      "title": "Sign in",
+      "subtitle": "Use your email and password.",
+      "fields": {
+        "email": "Email",
+        "password": "Password",
+        "remember": "Remember me"
+      },
+      "actions": {
+        "forgot": "Forgot password?",
+        "submit": "Sign in",
+        "register": "Create account"
+      },
+      "errors": {
+        "emailRequired": "Email is required.",
+        "emailInvalid": "Please enter a valid email.",
+        "passwordRequired": "Password is required.",
+        "passwordMin": "Password must be at least 6 characters."
+      },
+      "successTitle": "Welcome back!",
+      "successDesc": "You signed in successfully.",
+      "unverifiedTitle": "Email not verified",
+      "unverifiedDesc": "We sent you a verification link. Please confirm your email to continue.",
+      "resend": "Resend verification email",
+      "resentTitle": "Verification email sent",
+      "resentDesc": "Check your inbox for the new verification link.",
+      "resentFail": "Could not resend the verification email. Please try again.",
+      "noAccount": "Don't have an account?"
+    },
+    "register": {
+      "headline": "Create your account",
+      "subhead": "Join us in seconds.",
+      "title": "Sign up",
+      "subtitle": "It only takes a minute.",
+      "fields": {
+        "name": "Full name",
+        "email": "Email",
+        "password": "Password",
+        "confirm": "Confirm password"
+      },
+      "actions": {
+        "submit": "Create account",
+        "login": "Sign in"
+      },
+      "errors": {
+        "nameRequired": "Name is required.",
+        "nameMin": "Name must be at least 2 characters.",
+        "emailRequired": "Email is required.",
+        "emailInvalid": "Please enter a valid email.",
+        "passwordRequired": "Password is required.",
+        "passwordMin": "Password must be at least 8 characters.",
+        "confirmRequired": "Please confirm your password.",
+        "passwordMismatch": "Passwords do not match."
+      },
+      "haveAccount": "Already have an account?",
+      "notify": {
+        "success": "Account created.",
+        "checkEmail": "Please check your inbox and verify your email.",
+        "successTitle": "You're in!",
+        "verifyNotice": "We’ve sent a verification link to your email. Please confirm to activate your account."
+      }
+    },
+
+    "forgot": {
+      "headline": "Forgot your password?",
+      "subhead": "We’ll email you a reset link.",
+      "title": "Reset password",
+      "subtitle": "Enter the email associated with your account.",
+      "fields": {
+        "email": "Email"
+      },
+      "actions": {
+        "submit": "Send reset link",
+        "login": "Sign in"
+      },
+      "backTo": "Back to",
+      "errors": {
+        "emailRequired": "Email is required.",
+        "emailInvalid": "Please enter a valid email."
+      },
+      "info": "If that address exists, we’ll send a reset link.",
+      "notify": {
+        "sent": "If that email exists, a reset link has been sent."
+      }
+    },
+
+    "reset": {
+      "headline": "Reset your password",
+      "subhead": "Choose a strong new password.",
+      "title": "Set a new password",
+      "subtitle": "Enter and confirm your new password.",
+      "fields": {
+        "password": "New password",
+        "confirm": "Confirm password"
+      },
+      "actions": {
+        "submit": "Update password",
+        "requestNew": "Request a new link"
+      },
+      "linkHelp": "Link expired or invalid?",
+      "invalidLink": "The reset link is invalid or has expired. Please request a new one.",
+      "errors": {
+        "passwordRequired": "Password is required.",
+        "passwordMin": "Password must be at least 8 characters.",
+        "confirmRequired": "Please confirm your password.",
+        "passwordMismatch": "Passwords do not match."
+      },
+      "notify": {
+        "success": "Password updated successfully."
+      }
+    },
+
+    "verify": {
+      "notify": {
+        "success": "Your email has been verified."
+      }
+    },
+    "strength": {
+      "veryWeak": "Very weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong"
+    },
+    "common": {
+      "capsLockOn": "Caps Lock is ON"
+    },
+    "notify": {
+      "working": "Working...",
+      "done": "Done",
+      "error": "Something went wrong"
+    }
+  },
+  "common": {
+    "success": "Success",
+    "error": "Something went wrong",
+    "validationError": "Validation error",
+    "validationErrorDesc": "Please review the highlighted fields.",
+    "networkError": "Network error",
+    "networkErrorDesc": "Please check your connection and try again.",
+    "serverError": "Server error",
+    "serverErrorDesc": "Something went wrong on our side. Please try again later."
+  }
+}

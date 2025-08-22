@@ -1,124 +1,72 @@
+<!-- src/modules/public/pages/HomePage.vue -->
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
-import { useAuthStore } from '@/stores/auth/auth'
+import { ref, shallowRef, onMounted, watch } from "vue";
+import { useAuthStore } from "@/stores/auth/auth";
+import HeroSection from "@/modules/public/components/HeroSection.vue";
+import FeedSubnav from "@/modules/public/components/FeedSubnav.vue";
 
-const router = useRouter()
-const auth = useAuthStore()
+type TabKey =
+  | "feed"
+  | "parties"
+  | "books"
+  | "media"
+  | "campaigns"
+  | "profiles"
+  | "events"
+  | "announcements";
 
+const auth = useAuthStore();
 onMounted(() => {
-  // یه بار وضعیت سشن رو می‌گیریم
-  if (!auth.bootstrapDone) auth.bootstrap()
-})
+  if (!auth.bootstrapDone) auth.bootstrap();
+});
 
-const username = computed(() => auth.user?.name ?? '')
+const current = ref<TabKey>(
+  (new URLSearchParams(location.search).get("tab") as TabKey) || "feed",
+);
 
-async function onLogout() {
-  await auth.logout()
-  router.push({ name: 'home' })
+const loaders: Record<TabKey, () => Promise<any>> = {
+  feed: () => import("@/modules/public/tabs/feed/FeedPage.vue"),
+  parties: () => import("@/modules/public/tabs/parties/PartiesPage.vue"),
+  books: () => import("@/modules/public/tabs/books/BookPage.vue"),
+  media: () => import("@/modules/public/tabs/media/MediaPage.vue"),
+  campaigns: () => import("@/modules/public/tabs/campaigns/CampaignsPage.vue"),
+  profiles: () => import("@/modules/public/tabs/profiles/ProfilePage.vue"),
+  events: () => import("@/modules/public/tabs/events/EventPage.vue"),
+  announcements: () =>
+    import("@/modules/public/tabs/announcements/AnnouncementsPage.vue"),
+};
+
+const CurrentComp = shallowRef<any>(null);
+
+async function loadTab(key: TabKey) {
+  const m = await loaders[key]();
+  CurrentComp.value = m.default ?? m;
 }
+loadTab(current.value);
+
+watch(current, (v) => {
+  history.replaceState(null, "", `?tab=${encodeURIComponent(v)}`);
+  loadTab(v);
+});
 </script>
 
 <template>
-  <section class="grid gap-10">
-    <!-- Hero -->
-    <div class="text-center py-10">
-      <h1 class="text-3xl sm:text-4xl font-bold tracking-tight">
-        Welcome to NewApp
-      </h1>
-      <p class="mt-3 text-gray-600 max-w-2xl mx-auto">
-        A clean Vue 3 + Vite setup. This is the public area of your site.
-      </p>
+  <section
+    class="min-h-dvh bg-gray-50 text-gray-900 dark:bg-zinc-900 dark:text-zinc-100"
+    dir="auto"
+  >
+    <div class="mx-auto grid  gap-8 px-4 sm:px-6 lg:px-8">
+      <HeroSection />
 
-      <div class="mt-6 flex items-center justify-center gap-3">
-        <!-- وقتی لاگین نیست -->
-        <template v-if="!auth.isAuthenticated">
-          <RouterLink
-            to="/auth/login"
-            class="btn"
-          >
-            Login
-          </RouterLink>
-          <RouterLink
-            to="/auth/register"
-            class="btn btn-outline"
-          >
-            Register
-          </RouterLink>
-          <RouterLink
-            to="/dashboard"
-            class="btn btn-outline"
-          >
-            Go to Dashboard
-          </RouterLink>
-        </template>
+      <FeedSubnav
+        v-model="current"
+        class="border-b border-gray-200 dark:border-zinc-700"
+      />
 
-        <!-- وقتی لاگین هست -->
-        <template v-else>
-          <span class="inline-flex items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-800">
-            Hi, {{ username }}
-          </span>
-          <RouterLink
-            to="/dashboard"
-            class="btn btn-outline"
-          >
-            Dashboard
-          </RouterLink>
-          <button
-            type="button"
-            class="btn"
-            @click="onLogout"
-          >
-            Logout
-          </button>
-        </template>
+      <div class="rounded-xl border border-gray-200 bg-white p-0 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+        <component :is="CurrentComp" />
       </div>
-    </div>
-
-    <!-- Features (placeholders) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <article class="card">
-        <h3 class="card-title">
-          Fast
-        </h3>
-        <p class="card-text">
-          Vite + Vue 3 + Tailwind for a fast dev experience.
-        </p>
-      </article>
-      <article class="card">
-        <h3 class="card-title">
-          Modular
-        </h3>
-        <p class="card-text">
-          Public, Auth, and Dashboard are separated cleanly.
-        </p>
-      </article>
-      <article class="card">
-        <h3 class="card-title">
-          Scalable
-        </h3>
-        <p class="card-text">
-          Ready for routing, state, and API layers later.
-        </p>
-      </article>
     </div>
   </section>
 </template>
 
-<style scoped>
-.btn {
-  @apply inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition;
-}
-.btn-outline {
-  @apply bg-white text-gray-900 border border-gray-300 hover:bg-gray-50;
-}
-.card {
-  @apply rounded-lg border border-gray-200 bg-white p-5 shadow-sm;
-}
-.card-title {
-  @apply text-lg font-semibold;
-}
-.card-text {
-  @apply mt-1 text-gray-600;
-}
-</style>

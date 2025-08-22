@@ -6,6 +6,8 @@ services:
     user: "${UID}:${GID}"
     environment:
       APP_ENV: local
+      HOME: /var/www/html
+      XDG_CONFIG_HOME: /var/www/html/.config
     working_dir: /var/www/html
     volumes:
       - ./backend-app:/var/www/html
@@ -131,6 +133,8 @@ services:
     working_dir: /var/www/html
     environment:
       APP_ENV: local
+      HOME: /var/www/html
+      XDG_CONFIG_HOME: /var/www/html/.config
     volumes:
       - ./backend-admin:/var/www/html
     depends_on:
