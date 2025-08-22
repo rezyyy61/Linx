@@ -68,6 +68,16 @@
 defineOptions({ name: 'UiTextField' })
 import { useSlots, computed } from 'vue'
 
+type InputMode =
+  | 'none'
+  | 'text'
+  | 'search'
+  | 'email'
+  | 'url'
+  | 'tel'
+  | 'numeric'
+  | 'decimal'
+
 const props = withDefaults(defineProps<{
   id: string
   modelValue: string
@@ -76,12 +86,23 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   error?: string
   autocomplete?: string
-  inputmode?: string
+  inputmode?: InputMode
   inputClass?: string
   name?: string
   dir?: 'ltr' | 'rtl' | 'auto'
   locale?: string
-}>(), { type: 'text', disabled: false, inputClass: '', dir: 'auto' })
+}>(), {
+  type: 'text',
+  disabled: false,
+  inputClass: '',
+  dir: 'auto',
+  label: '',
+  error: '',
+  autocomplete: '',
+  inputmode: undefined as unknown as InputMode,
+  name: '',
+  locale: '',
+})
 
 defineEmits<{ 'update:modelValue':[string], blur:[] }>()
 

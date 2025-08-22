@@ -6,8 +6,8 @@
     :placeholder="placeholder"
     :type="show ? 'text' : 'password'"
     :disabled="disabled"
-    :error="error"
-    :autocomplete="autocomplete || 'new-password'"
+    :error="error || ''"
+    :autocomplete="autocomplete"
     @update:model-value="$emit('update:modelValue', $event)"
     @blur="$emit('blur')"
   >
@@ -47,10 +47,17 @@ withDefaults(defineProps<{
   label?: string
   placeholder?: string
   disabled?: boolean
-  error?: string
+  error?: string | null
   autocomplete?: string
   leftIcon?: string
-}>(), { leftIcon: 'mdi:lock-outline' })
+}>(), {
+  label: '',
+  placeholder: '',
+  disabled: false,
+  error: '',
+  autocomplete: 'new-password',
+  leftIcon: 'mdi:lock-outline',
+})
 
 defineEmits<{ 'update:modelValue':[string], blur:[] }>()
 const show = ref(false)

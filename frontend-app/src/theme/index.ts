@@ -38,7 +38,9 @@ export function applyTheme(theme: Theme) {
   const dark = theme === "dark" || (theme === "system" && systemDark());
   html.classList.toggle("dark", dark);
   setMeta(dark);
-  try { localStorage.setItem(KEY, theme); } catch {}
+  try { localStorage.setItem(KEY, theme); } catch {
+    // intentionally ignore: response body may not be JSON; keep default msg
+  }
 
   if (theme === "system" && typeof window !== "undefined" && window.matchMedia) {
     mql = window.matchMedia("(prefers-color-scheme: dark)");
