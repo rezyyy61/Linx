@@ -9,7 +9,7 @@ import UiPasswordField from '../components/ui/UiPasswordField.vue'
 import { Icon } from '@iconify/vue'
 
 import { useForm } from '../lib/forms/useForm'
-import { required, email as emailRule, minLen } from '../lib/forms/validators'
+import {required, email as emailRule, minLen, sameAs} from '../lib/forms/validators'
 import { useAuthStore } from '@/stores/auth/auth'
 import { handleApiError } from '../lib/notify/handleApiError'
 import { useNotify } from '../lib/notify/useNotify'
@@ -22,9 +22,6 @@ const submitting = ref(false)
 const rtlLocales = ['fa','ar','ckb','ku','kur','ps','ur','he','dv','syr']
 const isRTL = computed(() => rtlLocales.some(c => locale.value.toLowerCase().startsWith(c)))
 
-const confirmField = (key: string, msg: string) =>
-  (value: any, all: Record<string, any>) => (value === all[key] ? undefined : msg)
-
 const { values, touched, errors, validateField, validateAll, setTouchedAll, setServerErrors } =
   useForm({ name: '', email: '', password: '', password_confirmation: '' }, {
     name: [required(t('auth.register.errors.nameRequired')), minLen(2, t('auth.register.errors.nameMin'))],
@@ -32,7 +29,7 @@ const { values, touched, errors, validateField, validateAll, setTouchedAll, setS
     password: [required(t('auth.register.errors.passwordRequired')), minLen(8, t('auth.register.errors.passwordMin'))],
     password_confirmation: [
       required(t('auth.register.errors.confirmRequired')),
-      confirmField('password', t('auth.register.errors.passwordMismatch')),
+      sameAs('password', t('auth.register.errors.passwordMismatch')),
     ],
   })
 
@@ -62,11 +59,6 @@ async function onSubmit() {
   }
 }
 
-function oauth(provider: 'google'|'facebook'|'apple'|'github') {
-  if (submitting.value) return
-  const url = `/api/oauth/redirect/${provider}?redirect=${encodeURIComponent('/')}`
-  window.location.href = url
-}
 </script>
 
 
@@ -91,7 +83,6 @@ function oauth(provider: 'google'|'facebook'|'apple'|'github') {
       <AuthOAuthButtons
         :providers="['google','facebook','apple']"
         :disabled="submitting"
-        @click="oauth"
       />
     </template>
 
