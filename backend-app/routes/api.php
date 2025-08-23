@@ -2,17 +2,26 @@
 
 use App\Http\Controllers\Api\media\MediaAttachController;
 use App\Http\Controllers\Api\media\MediaController;
+use App\Http\Controllers\Api\Post\PostController;
 use App\Http\Controllers\Api\Profile\LinkController;
 use App\Http\Controllers\Api\Profile\ProfileController;
 use App\Http\Controllers\Api\Profile\ValueController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('media')->group(function () {
-    Route::post('presigned', [MediaController::class, 'createPresignedUrl']);
-    Route::post('{media}/finalize', [MediaController::class, 'finalizeUpload']);
-    Route::post('/{media}/attach', [MediaAttachController::class, 'attach']);
-    Route::post('/{media}/detach', [MediaAttachController::class, 'detach']);
-    Route::post('/{media}/attach-single', [MediaAttachController::class, 'attachSingle']);
+Route::middleware('auth:sanctum')
+    ->prefix('media')
+    ->group(function () {
+        Route::post('presigned', [MediaController::class, 'createPresignedUrl']);
+        Route::post('{media}/finalize', [MediaController::class, 'finalizeUpload']);
+        Route::post('/{media}/attach', [MediaAttachController::class, 'attach']);
+        Route::post('/{media}/detach', [MediaAttachController::class, 'detach']);
+        Route::post('/{media}/attach-single', [MediaAttachController::class, 'attachSingle']);
+    });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('posts', PostController::class)->parameters([
+        'posts' => 'post',
+    ]);
 });
 
 Route::middleware('auth:sanctum')
