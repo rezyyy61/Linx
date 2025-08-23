@@ -62,8 +62,8 @@ class ProfileMediaService
             }
 
             $next = $order ?? ((int) $profile->media()
-                    ->wherePivot('collection', 'documents')
-                    ->max('mediables.order_column') + 1);
+                ->wherePivot('collection', 'documents')
+                ->max('mediables.order_column') + 1);
 
             $profile->media()->attach($media->getKey(), ['collection' => 'documents', 'order_column' => $next]);
 
