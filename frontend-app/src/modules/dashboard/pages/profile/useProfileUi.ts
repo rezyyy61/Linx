@@ -10,7 +10,7 @@ import {
 
 type LinkVM = { id: string; type: string; title: string; url: string; value?: string | null };
 type ValueVM = { id: string; type: string; value: string };
-type FileVM = { id: number; name: string };
+type FileVM = { id: string; name: string; size: number; type: string; ext: string; previewUrl: string };
 
 function mediaName(m: Media): string {
   const k = m.key || "";
@@ -108,11 +108,14 @@ export function useProfileUi() {
       ? ((p.logo[0] as any).url ?? (p.logo[0] as any).public_url ?? "")
       : "";
     state.media.files = (p.documents || []).map((m: any) => ({
-      id: m.id,
+      id: String(m.id),
       name: mediaName(m as Media),
-    }))
-
-    original.fileIds = state.media.files.map(f => f.id)
+      size: Number(m.size ?? m.size_bytes ?? 0),
+      type: String(m.mime_type ?? m.type ?? ""),
+      ext: String(m.ext ?? (m.key ? (m.key.split(".").pop() || "").toLowerCase() : "")),
+      previewUrl: String(m.url ?? m.public_url ?? ""),
+    }));
+    original.fileIds = state.media.files.map(f => Number(f.id))
   }
 
   function ensureLoadedMaps() {
@@ -230,10 +233,10 @@ export function useProfileUi() {
   }
 
   function diffFiles() {
-    const currIds = new Set(state.media.files.map(f => f.id));
+    const currIds = new Set(state.media.files.map(f => Number(f.id)));
     const origIds = new Set(original.fileIds);
     const toRemove = original.fileIds.filter(id => !currIds.has(id));
-    const toAdd = state.media.files.filter(f => !origIds.has(f.id));
+    const toAdd = state.media.files.filter(f => !origIds.has(Number(f.id)));
     return { toAdd, toRemove };
   }
 
@@ -285,7 +288,7 @@ export function useProfileUi() {
       const F = diffFiles();
       for (const id of F.toRemove) await store.removeDocument(id);
       for (let i = 0; i < F.toAdd.length; i++) {
-        await store.addDocument(F.toAdd[i].id, i);
+        await store.addDocument(Number(F.toAdd[i].id), i);
       }
 
       await store.fetchMe();

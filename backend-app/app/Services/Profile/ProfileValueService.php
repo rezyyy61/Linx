@@ -31,8 +31,8 @@ class ProfileValueService
                 ->firstOrFail();
 
             $nextOrder = (int) ProfileValue::query()
-                    ->where('profile_id', $profile->getKey())
-                    ->max('order') + 1;
+                ->where('profile_id', $profile->getKey())
+                ->max('order') + 1;
 
             $payload = [
                 'profile_id' => $profile->getKey(),

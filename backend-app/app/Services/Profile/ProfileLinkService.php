@@ -25,8 +25,8 @@ class ProfileLinkService
             $profileId = (int) $user->profile()->lockForUpdate()->value('id');
 
             $nextOrder = (int) ProfileLink::query()
-                    ->where('profile_id', $profileId)
-                    ->max('order') + 1;
+                ->where('profile_id', $profileId)
+                ->max('order') + 1;
 
             $payload = [
                 'profile_id' => $profileId,
