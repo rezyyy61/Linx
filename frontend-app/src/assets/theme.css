@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .surface { @apply rounded-2xl bg-white/80 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/60 backdrop-blur p-6 md:p-8 transition-colors; }
+  .input { @apply w-full px-3 py-2 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500; }
+  .btn-primary { @apply px-3 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500; }
+  .btn-ghost { @apply px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200; }
+  .card-select { @apply relative rounded-xl border bg-white dark:bg-slate-800 transition-all p-4 text-left hover:shadow-sm border-slate-200 dark:border-slate-700; }
+  .card-select-active { @apply ring-2 ring-red-300 border-red-500 dark:ring-red-900/40; }
+  .chip { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200; }
+}

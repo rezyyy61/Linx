@@ -16,7 +16,7 @@ class MediaAttachController extends Controller
     public function attach(Request $request, Media $media)
     {
         $validated = $request->validate([
-            'model_type' => 'required|string', // eg: App\\Models\\Post
+            'model_type' => 'required|string',
             'model_id' => 'required|integer',
             'collection' => 'nullable|string',
             'order' => 'nullable|integer',
@@ -64,6 +64,36 @@ class MediaAttachController extends Controller
             $model,
             $media,
             $validated['collection'] ?? null
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function attachSingle(Request $request, Media $media)
+    {
+        $validated = $request->validate([
+            'model_type' => 'required|string',
+            'model_id' => 'required|integer',
+            'collection' => 'nullable|string',
+            'order' => 'nullable|integer',
+        ]);
+
+        /** @var class-string<Model> $class */
+        $class = $validated['model_type'];
+
+        /** @var Model $model */
+        $model = $class::query()->lockForUpdate()->findOrFail($validated['model_id']);
+
+        if (! $model instanceof Mediable) {
+            abort(400, 'Model is not mediable');
+        }
+
+        /** @var Mediable $model */
+        $this->mediaService->replaceSingle(
+            $model,
+            $media,
+            $validated['collection'] ?? 'default',
+            $validated['order'] ?? 0
         );
 
         return response()->json(['ok' => true]);

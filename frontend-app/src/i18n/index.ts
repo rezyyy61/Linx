@@ -1,7 +1,31 @@
+// /home/rezyyy/PhpstormProjects/Linx/frontend-app/src/i18n/index.ts
 import { createI18n } from "vue-i18n";
-import en from "./locales/en.json";
-import fa from "./locales/fa.json";
-import ku from "./locales/ku.json";
+
+type Msgs = Record<string, any>;
+
+function deepMerge(target: any, source: any) {
+  for (const k of Object.keys(source)) {
+    const sv = source[k];
+    if (sv && typeof sv === "object" && !Array.isArray(sv)) {
+      target[k] = deepMerge(target[k] || {}, sv);
+    } else {
+      target[k] = sv;
+    }
+  }
+  return target;
+}
+
+const modules = import.meta.glob("./locales/**/*.json", { eager: true });
+const messages: Msgs = {};
+
+for (const path in modules) {
+  const mod: any = (modules as any)[path];
+  const data = mod.default ?? mod;
+  const m = path.match(/locales\/([a-zA-Z-_]+)(?:\/|\.json)/);
+  if (!m) continue;
+  const locale = m[1];
+  messages[locale] = deepMerge(messages[locale] || {}, data);
+}
 
 const rtl = new Set(["fa", "ku", "ckb", "ar", "he"]);
 const saved = localStorage.getItem("lang") || "en";
@@ -10,7 +34,7 @@ const i18n = createI18n({
   legacy: false,
   locale: saved,
   fallbackLocale: "en",
-  messages: { en, fa, ku },
+  messages,
 });
 
 export function setLocale(lang: string) {
@@ -21,7 +45,6 @@ export function setLocale(lang: string) {
   html.setAttribute("dir", rtl.has(lang) ? "rtl" : "ltr");
 }
 
-// مهم: همین الان مقدار ذخیره‌شده را اعمال کن
 setLocale(saved);
 
 export default i18n;

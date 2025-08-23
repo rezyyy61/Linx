@@ -9,6 +9,7 @@ import App from "./App.vue";
 import i18n from "./i18n";
 import { initTheme } from "./theme";
 import "./assets/main.css";
+import "@/assets/theme.css";
 import router, { installGuards } from "./router";
 
 initTheme();

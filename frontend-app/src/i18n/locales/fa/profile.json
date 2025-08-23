@@ -1,0 +1,52 @@
+{
+  "profile": {
+    "title": "پروفایل",
+    "subtitle": "ویرایشگر تمیز برای ساخت پروفایل",
+    "politicalTitle": "پروفایل سیاسی",
+    "steps": {
+      "general": "۱. اطلاعات عمومی",
+      "ideology": "۲. مواضع ایدئولوژیک",
+      "description": "۳. توضیحات کامل",
+      "links": "۴. شبکه‌های اجتماعی و لینک‌ها"
+    },
+    "basic": {
+      "displayName": { "label": "نام نمایشی", "placeholder": "نام" },
+      "slug": { "label": "اسلاگ", "placeholder": "your-slug" },
+      "location": { "label": "موقعیت", "placeholder": "شهر، کشور" },
+      "foundedYear": { "label": "سال تأسیس", "placeholder": "مثلاً ۲۰۱۵" },
+      "avatarColor": { "label": "رنگ آواتار" },
+      "entityType": {
+        "label": "نوع موجودیت",
+        "locked": "قفل",
+        "requiresApproval": "نیازمند تأیید",
+        "options": {
+          "individual": { "title": "فردی", "desc": "پروفایل شخصی برای یک فرد" },
+          "party": { "title": "حزب", "desc": "پروفایل حزب سیاسی (به‌زودی)" },
+          "collective": { "title": "جمعی", "desc": "پروفایل گروه یا حرکت (به‌زودی)" },
+          "media": { "title": "رسانه", "desc": "پروفایل رسانه‌ای (به‌زودی)" }
+        }
+      }
+    },
+    "about": {
+      "tagline": { "label": "شعار کوتاه", "placeholder": "شعار کوتاه" },
+      "about": { "label": "درباره", "placeholder": "توضیح کامل درباره سازمان، مأموریت و چشم‌انداز آن را اینجا بنویسید." },
+      "goals": { "label": "اهداف", "placeholder": "اهداف و مقاصد اصلی را به‌صورت روشن و خلاصه فهرست کنید." },
+      "structure": { "label": "ساختار", "placeholder": "ساختار داخلی، نقش‌ها یا سلسله‌مراتب سازمان را توضیح دهید." },
+      "activities": { "label": "فعالیت‌ها", "placeholder": "فعالیت‌های کلیدی" }
+    },
+    "links": { "heading": "مدیریت لینک‌ها", "add": "افزودن لینک", "remove": "حذف", "empty": "هنوز لینکی ثبت نشده", "type": "نوع", "title": "عنوان", "url": "آدرس" },
+    "values": { "heading": "مقادیر سفارشی", "add": "افزودن مقدار", "remove": "حذف", "empty": "هنوز مقداری ثبت نشده", "type": "نوع", "value": "مقدار" },
+    "media": {
+      "documents": "اسناد",
+      "addFiles": "فایل‌ها را اینجا بکشید و رها کنید یا برای انتخاب کلیک کنید",
+      "fileHint": "PDF، DOCX، PPTX، XLSX، CSV، TXT • هر فایل حداکثر ۲۰ مگابایت",
+      "noFiles": "هنوز سندی اضافه نشده است.",
+      "open": "باز کردن",
+      "unsupportedType": "برخی فایل‌ها به‌دلیل فرمت نامعتبر نادیده گرفته شدند.",
+      "tooLarge": "برخی فایل‌ها بزرگ‌تر از ۲۰ مگابایت بودند و نادیده گرفته شدند."
+    },
+    "summary": { "completion": "پیشرفت", "save": "ذخیره", "saving": "در حال ذخیره…", "saved": "ذخیره شد", "yourProfile": "پروفایل شما", "slugPrefix": "/", "logoPreview": "پیش‌نمایش لوگو" },
+    "locale": { "new": "زبان جدید", "add": "افزودن" }
+  },
+  "common": { "selected": "انتخاب شد" }
+}

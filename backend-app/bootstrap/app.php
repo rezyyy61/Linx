@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
@@ -26,9 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('horizon:snapshot')->everyFiveMinutes();
     })
-    ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->appendToGroup('web', [
-            EnsureFrontendRequestsAreStateful::class,
-        ]);
-    })
+//    ->withMiddleware(function (Middleware $middleware): void {
+//        $middleware->appendToGroup('web', [
+//            EnsureFrontendRequestsAreStateful::class,
+//        ]);
+//    })
     ->create();

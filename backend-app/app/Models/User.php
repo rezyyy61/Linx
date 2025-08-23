@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Contracts\Mediable;
 use App\Models\Concerns\HasMedia;
+use App\Models\Profile\Profile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -32,5 +34,10 @@ class User extends Authenticatable implements Mediable, MustVerifyEmail
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new \App\Notifications\QueuedResetPassword($token));
+    }
+
+    public function profile(): HasOne
+    {
+        return $this->hasOne(Profile::class);
     }
 }

@@ -3,9 +3,11 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
+use App\Services\Profile\ProfileBootstrapService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -15,18 +17,27 @@ class RegisterService
     {
         $this->ensureRegisterNotRateLimited($data['email'], (string) $request->ip());
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-        ]);
+        $result = DB::transaction(function () use ($data) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $data['password'],
+            ]);
+
+            $bootstrap = app(ProfileBootstrapService::class);
+            $profile = $bootstrap->createForUser($user);
+
+            return [$user, $profile];
+        });
+
+        [$user, $profile] = $result;
 
         Auth::login($user);
         $request->session()->regenerate();
 
         event(new Registered($user));
 
-        RateLimiter::clear($this->registerKey($data['email'], (string) $request->ip()));
+        RateLimiter::clear($this->registerKey($data['email'], (string) request()->ip()));
 
         return [
             'http' => 201,
@@ -35,6 +46,13 @@ class RegisterService
                 'name' => $user->name,
                 'email' => $user->email,
                 'email_verified_at' => $user->email_verified_at,
+            ],
+            'profile' => [
+                'id' => $profile->id,
+                'slug' => $profile->slug,
+                'entity_type' => $profile->entity_type,
+                'avatar_color' => $profile->avatar_color,
+                'status' => $profile->status,
             ],
         ];
     }
