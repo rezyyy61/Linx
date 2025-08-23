@@ -30,7 +30,7 @@ function toggleMenu() {
     class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200 dark:bg-gray-900/80"
   >
     <div
-      class="max-w-screen-xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3"
+      class="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between gap-3"
     >
       <RouterLink
         to="/"

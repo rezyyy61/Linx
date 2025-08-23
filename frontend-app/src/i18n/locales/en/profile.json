@@ -1,0 +1,52 @@
+{
+  "profile": {
+    "title": "Profile",
+    "politicalTitle": "Political Profile",
+    "subtitle": "Clean editor to build your profile",
+    "steps": {
+      "general": "1. General Information",
+      "ideology": "2. Ideological Positions",
+      "description": "3. Full Description",
+      "links": "4. Social Media & Links"
+    },
+    "basic": {
+      "displayName": { "label": "Display name", "placeholder": "Name" },
+      "slug": { "label": "Slug", "placeholder": "your-slug" },
+      "location": { "label": "Location", "placeholder": "City, Country" },
+      "foundedYear": { "label": "Founded year", "placeholder": "e.g. 2015" },
+      "avatarColor": { "label": "Avatar color" },
+      "entityType": {
+        "label": "Entity type",
+        "locked": "Locked",
+        "requiresApproval": "Requires approval",
+        "options": {
+          "individual": { "title": "Individual", "desc": "Personal profile for a single person" },
+          "party": { "title": "Party", "desc": "Political party profile (coming soon)" },
+          "collective": { "title": "Collective", "desc": "Group or movement profile (coming soon)" },
+          "media": { "title": "Media", "desc": "Media outlet profile (coming soon)" }
+        }
+      }
+    },
+    "about": {
+      "tagline": { "label": "Tagline", "placeholder": "Short tagline" },
+      "about": { "label": "About", "placeholder": "Write a detailed description about the organization, its mission, and vision." },
+      "goals": { "label": "Goals", "placeholder": "List the main goals and objectives clearly and concisely." },
+      "structure": { "label": "Structure", "placeholder": "Explain the internal structure, roles, or hierarchy of the organization." },
+      "activities": { "label": "Activities", "placeholder": "Key activities" }
+    },
+    "links": { "heading": "Manage your links", "add": "Add link", "remove": "Remove", "empty": "No links yet", "type": "Type", "title": "Title", "url": "URL" },
+    "values": { "heading": "Custom values", "add": "Add value", "remove": "Remove", "empty": "No values yet", "type": "Type", "value": "Value" },
+    "media": {
+      "documents": "Documents",
+      "addFiles": "Drag & drop documents here or click to browse",
+      "fileHint": "PDF, DOCX, PPTX, XLSX, CSV, TXT • each ≤ 20MB",
+      "noFiles": "No documents added yet.",
+      "open": "Open",
+      "unsupportedType": "Some files were skipped due to unsupported type.",
+      "tooLarge": "Some files exceed 20MB and were skipped."
+    },
+    "summary": { "completion": "Completion", "save": "Save", "saving": "Saving...", "saved": "Saved", "yourProfile": "Your Profile", "slugPrefix": "/", "logoPreview": "Logo preview" },
+    "locale": { "new": "new locale", "add": "Add" }
+  },
+  "common": { "selected": "Selected" }
+}
