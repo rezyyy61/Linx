@@ -30,6 +30,8 @@ class PostApiTest extends TestCase
 
     public function test_user_cannot_update_others_post(): void
     {
+        $this->withExceptionHandling();
+
         $user = User::factory()->create();
         $other = User::factory()->create();
         $this->actingAs($user, 'web');
