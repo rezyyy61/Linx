@@ -17,7 +17,7 @@ class MediaController extends Controller
 
     public function createPresignedUrl(CreatePresignedUrlRequest $request): JsonResponse
     {
-        $typeEnum = MediaType::from($request->input('type')); // ✅
+        $typeEnum = MediaType::from($request->input('type'));
 
         $data = $this->mediaService->createPresignedUploadUrl(
             $request->input('extension'),
