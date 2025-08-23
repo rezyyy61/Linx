@@ -77,13 +77,15 @@ class Media extends Model
 
     public function publicUrl(): ?string
     {
-        $disk = Storage::disk($this->disk ?: 's3');
-
-        if (method_exists($disk->getAdapter(), 'getClient')) {
-            return $disk->url($this->key);
+        try {
+            return Storage::disk('s3_public')->url($this->key);
+        } catch (\Throwable) {
+            try {
+                return Storage::disk($this->disk ?: 's3')->url($this->key);
+            } catch (\Throwable) {
+                return null;
+            }
         }
-
-        return null;
     }
 
     public function mediables(): \Illuminate\Database\Eloquent\Relations\MorphToMany|\Illuminate\Database\Eloquent\Relations\BelongsToMany

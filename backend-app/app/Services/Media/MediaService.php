@@ -7,6 +7,7 @@ use App\Enums\MediaStatus;
 use App\Enums\MediaType;
 use App\Jobs\ScanFileJob;
 use App\Models\Media;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -133,5 +134,22 @@ class MediaService
         } else {
             $relation->detach($media->id);
         }
+    }
+
+    public function replaceSingle(Mediable $model, Media $media, string $collection = 'logo', int $order = 0): void
+    {
+        DB::transaction(function () use ($model, $media, $collection, $order) {
+            /** @var MorphToMany $rel */
+            $rel = $model->media();
+
+            $rel->wherePivot('collection', $collection)->detach();
+
+            $rel->attach($media->id, [
+                'collection' => $collection,
+                'order_column' => $order,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
     }
 }

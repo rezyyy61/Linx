@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\MediaStatus;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,6 +27,7 @@ class MediaResource extends JsonResource
     {
         /** @var Media $media */
         $media = $this->resource;
+        $publicUrl = $media->publicUrl();
 
         return [
             'id' => $media->id,
@@ -38,10 +38,8 @@ class MediaResource extends JsonResource
             'ext' => $media->ext,
             'size' => $media->size,
             'mime' => $media->mime,
-            'url' => $this->when(
-                $media->status === MediaStatus::READY,
-                fn () => $media->publicUrl()
-            ),
+            'url' => $publicUrl,
+            'public_url' => $publicUrl,
             'created_at' => $media->created_at?->toIso8601String(),
         ];
     }
