@@ -21,7 +21,6 @@ class ScanFileJob implements ShouldQueue
     public function __construct(public int $mediaId)
     {
         $this->onQueue('scan');
-        // $this->afterCommit(); // اگر finalize داخل تراکنش است
     }
 
     public function tags(): array
@@ -37,7 +36,6 @@ class ScanFileJob implements ShouldQueue
             return;
         }
 
-        // اگر اسکن غیرفعاله، پایپ‌لاین رو متوقف نکن
         if (! config('clamav.enabled', true)) {
             $media->status = MediaStatus::SCANNED;
             $media->save();
@@ -56,7 +54,6 @@ class ScanFileJob implements ShouldQueue
         try {
             $result = $scanner->scanStream(fn () => $disk->readStream($media->key));
         } catch (\Throwable $e) {
-            // انتخاب با خودته: یا fail کنی یا با احتیاط جلو بری
             Log::error('Scan error', ['id' => $media->id, 'key' => $media->key, 'err' => $e->getMessage()]);
             $media->status = MediaStatus::FAILED;
             $media->save();
@@ -88,7 +85,6 @@ class ScanFileJob implements ShouldQueue
             return;
         }
 
-        // سالم: یک‌بار و فقط همین‌جا به SCANNED ببر و جاب بعدی را صف کن
         $media->status = MediaStatus::SCANNED;
         $media->meta = $meta;
         $media->save();

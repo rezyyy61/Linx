@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\Post;
 
-use App\Enums\MediaStatus;
 use App\Models\Media;
 use App\Models\Post\Post as PostModel;
 use App\Models\User;
@@ -12,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class PostService
 {
+    private const MAX_MEDIA = 10;
+
+    private const COLLECTION = 'post';
+
     public function create(array $data, User $user): PostModel
     {
         return DB::transaction(function () use ($data, $user) {
@@ -23,9 +26,11 @@ class PostService
             $post->published_at = $post->status === 'published' ? now() : null;
             $post->save();
 
-            $this->syncMedia($post, $data['media'] ?? []);
+            if (array_key_exists('media', $data)) {
+                $this->syncMedia($post, $data['media']);
+            }
 
-            return $post->load('media');
+            return $this->loadPostMedia($post);
         });
     }
 
@@ -50,53 +55,85 @@ class PostService
                 $this->syncMedia($post, $data['media']);
             }
 
-            return $post->load('media');
+            return $this->loadPostMedia($post);
         });
     }
 
     public function delete(PostModel $post): void
     {
         DB::transaction(function () use ($post) {
-            $post->media()->detach();
+            $post->media()->wherePivot('collection', self::COLLECTION)->detach();
             $post->delete();
         });
     }
 
     private function syncMedia(PostModel $post, ?array $mediaItems): void
     {
-        if (empty($mediaItems)) {
-            $post->media()->detach();
+        if ($mediaItems === null) {
+            return;
+        }
+
+        if ($mediaItems === []) {
+            $post->media()->wherePivot('collection', self::COLLECTION)->detach();
 
             return;
         }
 
         $prepared = [];
-        foreach ($mediaItems as $item) {
+        foreach ($mediaItems as $idx => $item) {
             if (! isset($item['id'])) {
                 continue;
             }
             $id = (int) $item['id'];
-            $order = isset($item['order']) ? (int) $item['order'] : 0;
-            $prepared[$id] = ['collection' => 'post', 'order_column' => $order];
+            $order = isset($item['order']) ? (int) $item['order'] : $idx;
+            $prepared[$id] = ['collection' => self::COLLECTION, 'order_column' => $order];
+            if (count($prepared) >= self::MAX_MEDIA) {
+                break;
+            }
         }
 
         if ($prepared === []) {
-            $post->media()->detach();
+            $post->media()->wherePivot('collection', self::COLLECTION)->detach();
 
             return;
         }
 
-        $validIds = Media::query()
+        $existingIds = Media::query()
             ->whereIn('id', array_keys($prepared))
-            ->where('status', MediaStatus::READY)
             ->pluck('id')
             ->all();
 
-        $sync = [];
-        foreach ($validIds as $id) {
-            $sync[$id] = $prepared[$id];
+        if ($existingIds === []) {
+            $post->media()->wherePivot('collection', self::COLLECTION)->detach();
+
+            return;
         }
 
-        $post->media()->sync($sync);
+        $currentIds = $post->media()
+            ->wherePivot('collection', self::COLLECTION)
+            ->pluck('media.id')
+            ->all();
+
+        $desiredIds = $existingIds;
+        $toDetach = array_diff($currentIds, $desiredIds);
+        if (! empty($toDetach)) {
+            $post->media()->wherePivot('collection', self::COLLECTION)->detach($toDetach);
+        }
+
+        foreach ($desiredIds as $id) {
+            $attrs = $prepared[$id];
+            if (in_array($id, $currentIds, true)) {
+                $post->media()->updateExistingPivot($id, $attrs);
+            } else {
+                $post->media()->attach($id, $attrs + ['created_at' => now(), 'updated_at' => now()]);
+            }
+        }
+    }
+
+    private function loadPostMedia(PostModel $post): PostModel
+    {
+        return $post->load(['media' => function ($q) {
+            $q->wherePivot('collection', self::COLLECTION)->orderBy('mediables.order_column');
+        }]);
     }
 }
