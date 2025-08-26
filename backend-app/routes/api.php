@@ -16,6 +16,7 @@ Route::middleware('auth:sanctum')
         Route::post('/{media}/attach', [MediaAttachController::class, 'attach']);
         Route::post('/{media}/detach', [MediaAttachController::class, 'detach']);
         Route::post('/{media}/attach-single', [MediaAttachController::class, 'attachSingle']);
+        Route::get('{media}', [MediaController::class, 'show']);
     });
 
 Route::middleware('auth:sanctum')->group(function () {
