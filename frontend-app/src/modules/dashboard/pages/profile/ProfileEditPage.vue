@@ -3,7 +3,7 @@
     <div class="w-full max-w-5xl mx-auto grid grid-cols-1 gap-8 items-start">
       <div class="space-y-6">
         <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-semibold">
+          <h1 class="text-2xl font-semibold text-red-500 my-4">
             {{ t('profile.politicalTitle') }}
           </h1>
         </div>

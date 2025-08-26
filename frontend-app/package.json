@@ -8,6 +8,8 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.vue --fix --cache --cache-location .eslintcache",
+    "format": "npm run prettier:write && npm run lint:fix",
     "type-check": "vue-tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
@@ -17,10 +19,15 @@
     "@fontsource/vazirmatn": "^5.2.6",
     "@iconify/vue": "^5.0.0",
     "axios": "^1.11.0",
+    "dompurify": "^3.2.6",
+    "photoswipe": "^5.4.4",
     "pinia": "^2.3.1",
+    "quill": "^2.0.3",
+    "video.js": "^8.23.4",
     "vue": "^3.5.18",
     "vue-i18n": "^9.14.5",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "wavesurfer.js": "^7.10.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

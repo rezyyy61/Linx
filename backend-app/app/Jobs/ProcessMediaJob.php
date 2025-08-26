@@ -40,7 +40,6 @@ class ProcessMediaJob implements ShouldQueue
             return;
         }
 
-        // idempotency: اگر قبلاً به نتیجه رسیدیم، دوباره پردازش نکن
         if (in_array($media->status?->value, [
             MediaStatus::READY->value,
             MediaStatus::REJECTED->value,
@@ -58,20 +57,12 @@ class ProcessMediaJob implements ShouldQueue
             return;
         }
 
-        // وضعیت → PROCESSING
+        // → PROCESSING
         $media->status = MediaStatus::PROCESSING;
         $media->save();
 
-        // تعیین نوع مدیا با fallback (enum → mime → ext)
         $kind = $this->detectKind($media);
-        Log::info('Process kind', [
-            'id' => $media->id,
-            'kind' => $kind,
-            'mime' => $media->mime,
-            'ext' => $media->ext,
-        ]);
 
-        // دانلود به tmp با پسوند واقعی (بعضی ابزارها به پسوند حساس‌اند)
         $tmpDir = rtrim(sys_get_temp_dir(), '/').'/media_'.$media->id.'_'.bin2hex(random_bytes(4));
         @mkdir($tmpDir, 0777, true);
         $ext = $this->guessExt($media); // jpg|png|mp4|pdf|wav|...
@@ -79,7 +70,6 @@ class ProcessMediaJob implements ShouldQueue
         $this->downloadTo($disk, $media->key, $srcTmp);
 
         $processed = $media->processed ?? [];
-        // نکته: می‌تونی اینو به 'processed/'.$media->id تغییر بدی؛ الان هم‌خوان با بقیه‌ی کدت نگه داشتم:
         $baseNameNoExt = pathinfo($media->key, PATHINFO_FILENAME);
         $s3BaseDir = "processed/{$baseNameNoExt}";
 
@@ -102,7 +92,6 @@ class ProcessMediaJob implements ShouldQueue
                     break;
 
                 case 'document':
-                    // فعلاً PDF؛ بقیه (docx, pptx, …) نیاز به LibreOffice دارند (فاز بعد)
                     if ($ext === 'pdf') {
                         $pdf = new PdfProcessor($media->disk ?: 's3');
                         $res = $pdf->process($srcTmp, $s3BaseDir, $baseNameNoExt);
@@ -137,11 +126,9 @@ class ProcessMediaJob implements ShouldQueue
 
             }
 
-            // پاکسازی tmp
             @unlink($srcTmp);
             @rmdir($tmpDir);
 
-            // اگر نوع شناخته‌شده بود ولی خروجی نداشتیم → FAILED تا مشخص باشد
             $nothingProduced = empty($processed['image']) && empty($processed['video']) && empty($processed['document']) && empty($processed['audio']);
             if (in_array($kind, ['image', 'video', 'document', 'audio'], true) && $nothingProduced) {
                 $media->status = MediaStatus::FAILED;
@@ -152,7 +139,6 @@ class ProcessMediaJob implements ShouldQueue
                 return;
             }
 
-            // موفق
             $media->processed = $processed;
             $media->status = MediaStatus::READY;
             $media->save();
@@ -165,7 +151,6 @@ class ProcessMediaJob implements ShouldQueue
             $media->status = MediaStatus::FAILED;
             $media->save();
 
-            // تا در Horizon → Failed Jobs هم دیده شود
             throw $e;
         }
     }
@@ -182,7 +167,6 @@ class ProcessMediaJob implements ShouldQueue
             };
         }
 
-        // 2) بر اساس MIME
         $mime = strtolower((string) $media->mime);
         if (str_starts_with($mime, 'image/')) {
             return 'image';
@@ -197,7 +181,6 @@ class ProcessMediaJob implements ShouldQueue
             return 'document';
         }
 
-        // 3) بر اساس پسوند
         $ext = strtolower($media->ext ?? pathinfo($media->key, PATHINFO_EXTENSION));
         if (in_array($ext, $this->imageExts(), true)) {
             return 'image';
@@ -234,7 +217,6 @@ class ProcessMediaJob implements ShouldQueue
 
     private function imageExts(): array
     {
-        // HEIC/AVIF ممکنه در ImageMagick/ffmpeg شما فعال نباشه؛ فعلاً امن‌ها رو می‌ذاریم
         return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'tif'];
     }
 
@@ -250,7 +232,6 @@ class ProcessMediaJob implements ShouldQueue
 
     private function docExts(): array
     {
-        // فعلاً فقط pdf؛ اگر خواستی docx/pptx هم add می‌کنیم (با LibreOffice)
         return ['pdf'];
     }
 
