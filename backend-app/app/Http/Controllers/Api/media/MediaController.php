@@ -33,4 +33,9 @@ class MediaController extends Controller
 
         return new MediaResource($media);
     }
+
+    public function show(Media $media): MediaResource
+    {
+        return new MediaResource($media);
+    }
 }

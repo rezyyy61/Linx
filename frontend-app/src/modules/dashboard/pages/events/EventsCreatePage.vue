@@ -10,12 +10,14 @@
       </div>
     </div>
   </div>
+  <MediaUpload />
 </template>
 
 <script setup lang="ts">
 import PageHeader from "../../components/PageHeader.vue";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import MediaUpload from "@/components/MediaUpload.vue";
 
 const route = useRoute();
 const map: Record<string, { title: string; desc: string }> = {

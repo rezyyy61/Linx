@@ -53,6 +53,9 @@ export default [
       },
     },
     plugins: { vue, "@typescript-eslint": ts },
-    rules: {},
+    "rules": {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
+    }
   },
 ];
