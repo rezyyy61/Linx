@@ -9,7 +9,7 @@ import UiPasswordField from '../components/ui/UiPasswordField.vue'
 import { Icon } from '@iconify/vue'
 
 import { useForm } from '../lib/forms/useForm'
-import {required, email as emailRule, minLen, sameAs} from '../lib/forms/validators'
+import { required, email as emailRule, minLen, sameAs } from '../lib/forms/validators'
 import { useAuthStore } from '@/stores/auth/auth'
 import { handleApiError } from '../lib/notify/handleApiError'
 import { useNotify } from '../lib/notify/useNotify'
@@ -23,15 +23,15 @@ const rtlLocales = ['fa','ar','ckb','ku','kur','ps','ur','he','dv','syr']
 const isRTL = computed(() => rtlLocales.some(c => locale.value.toLowerCase().startsWith(c)))
 
 const { values, touched, errors, validateField, validateAll, setTouchedAll, setServerErrors } =
-  useForm({ name: '', email: '', password: '', password_confirmation: '' }, {
-    name: [required(t('auth.register.errors.nameRequired')), minLen(2, t('auth.register.errors.nameMin'))],
-    email: [required(t('auth.register.errors.emailRequired')), emailRule(t('auth.register.errors.emailInvalid'))],
-    password: [required(t('auth.register.errors.passwordRequired')), minLen(8, t('auth.register.errors.passwordMin'))],
-    password_confirmation: [
-      required(t('auth.register.errors.confirmRequired')),
-      sameAs('password', t('auth.register.errors.passwordMismatch')),
-    ],
-  })
+  useForm(
+    { name: '', email: '', password: '', password_confirmation: '' },
+    {
+      name: [required(t('auth.register.errors.nameRequired')), minLen(2, t('auth.register.errors.nameMin'))],
+      email: [required(t('auth.register.errors.emailRequired')), emailRule(t('auth.register.errors.emailInvalid'))],
+      password: [required(t('auth.register.errors.passwordRequired')), minLen(8, t('auth.register.errors.passwordMin'))],
+      password_confirmation: [required(t('auth.register.errors.confirmRequired')), sameAs('password', t('auth.register.errors.passwordMismatch'))],
+    }
+  )
 
 async function onSubmit() {
   setTouchedAll()
@@ -45,23 +45,18 @@ async function onSubmit() {
       password: values.password,
       password_confirmation: values.password_confirmation
     })
-
     notify.success({
       title: t('auth.register.notify.successTitle'),
       description: t('auth.register.notify.verifyNotice'),
       duration: 6000
     })
-
   } catch (e) {
     handleApiError(e, { setFieldErrors: (errs) => setServerErrors(errs), t })
   } finally {
     submitting.value = false
   }
 }
-
 </script>
-
-
 
 <template>
   <AuthLayout>
@@ -78,7 +73,7 @@ async function onSubmit() {
         :class="isRTL ? 'text-right' : 'text-left'"
         :dir="isRTL ? 'rtl' : 'ltr'"
       >
-        {{ $t('auth.oauth.subtitle') }}
+        {{ t('auth.oauth.subtitle') }}
       </p>
       <AuthOAuthButtons
         :providers="['google','facebook','apple']"
@@ -93,14 +88,14 @@ async function onSubmit() {
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.register.title') }}
+          {{ t('auth.register.title') }}
         </h2>
         <p
           class="mt-2 text-gray-500 dark:text-gray-400"
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.register.subtitle') }}
+          {{ t('auth.register.subtitle') }}
         </p>
       </div>
 
@@ -112,7 +107,7 @@ async function onSubmit() {
         <UiTextField
           id="name"
           v-model="values.name"
-          :label="$t('auth.register.fields.name')"
+          :label="t('auth.register.fields.name')"
           :error="touched.name && errors.name ? errors.name[0] : ''"
           :locale="locale"
           autocomplete="name"
@@ -129,7 +124,7 @@ async function onSubmit() {
         <UiTextField
           id="email"
           v-model="values.email"
-          :label="$t('auth.register.fields.email')"
+          :label="t('auth.register.fields.email')"
           :error="touched.email && errors.email ? errors.email[0] : ''"
           :locale="locale"
           autocomplete="email"
@@ -147,7 +142,7 @@ async function onSubmit() {
         <UiPasswordField
           id="password"
           v-model="values.password"
-          :label="$t('auth.register.fields.password')"
+          :label="t('auth.register.fields.password')"
           :error="touched.password && errors.password ? errors.password[0] : ''"
           :locale="locale"
           autocomplete="new-password"
@@ -157,7 +152,7 @@ async function onSubmit() {
         <UiPasswordField
           id="password_confirmation"
           v-model="values.password_confirmation"
-          :label="$t('auth.register.fields.confirm')"
+          :label="t('auth.register.fields.confirm')"
           :error="touched.password_confirmation && errors.password_confirmation ? errors.password_confirmation[0] : ''"
           :locale="locale"
           autocomplete="new-password"
@@ -169,15 +164,15 @@ async function onSubmit() {
           :disabled="submitting"
           :aria-busy="submitting || undefined"
           class="inline-flex h-11 w-full select-none items-center justify-center rounded-xl
-         px-4 text-sm font-medium text-white
-         shadow-sm ring-1 ring-indigo-600/20
-         bg-gradient-to-r from-indigo-600 to-violet-600
-         hover:from-indigo-600/90 hover:to-violet-600/90
-         dark:from-indigo-500 dark:to-violet-500
-         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
-         focus-visible:ring-offset-2 focus-visible:ring-offset-white
-         dark:focus-visible:ring-offset-zinc-900
-         active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                 px-4 text-sm font-medium text-white
+                 shadow-sm ring-1 ring-indigo-600/20
+                 bg-gradient-to-r from-indigo-600 to-violet-600
+                 hover:from-indigo-600/90 hover:to-violet-600/90
+                 dark:from-indigo-500 dark:to-violet-500
+                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+                 focus-visible:ring-offset-2 focus-visible:ring-offset-white
+                 dark:focus-visible:ring-offset-zinc-900
+                 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <span class="inline-flex items-center gap-2">
             <span class="inline-flex h-4 w-4 items-center justify-center">
@@ -202,18 +197,17 @@ async function onSubmit() {
                 />
               </svg>
             </span>
-            <span>{{ $t('auth.register.actions.submit') }}</span>
+            <span>{{ t('auth.register.actions.submit') }}</span>
           </span>
         </button>
 
-
         <p class="text-center text-sm text-gray-600 dark:text-zinc-400">
-          {{ $t('auth.register.haveAccount') }}
+          {{ t('auth.register.haveAccount') }}
           <RouterLink
             to="/auth/login"
             class="text-brand underline-offset-2 hover:underline"
           >
-            {{ $t('auth.register.actions.login') }}
+            {{ t('auth.register.actions.login') }}
           </RouterLink>
         </p>
       </form>
