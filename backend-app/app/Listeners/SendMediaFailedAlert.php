@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Events\MediaProcessingFailed;
+use App\Events\media\MediaProcessingFailed;
 use App\Notifications\MediaFailedAlert;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;

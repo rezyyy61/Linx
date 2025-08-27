@@ -20,7 +20,10 @@ const rtlLocales = ['fa','ar','ckb','ku','kur','ps','ur','he','dv','syr']
 const isRTL = computed(() => rtlLocales.some(c => locale.value.toLowerCase().startsWith(c)))
 
 const { values, touched, errors, validateField, validateAll, setTouchedAll, setServerErrors } =
-  useForm({ email: '' }, { email: [required(t('auth.forgot.errors.emailRequired')), emailRule(t('auth.forgot.errors.emailInvalid'))] })
+  useForm(
+    { email: '' },
+    { email: [required(t('auth.forgot.errors.emailRequired')), emailRule(t('auth.forgot.errors.emailInvalid'))] }
+  )
 
 async function onSubmit() {
   setTouchedAll()
@@ -46,17 +49,16 @@ async function onSubmit() {
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.forgot.title') }}
+          {{ t('auth.forgot.title') }}
         </h2>
         <p
           class="mt-1 text-gray-500 dark:text-gray-400"
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.forgot.subtitle') }}
+          {{ t('auth.forgot.subtitle') }}
         </p>
       </div>
-      
 
       <form
         class="mt-6 grid gap-5"
@@ -66,7 +68,7 @@ async function onSubmit() {
         <UiTextField
           id="email"
           v-model="values.email"
-          :label="$t('auth.forgot.fields.email')"
+          :label="t('auth.forgot.fields.email')"
           :error="touched.email && errors.email ? errors.email[0] : ''"
           :locale="locale"
           autocomplete="email"
@@ -119,17 +121,17 @@ async function onSubmit() {
                 />
               </svg>
             </span>
-            <span>{{ $t('auth.forgot.actions.submit') }}</span>
+            <span>{{ t('auth.forgot.actions.submit') }}</span>
           </span>
         </button>
 
         <p class="text-center text-sm text-gray-600 dark:text-zinc-400">
-          {{ $t('auth.forgot.backTo') }}
+          {{ t('auth.forgot.backTo') }}
           <RouterLink
             to="/auth/login"
             class="text-indigo-600 hover:opacity-90"
           >
-            {{ $t('auth.forgot.actions.login') }}
+            {{ t('auth.forgot.actions.login') }}
           </RouterLink>
         </p>
       </form>

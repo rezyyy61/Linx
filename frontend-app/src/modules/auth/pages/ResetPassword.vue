@@ -67,14 +67,14 @@ async function onSubmit() {
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.reset.title') }}
+          {{ t('auth.reset.title') }}
         </h2>
         <p
           class="mt-1 text-sm text-gray-600 dark:text-zinc-400"
           :class="isRTL ? 'text-right' : 'text-left'"
           :dir="isRTL ? 'rtl' : 'ltr'"
         >
-          {{ $t('auth.reset.subtitle') }}
+          {{ t('auth.reset.subtitle') }}
         </p>
       </div>
 
@@ -98,7 +98,7 @@ async function onSubmit() {
         <UiPasswordField
           id="password"
           v-model="values.password"
-          :label="$t('auth.reset.fields.password')"
+          :label="t('auth.reset.fields.password')"
           :error="touched.password && errors.password ? errors.password[0] : ''"
           :locale="locale"
           left-icon="mdi:lock-outline"
@@ -109,7 +109,7 @@ async function onSubmit() {
         <UiPasswordField
           id="password_confirmation"
           v-model="values.password_confirmation"
-          :label="$t('auth.reset.fields.confirm')"
+          :label="t('auth.reset.fields.confirm')"
           :error="touched.password_confirmation && errors.password_confirmation ? errors.password_confirmation[0] : ''"
           :locale="locale"
           left-icon="mdi:lock-check-outline"
@@ -155,17 +155,17 @@ async function onSubmit() {
                 />
               </svg>
             </span>
-            <span>{{ $t('auth.reset.actions.submit') }}</span>
+            <span>{{ t('auth.reset.actions.submit') }}</span>
           </span>
         </button>
 
         <p class="text-center text-sm text-gray-600 dark:text-zinc-400">
-          {{ $t('auth.reset.linkHelp') }}
+          {{ t('auth.reset.linkHelp') }}
           <RouterLink
             to="/auth/forgot-password"
             class="text-[rgb(var(--color-brand))] hover:opacity-90"
           >
-            {{ $t('auth.reset.actions.requestNew') }}
+            {{ t('auth.reset.actions.requestNew') }}
           </RouterLink>
         </p>
       </form>

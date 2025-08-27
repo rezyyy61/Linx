@@ -7,7 +7,7 @@
       class="relative h-11 md:h-12 w-full rounded-xl px-4 text-sm font-medium shadow-sm transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
       :class="p.classes"
       :disabled="disabled"
-      :aria-label="$t(`auth.oauth.${p.key}`)"
+      :aria-label="t(`auth.oauth.${p.key}`)"
       @click="emit('click', p.key)"
     >
       <span class="absolute inset-y-0 left-4 inline-flex items-center">
@@ -16,7 +16,7 @@
           class="h-5 w-5"
         />
       </span>
-      <span class="block text-center select-none">{{ $t(`auth.oauth.${p.key}`) }}</span>
+      <span class="block text-center select-none">{{ t(`auth.oauth.${p.key}`) }}</span>
     </button>
   </div>
 </template>
@@ -25,6 +25,8 @@
 defineOptions({ name: 'AuthOAuthButtons' })
 import { Icon } from '@iconify/vue'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 type Provider = 'google' | 'facebook' | 'apple' | 'github'
 

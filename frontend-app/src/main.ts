@@ -11,6 +11,7 @@ import { initTheme } from "./theme";
 import "./assets/main.css";
 import "@/assets/theme.css";
 import router, { installGuards } from "./router";
+import {installRealtime} from "@/lib/echo";
 
 initTheme();
 
@@ -22,4 +23,5 @@ app.use(pinia);
 installGuards(pinia, router);
 app.use(router);
 
+await installRealtime(app)
 app.mount("#app");

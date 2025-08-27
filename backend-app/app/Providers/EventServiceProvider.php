@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\MediaProcessingFailed;
-use App\Events\MediaRejected;
+use App\Events\media\MediaProcessingFailed;
+use App\Events\media\MediaRejected;
 use App\Listeners\SendMediaFailedAlert;
 use App\Listeners\SendMediaRejectedAlert;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
