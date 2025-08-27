@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Str;
 
-// فلگ کنترل مصرف صف media توسط Horizon در محیط local (پیش‌فرض: خاموش)
 $consumeMediaLocal = filter_var(env('HORIZON_LOCAL_CONSUME_MEDIA', false), FILTER_VALIDATE_BOOL);
 
 return [
@@ -182,7 +181,6 @@ return [
                 'timeout' => 60,
             ],
 
-            // فقط اگر بخواهی Horizon در local صف media را هم مصرف کند:
             $consumeMediaLocal ? 'supervisor-media' : null => $consumeMediaLocal ? [
                 'connection' => 'redis',
                 'queue' => ['media'],

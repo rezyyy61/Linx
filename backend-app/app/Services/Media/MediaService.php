@@ -5,6 +5,7 @@ namespace App\Services\Media;
 use App\Contracts\Mediable;
 use App\Enums\MediaStatus;
 use App\Enums\MediaType;
+use App\Events\media\MediaUpdated;
 use App\Jobs\ScanFileJob;
 use App\Models\Media;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -94,7 +95,7 @@ class MediaService
         $media->status = MediaStatus::UPLOADED;
         $media->fill($extra);
         $media->save();
-
+        event(new MediaUpdated($media->id, ['status' => 'UPLOADED']));
         ScanFileJob::dispatch($media->id);
 
         return $media;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Events;
+namespace App\Events\media;
 
-class MediaRejected
+class MediaProcessingFailed
 {
     public function __construct(
         public int $mediaId,

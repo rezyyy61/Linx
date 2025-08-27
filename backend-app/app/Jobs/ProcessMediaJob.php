@@ -4,7 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\MediaStatus;
 use App\Enums\MediaType;
-use App\Events\MediaProcessingFailed;
+use App\Events\media\MediaProcessingFailed;
+use App\Events\media\MediaUpdated;
 use App\Models\Media;
 use App\Services\Media\Processors\AudioProcessor;
 use App\Services\Media\Processors\ImageProcessor;
@@ -46,6 +47,7 @@ class ProcessMediaJob implements ShouldQueue
             MediaStatus::FAILED->value,
         ], true)) {
             Log::info('Process skipped: terminal status', ['id' => $media->id, 'status' => $media->status->value ?? null]);
+            event(new MediaUpdated($media->id, ['status' => strtoupper($media->status->value ?? 'READY')]));
 
             return;
         }
@@ -53,6 +55,7 @@ class ProcessMediaJob implements ShouldQueue
         $disk = Storage::disk($media->disk ?: 's3');
         if (! $disk->exists($media->key)) {
             Log::warning('Process skipped: file missing', ['id' => $media->id, 'key' => $media->key]);
+            event(new MediaUpdated($media->id, ['status' => 'FAILED']));
 
             return;
         }
@@ -60,6 +63,7 @@ class ProcessMediaJob implements ShouldQueue
         // → PROCESSING
         $media->status = MediaStatus::PROCESSING;
         $media->save();
+        event(new MediaUpdated($media->id, ['status' => 'PROCESSING']));
 
         $kind = $this->detectKind($media);
 
@@ -135,6 +139,7 @@ class ProcessMediaJob implements ShouldQueue
                 $media->save();
                 Log::error('Processing produced no outputs', ['id' => $media->id, 'kind' => $kind]);
                 event(new MediaProcessingFailed($media->id, $media->key, 'no-output-produced'));
+                event(new MediaUpdated($media->id, ['status' => 'FAILED']));
 
                 return;
             }
@@ -142,6 +147,15 @@ class ProcessMediaJob implements ShouldQueue
             $media->processed = $processed;
             $media->status = MediaStatus::READY;
             $media->save();
+            event(new MediaUpdated($media->id, [
+                'status' => 'READY',
+                'processed' => $processed,
+                'public_url' => $media->public_url ?? null,
+                'meta' => $media->meta ?? null,
+                'width' => $media->width,
+                'height' => $media->height,
+                'duration' => $media->duration,
+            ]));
 
         } catch (\Throwable $e) {
             Log::error('Process error', ['id' => $media->id, 'key' => $media->key, 'err' => $e->getMessage()]);
@@ -150,7 +164,7 @@ class ProcessMediaJob implements ShouldQueue
 
             $media->status = MediaStatus::FAILED;
             $media->save();
-
+            event(new MediaUpdated($media->id, ['status' => 'FAILED']));
             throw $e;
         }
     }
