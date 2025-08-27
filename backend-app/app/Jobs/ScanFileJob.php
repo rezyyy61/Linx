@@ -3,7 +3,8 @@
 namespace App\Jobs;
 
 use App\Enums\MediaStatus;
-use App\Events\MediaRejected;
+use App\Events\media\MediaRejected;
+use App\Events\media\MediaUpdated;
 use App\Models\Media;
 use App\Services\Security\VirusScanner;
 use Illuminate\Bus\Queueable;
@@ -36,9 +37,12 @@ class ScanFileJob implements ShouldQueue
             return;
         }
 
+        event(new MediaUpdated($media->id, ['status' => 'SCANNING']));
+
         if (! config('clamav.enabled', true)) {
             $media->status = MediaStatus::SCANNED;
             $media->save();
+            event(new MediaUpdated($media->id, ['status' => 'SCANNED']));
             \App\Jobs\ProcessMediaJob::dispatch($media->id);
 
             return;
@@ -47,6 +51,7 @@ class ScanFileJob implements ShouldQueue
         $disk = Storage::disk($media->disk ?: 's3');
         if (! $disk->exists($media->key)) {
             Log::warning('Scan skipped: file missing', ['id' => $media->id, 'key' => $media->key]);
+            event(new MediaUpdated($media->id, ['status' => 'FAILED']));
 
             return;
         }
@@ -57,6 +62,7 @@ class ScanFileJob implements ShouldQueue
             Log::error('Scan error', ['id' => $media->id, 'key' => $media->key, 'err' => $e->getMessage()]);
             $media->status = MediaStatus::FAILED;
             $media->save();
+            event(new MediaUpdated($media->id, ['status' => 'FAILED']));
 
             return;
         }
@@ -81,6 +87,7 @@ class ScanFileJob implements ShouldQueue
             $media->save();
             Log::warning('Infected file removed', ['id' => $media->id, 'key' => $media->key, 'reason' => $reason]);
             event(new MediaRejected($media->id, $media->key, $reason));
+            event(new MediaUpdated($media->id, ['status' => 'REJECTED', 'reason' => $reason]));
 
             return;
         }
@@ -89,6 +96,7 @@ class ScanFileJob implements ShouldQueue
         $media->meta = $meta;
         $media->save();
 
+        event(new MediaUpdated($media->id, ['status' => 'SCANNED']));
         \App\Jobs\ProcessMediaJob::dispatch($media->id);
     }
 }
