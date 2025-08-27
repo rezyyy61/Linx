@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { api, ensureCsrfCookie } from '@/lib/http'
+import { subscribePrivate, unsubscribe } from '@/lib/echo'
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'document'
 
@@ -36,6 +37,8 @@ export type UploadTask = {
   error?: string | null
   abort?: AbortController
   intervalId?: number | null
+  rtName?: string
+  rtBound?: boolean
 }
 
 const fileSig = (f: File) => `${f.name}:${f.size}:${f.lastModified}`
@@ -65,10 +68,13 @@ const hasPublicUrl = (m?: MediaRecord) => !!(m?.public_url || m?.url)
 const looksProcessedForVideo = (m?: any) => {
   const st = pickStatus(m)
   const readyish = ['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)
-  const variants = Array.isArray(m?.processed?.variants) && m.processed.variants.length > 0
-  const mp4 = !!(m?.processed?.mp4_key || m?.processed?.mp4_url || m?.processed?.mp4)
-  return readyish || variants || mp4
+  const variantsRoot = Array.isArray(m?.processed?.variants) && m.processed.variants.length > 0
+  const variantsVideo = Array.isArray(m?.processed?.video?.variants) && m.processed.video.variants.length > 0
+  const mp4Root = !!(m?.processed?.mp4_key || m?.processed?.mp4_url || m?.processed?.mp4)
+  const mp4Video = !!(m?.processed?.video?.mp4_key || m?.processed?.video?.mp4_url || m?.processed?.video?.mp4)
+  return readyish || variantsRoot || variantsVideo || mp4Root || mp4Video
 }
+
 const mapPhaseSmart = (m?: MediaRecord): 'ready'|'rejected'|'failed'|'scanning'|'processing' => {
   const st = pickStatus(m)
   const kind = inferKind(m)
@@ -109,7 +115,7 @@ export const useMediaStore = defineStore('media', {
       const existingUid = this.bySig[sig]
       if (existingUid && this.tasks[existingUid]) return this.tasks[existingUid]
       const uid = `${Date.now()}_${Math.random().toString(36).slice(2)}`
-      const t: UploadTask = { uid, sig, file, kind, progress: 0, status: 'idle', error: null, intervalId: null }
+      const t: UploadTask = { uid, sig, file, kind, progress: 0, status: 'idle', error: null, intervalId: null, rtName: undefined, rtBound: false }
       this.tasks[uid] = t
       this.bySig[sig] = uid
       return t
@@ -139,7 +145,7 @@ export const useMediaStore = defineStore('media', {
         await this.presign(t)
         await this.uploadToS3(t)
         await this.finalize(t)
-        if (!['ready','rejected','failed','error'].includes(t.status)) this.startPolling(t)
+        if (!['ready','rejected','failed','error'].includes(t.status)) await this.subscribeRealtime(t)
       } catch (e: any) {
         t.status = 'error'
         t.error = e?.message || 'upload_error'
@@ -224,62 +230,53 @@ export const useMediaStore = defineStore('media', {
       return media
     },
 
+    async subscribeRealtime(t: UploadTask) {
+      if (!t.id || t.rtBound) return
+      const name = `media.${t.id}`
+      console.log('name: ', name)
+      const ch = await subscribePrivate(name)
+      const handler = (p: any) => {
+        t.media = { ...(t.media || {}), ...p }
+        const prog = typeof p?.progress === 'number' ? p.progress : pickProgress(t.media)
+        if (prog !== null && t.status !== 'ready') t.progress = Math.min(100, Number(prog))
+        const st = norm(p?.status || pickStatus(t.media))
+
+        if (['REJECTED','BLOCKED'].includes(st)) { t.status = 'rejected'; this.unsubscribeRealtime(t); return }
+        if (['FAILED','ERROR'].includes(st))     { t.status = 'failed';   this.unsubscribeRealtime(t); return }
+
+        if (t.kind === 'video') {
+          if (looksProcessedForVideo(t.media)) { t.status='ready'; t.progress=100; this.unsubscribeRealtime(t); return }
+          if (['SCANNED','UPLOADED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) {
+            t.status = 'processing'; floorProcessingProgress(t); return
+          }
+        }
+
+        if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st) || hasPublicUrl(t.media)) { t.status='ready'; t.progress=100; this.unsubscribeRealtime(t); return }
+        if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) { t.status = st === 'SCANNING' ? 'scanning' : 'processing'; floorProcessingProgress(t); return }
+      }
+      ch.unbind('MediaUpdated')
+      ch.bind('MediaUpdated', handler)
+      t.rtName = name
+      t.rtBound = true
+    },
+
+    async unsubscribeRealtime(t: UploadTask) {
+      if (t.rtName) { try { await unsubscribe(t.rtName) } catch { /* empty */ } }
+      t.rtName = undefined
+      t.rtBound = false
+    },
+
     async fetchMedia(id: number): Promise<MediaRecord> {
       const res = await api.get(`media/${id}`, { params: { _: Date.now() } })
       return unpack<MediaRecord>(res)
     },
 
-    startPolling(t: UploadTask, intervalMs = 1200, maxMs = 180000) {
-      if (!t.id || t.intervalId) return
-      let fail = 0
-      let running = false
-      const started = Date.now()
-      const kind = t.kind
-      let delay = Math.max(300, intervalMs)
-
-      const tick = async () => {
-        if (running) return
-        if (t.intervalId === null || ['ready','rejected','failed','error'].includes(t.status)) return
-        running = true
-        try {
-          const media = await this.fetchMedia(t.id as number)
-          t.media = media
-          const prog = pickProgress(media)
-          if (prog !== null && t.status !== 'ready') t.progress = Math.min(99, prog)
-          let phase = mapPhaseSmart(media)
-          if (phase !== 'ready' && kind !== 'video' && hasPublicUrl(media)) phase = 'ready'
-          if (phase === 'ready') { t.status = 'ready'; t.progress = 100; this.stopPolling(t); return }
-          if (phase === 'rejected') { t.status = 'rejected'; this.stopPolling(t); return }
-          if (phase === 'failed')   { t.status = 'failed';   this.stopPolling(t); return }
-          if (phase === 'scanning') { t.status = 'scanning'; if (prog === null) floorProcessingProgress(t) }
-          if (phase === 'processing') { t.status = 'processing'; if (prog === null) floorProcessingProgress(t) }
-          fail = 0
-          delay = Math.min(15000, Math.max(intervalMs, delay * 1.2))
-        } catch {
-          fail++
-          if (fail >= 3) { t.status = 'error'; t.error = 'poll_error'; this.stopPolling(t); return }
-          delay = Math.min(15000, Math.max(intervalMs, delay * 2))
-        } finally {
-          running = false
-          const timedOut = (Date.now() - started > maxMs)
-          const terminal = ['ready','rejected','failed','error'].includes(t.status)
-          // eslint-disable-next-line no-unsafe-finally
-          if (timedOut && !terminal) { t.status = 'error'; this.stopPolling(t); return }
-          // eslint-disable-next-line no-unsafe-finally
-          if (timedOut || terminal || t.intervalId === null) return
-          t.intervalId = window.setTimeout(tick, delay)
-        }
-      }
-
-      t.intervalId = window.setTimeout(tick, 0)
-    },
-
-    stopPolling(t: UploadTask) {
-      if (t.intervalId) { clearTimeout(t.intervalId); t.intervalId = null }
-    },
+    startPolling() {},
+    stopPolling() {},
 
     cancelUpload(t: UploadTask) {
       if (t.abort) { try { t.abort.abort() } catch { /* empty */ } }
+      this.unsubscribeRealtime(t)
       t.status = 'error'
     },
   },

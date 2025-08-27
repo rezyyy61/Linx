@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Events\MediaRejected;
+use App\Events\media\MediaRejected;
 use App\Notifications\MediaRejectedAlert;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Notification;

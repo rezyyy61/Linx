@@ -37,3 +37,9 @@ exit
 php artisan optimize:clear
 php artisan optimize:clear
 exit
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+exit
