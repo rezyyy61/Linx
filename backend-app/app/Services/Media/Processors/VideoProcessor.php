@@ -135,7 +135,7 @@ class VideoProcessor
         }
     }
 
-    /** Fast ffprobe with essential fields */
+    /** Fast ffprobe with essential createFields */
     private function ffprobe(string $path): array
     {
         $p = new Process(['ffprobe', '-v', 'error', '-show_format', '-show_streams', '-print_format', 'json', $path]);

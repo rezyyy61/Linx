@@ -24,6 +24,6 @@ class ExplodeJob implements ShouldQueue
 
     public function tags(): array
     {
-        return ['test', 'job:explode'];
+        return ['createPost', 'job:explode'];
     }
 }

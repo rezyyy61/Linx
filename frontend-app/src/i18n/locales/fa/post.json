@@ -1,0 +1,84 @@
+{
+  "post": {
+    "form": {
+      "content": "محتوا",
+      "content_placeholder": "یه چیزی بنویس…",
+      "visibility": "نمایش",
+      "status": "وضعیت",
+      "publish_at": "زمان انتشار"
+    },
+    "visibility": {
+      "public": "عمومی",
+      "private": "خصوصی",
+      "friends": "دوستان"
+    },
+    "status": {
+      "draft": "پیش‌نویس",
+      "published": "منتشر شده",
+      "archived": "بایگانی شده"
+    },
+    "media": {
+      "gallery": {
+        "empty": "هنوز رسانه‌ای نیست",
+        "preview": "پیش‌نمایش",
+        "image_alt": "پیش‌نمایش تصویر",
+        "move_up": "انتقال به بالا",
+        "move_down": "انتقال به پایین"
+      },
+      "uploader": {
+        "drop_or_click": "فایل‌ها را اینجا رها کنید یا برای آپلود کلیک کنید",
+        "hint": "تصویر، ویدیو، صوت و اسناد پشتیبانی می‌شوند.",
+        "pick_button": "انتخاب فایل‌ها"
+      }
+    },
+    "actions": {
+      "save": "ذخیره",
+      "publish": "انتشار",
+      "remove": "حذف",
+      "create": "ایجاد پست",
+      "cancel": "انصراف",
+      "delete": "حذف",
+      "deleting": "در حال حذف…"
+    },
+    "errors": {
+      "generic": "خطایی رخ داد."
+    },
+    "card": {
+      "media": "رسانه",
+      "text_only": "فقط متن",
+      "more": "+{count} مورد دیگر",
+      "count": {
+        "images": "{count} عکس",
+        "videos": "{count} ویدئو",
+        "audios": "{count} صوت",
+        "documents": "{count} سند"
+      }
+    },
+    "postlist": {
+      "title": "پست‌های من",
+      "loading": { "auth": "در حال بارگذاری حساب شما…" },
+      "empty": {
+        "auth": {
+          "title": "برای دیدن پست‌ها وارد شوید",
+          "subtitle": "داشبورد فقط پست‌های خودتان را نشان می‌دهد"
+        },
+        "none": {
+          "title": "هنوز پستی ندارید",
+          "subtitle": "اولین پست خود را بسازید"
+        }
+      },
+      "actions": {
+        "create": "ایجاد پست",
+        "loading": "در حال بارگذاری…",
+        "load_more": "نمایش بیشتر"
+      },
+      "confirm": {
+        "title": "حذف پست",
+        "message": "از حذف این پست مطمئن هستید؟",
+        "cancel": "انصراف",
+        "deleting": "در حال حذف…",
+        "delete": "حذف"
+      }
+    }
+  }
+}

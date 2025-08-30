@@ -8,8 +8,8 @@ use App\Enums\MediaType;
 use App\Events\media\MediaUpdated;
 use App\Jobs\ScanFileJob;
 use App\Models\Media;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Mime\MimeTypes;
@@ -135,13 +135,16 @@ class MediaService
         } else {
             $relation->detach($media->id);
         }
+        DB::afterCommit(function () use ($media) {
+            $this->deleteIfOrphan($media);
+        });
     }
 
     public function replaceSingle(Mediable $model, Media $media, string $collection = 'logo', int $order = 0): void
     {
         DB::transaction(function () use ($model, $media, $collection, $order) {
-            /** @var MorphToMany $rel */
             $rel = $model->media();
+            $oldIds = $rel->wherePivot('collection', $collection)->pluck('media.id')->all();
 
             $rel->wherePivot('collection', $collection)->detach();
 
@@ -151,6 +154,44 @@ class MediaService
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            DB::afterCommit(function () use ($oldIds) {
+                $olds = Media::whereIn('id', $oldIds)->get();
+                foreach ($olds as $old) {
+                    $this->deleteIfOrphan($old);
+                }
+            });
         });
+    }
+
+    public function deleteIfOrphan(Media $media, bool $force = false): void
+    {
+        DB::transaction(function () use ($media, $force) {
+            $inUse = DB::table('mediables')->where('media_id', $media->id)->exists();
+            if ($inUse) {
+                return;
+            }
+
+            try {
+                Storage::disk($media->disk)->delete($media->key);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to delete media object from storage', [
+                    'media_id' => $media->id,
+                    'disk' => $media->disk,
+                    'key' => $media->key,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $media->status = MediaStatus::DELETED;
+            $media->save();
+            event(new MediaUpdated($media->id, ['status' => 'DELETED']));
+
+            if ($force) {
+                $media->forceDelete();
+            } else {
+                $media->delete();
+            }
+        }, 3);
     }
 }
