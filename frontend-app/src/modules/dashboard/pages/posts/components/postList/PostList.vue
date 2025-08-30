@@ -7,7 +7,7 @@
           class="w-6 h-6 text-gray-700 dark:text-gray-200"
         />
         <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          My Posts
+          {{ tr('postlist.title') }}
         </h2>
       </div>
       <slot name="actions" />
@@ -23,7 +23,7 @@
           class="w-5 h-5 animate-spin text-emerald-600"
         />
         <div class="text-sm text-gray-700 dark:text-gray-300">
-          Loading your account…
+          {{ tr('postlist.loading.auth') }}
         </div>
       </div>
     </div>
@@ -31,28 +31,30 @@
     <EmptyState
       v-else-if="!userId"
       icon="mdi:lock-outline"
-      title="Sign in to see your posts"
-      subtitle="Dashboard shows only your own posts"
+      :title="tr('postlist.empty.auth.title')"
+      :subtitle="tr('postlist.empty.auth.subtitle')"
     />
 
     <div v-else>
       <div
         v-if="loading && posts.length === 0"
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
+        class="grid items-stretch grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-[1fr]"
       >
         <div
           v-for="i in 6"
           :key="i"
-          class="rounded-2xl overflow-hidden border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700"
+          class="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700"
         >
-          <div class="h-36 bg-gray-100 animate-pulse dark:bg-gray-800" />
-          <div class="p-4 space-y-3">
-            <div class="h-4 w-3/4 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
-            <div class="h-3 w-full bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
-            <div class="h-3 w-5/6 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
-            <div class="flex items-center gap-2 pt-2">
-              <div class="h-6 w-16 bg-gray-100 rounded-full animate-pulse dark:bg-gray-800" />
-              <div class="h-6 w-16 bg-gray-100 rounded-full animate-pulse dark:bg-gray-800" />
+          <div class="aspect-[4/3] w-full bg-gray-100 animate-pulse dark:bg-gray-800" />
+          <div class="flex flex-1 flex-col p-4">
+            <div class="space-y-2">
+              <div class="h-4 w-3/4 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
+              <div class="h-4 w-full bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
+              <div class="h-4 w-5/6 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
+            </div>
+            <div class="mt-auto flex items-center justify-between pt-4">
+              <div class="h-4 w-24 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
+              <div class="h-4 w-16 bg-gray-100 rounded animate-pulse dark:bg-gray-800" />
             </div>
           </div>
         </div>
@@ -61,8 +63,8 @@
       <EmptyState
         v-else-if="posts.length === 0"
         icon="mdi:inbox-outline"
-        title="No posts yet"
-        subtitle="Create your first post"
+        :title="tr('postlist.empty.none.title')"
+        :subtitle="tr('postlist.empty.none.subtitle')"
       >
         <template #action>
           <button
@@ -74,14 +76,14 @@
               icon="mdi:plus"
               class="w-5 h-5"
             />
-            <span>Create Post</span>
+            <span>{{ tr('postlist.actions.create') }}</span>
           </button>
         </template>
       </EmptyState>
 
       <ul
         v-else
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr gap-4"
+        class="grid items-stretch grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-[1fr]"
       >
         <li
           v-for="p in posts"
@@ -91,6 +93,7 @@
           <PostCard
             class="h-full"
             :post="p"
+            :clickable="false"
             :mine="true"
             @open="goOpen(p.id)"
             @edit="goEdit(p.id)"
@@ -119,7 +122,7 @@
             icon="mdi:chevron-down"
             class="w-5 h-5"
           />
-          <span>{{ loadingMore ? 'Loading...' : 'Load more' }}</span>
+          <span>{{ loadingMore ? tr('postlist.actions.loading') : tr('postlist.actions.load_more') }}</span>
         </button>
       </div>
 
@@ -142,11 +145,11 @@
               class="w-5 h-5 text-red-600"
             />
             <div class="font-semibold text-gray-900 dark:text-gray-100">
-              Delete post
+              {{ tr('postlist.confirm.title') }}
             </div>
           </div>
           <div class="p-4 text-sm text-gray-700 dark:text-gray-300">
-            Are you sure you want to delete this post?
+            {{ tr('postlist.confirm.message') }}
           </div>
           <div class="p-4 flex items-center justify-end gap-2">
             <button
@@ -159,7 +162,7 @@
                 icon="mdi:close"
                 class="w-4 h-4"
               />
-              <span>Cancel</span>
+              <span>{{ tr('postlist.confirm.cancel') }}</span>
             </button>
             <button
               type="button"
@@ -177,7 +180,7 @@
                 icon="mdi:trash-can-outline"
                 class="w-4 h-4"
               />
-              <span>{{ deleting ? 'Deleting...' : 'Delete' }}</span>
+              <span>{{ deleting ? tr('postlist.confirm.deleting') : tr('postlist.confirm.delete') }}</span>
             </button>
           </div>
         </div>
@@ -190,17 +193,20 @@
 import { Icon } from '@iconify/vue'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { usePostStore } from '@/stores/post/post'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth/auth'
-import EmptyState from '@/modules/dashboard/pages/posts/components/EmptyState.vue'
-import PostCard from "@/modules/dashboard/pages/posts/components/PostCard.vue";
+import EmptyState from '@/modules/dashboard/pages/posts/components/postList/EmptyState.vue'
+import PostCard from '@/modules/dashboard/pages/posts/components/postList/PostCard.vue'
+import {usePostStore} from "@/stores/post/post";
+
+const { t, te } = useI18n()
+const tr = (k: string) => te(`post.${k}`) ? t(`post.${k}`) : t(k)
+
+defineEmits<{ create: [] }>()
 
 const router = useRouter()
 const auth = useAuthStore()
 const store = usePostStore()
-
-defineEmits<{ create: [] }>()
-
 
 const userId = computed(() => auth.user?.id ?? null)
 const authLoading = computed(() => auth.loading && !auth.bootstrapDone)
@@ -241,7 +247,7 @@ function goOpen(id: number) { router.push(`/dashboard/posts/${id}`) }
 function goEdit(id: number) { router.push(`/dashboard/posts/${id}/edit`) }
 
 onMounted(async () => { await fetchFirst(); setupIO() })
-watch(() => auth.user?.id, async () => { await fetchFirst() }, { immediate: false })
+watch(() => auth.user?.id, async () => { await fetchFirst() })
 onBeforeUnmount(() => { destroyIO() })
 </script>
 

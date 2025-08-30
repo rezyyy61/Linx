@@ -21,7 +21,8 @@
           <Icon
             icon="mdi:pencil-outline"
             class="w-4 h-4"
-          /><span>Edit</span>
+          />
+          <span>Edit</span>
         </button>
         <button
           type="button"
@@ -31,7 +32,8 @@
           <Icon
             icon="mdi:trash-can-outline"
             class="w-4 h-4"
-          /><span>Delete</span>
+          />
+          <span>Delete</span>
         </button>
       </div>
     </div>
@@ -53,9 +55,56 @@
       class="rounded-2xl overflow-hidden border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700"
     >
       <PostMediaViewer
+        v-if="viewerItems.length"
+        :key="post.id"
         :items="viewerItems"
         :tile-height="560"
       />
+      <div
+        v-else
+        class="bg-gray-50 dark:bg-gray-800/40"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
+          <div
+            v-for="it in fallbackItems"
+            :key="it.id"
+            class="relative w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800"
+          >
+            <div class="aspect-[4/3] w-full">
+              <img
+                v-if="it.kind==='image'"
+                :src="it.url"
+                alt=""
+                class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              >
+              <video
+                v-else-if="it.kind==='video'"
+                :src="it.url"
+                class="h-full w-full object-cover"
+                controls
+              />
+              <audio
+                v-else-if="it.kind==='audio'"
+                :src="it.url"
+                class="w-full absolute left-0 right-0 bottom-2"
+                controls
+              />
+              <div
+                v-else
+                class="flex h-full w-full items-center justify-center"
+              >
+                <Icon
+                  icon="solar:document-bold-duotone"
+                  class="h-10 w-10 text-gray-400 dark:text-gray-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="p-6 space-y-4">
         <div class="flex items-center gap-2">
           <span :class="badgeClass(post.status)">{{ post.status }}</span>
@@ -66,12 +115,12 @@
             />
             <span class="uppercase">{{ post.visibility }}</span>
           </span>
-          <span class="ml-auto inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <span class="ml-auto inline-flex items-center gap-1 text-xs text-gray-5 00 dark:text-gray-400">
             <Icon
               icon="mdi:calendar-clock"
               class="w-4 h-4"
             />
-            <span>{{ when(post) }}</span>
+            <span>{{ displayDate }}</span>
           </span>
         </div>
 
@@ -95,13 +144,15 @@ import { Icon } from '@iconify/vue'
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePostStore, type Post } from '@/stores/post/post'
-import PostMediaViewer from '@/modules/dashboard/pages/posts/components/PostMediaViewer.vue'
+import PostMediaViewer from '@/modules/dashboard/pages/posts/components/postList/PostMediaViewer.vue'
 import { sanitizeForDisplay, directionFor, htmlToText, isEmptyHtml } from '@/utils/text-utils'
-import SafeHtml from "@/components/SafeHtml.vue";
+import SafeHtml from '@/components/SafeHtml.vue'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const store = usePostStore()
+const { locale } = useI18n()
 
 type ViewerItem = {
   id: number
@@ -112,7 +163,33 @@ type ViewerItem = {
   title?: string
   kind?: 'image'|'video'|'audio'|'document'
   poster?: string
+  src?: string
+  type?: 'image'|'video'|'audio'|'document'
+  w?: number
+  h?: number
 }
+
+const id = Number(route.params.id)
+const loading = ref(false)
+const post = ref<Post | null>(null)
+
+const raw = computed(() => post.value?.content || '')
+const html = computed(() => sanitizeForDisplay(raw.value))
+const dir = computed(() => directionFor(raw.value))
+const empty = computed(() => isEmptyHtml(raw.value))
+const title = computed(() => {
+  const t = htmlToText(raw.value, { preserveLineBreaks: true })
+  const first = t.split('\n').map(s => s.trim()).find(Boolean) || `Post #${id}`
+  return first.length > 100 ? first.slice(0, 100) + '…' : first
+})
+
+const displayDate = computed(() => {
+  const iso = post.value?.published_at || post.value?.created_at || ''
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return '—'
+  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(d)
+})
 
 const viewerItems = computed<ViewerItem[]>(() => {
   const list = (post.value?.media || []) as any[]
@@ -135,57 +212,56 @@ const viewerItems = computed<ViewerItem[]>(() => {
         m.meta?.poster_url ||
         undefined
 
+      const width = typeof m.width === 'number' ? m.width : undefined
+      const height = typeof m.height === 'number' ? m.height : undefined
+
       return {
         id: Number.isFinite(Number(m.id)) ? Number(m.id) : i,
         url: String(m.url),
         mime,
-        width: typeof m.width === 'number' ? m.width : undefined,
-        height: typeof m.height === 'number' ? m.height : undefined,
+        width,
+        height,
         title: m.title || '',
         kind,
         poster,
+        src: String(m.url),
+        type: kind,
+        w: width,
+        h: height,
       }
     })
 })
 
-const id = Number(route.params.id)
-const loading = ref(false)
-const post = ref<Post | null>(null)
+const fallbackItems = computed(() => viewerItems.value)
 
-const raw = computed(() => post.value?.content || '')
-const html = computed(() => sanitizeForDisplay(raw.value))
-const dir = computed(() => directionFor(raw.value))
-const empty = computed(() => isEmptyHtml(raw.value))
-const title = computed(() => {
-  const t = htmlToText(raw.value, { preserveLineBreaks: true })
-  const first = t.split('\n').map(s => s.trim()).find(Boolean) || `Post #${id}`
-  return first.length > 100 ? first.slice(0, 100) + '…' : first
-})
-
-function when(p: Post) {
-  const iso = (p as any).published_at || p.created_at || ''
-  if (!iso) return '—'
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = Math.floor((now.getTime() - d.getTime()) / 1000)
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  return d.toLocaleString()
+async function load() {
+  loading.value = true
+  try {
+    post.value = await store.fetchOne(id)
+  } finally {
+    loading.value = false
+  }
 }
+
+function goEdit() { router.push(`/dashboard/posts/${id}/edit`) }
+
+async function onDelete() {
+  if (!post.value) return
+  await store.remove(post.value.id)
+  router.push('/dashboard/posts')
+}
+
 function visibilityIcon(v: Post['visibility']) {
   if (v === 'public') return 'mdi:earth'
   if (v === 'friends') return 'mdi:account-group-outline'
   return 'mdi:lock-outline'
 }
+
 function badgeClass(status: Post['status']) {
   if (status === 'published') return 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-emerald-600 text-white'
   if (status === 'draft') return 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-amber-500 text-white'
   return 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-gray-500 text-white'
 }
-async function load() { loading.value = true; try { post.value = await store.fetchOne(id) } finally { loading.value = false } }
-function goEdit() { router.push(`/dashboard/posts/${id}/edit`) }
-async function onDelete() { if (!post.value) return; await store.remove(post.value.id); router.push('/dashboard/posts') }
 
 onMounted(load)
 </script>
@@ -200,8 +276,6 @@ onMounted(load)
 .dark .post-body blockquote { border-inline-start-color: rgba(229,231,235,0.3); color: rgb(209,213,219); }
 .post-body a { text-decoration: underline; }
 .post-body img, .post-body video { max-width: 100%; height: auto; border-radius: 0.5rem; }
-
-/* Quill alignment/indent classes */
 .post-body .ql-align-right { text-align: right; }
 .post-body .ql-align-center { text-align: center; }
 .post-body .ql-align-justify { text-align: justify; }

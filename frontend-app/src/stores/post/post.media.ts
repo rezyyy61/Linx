@@ -64,7 +64,6 @@ const pickProgress = (m?: any): number | null => {
   for (const v of c) { const n = Number(v); if (Number.isFinite(n)) return Math.max(0, Math.min(100, n)) }
   return null
 }
-const hasPublicUrl = (m?: MediaRecord) => !!(m?.public_url || m?.url)
 const looksProcessedForVideo = (m?: any) => {
   const st = pickStatus(m)
   const readyish = ['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)
@@ -80,16 +79,18 @@ const mapPhaseSmart = (m?: MediaRecord): 'ready'|'rejected'|'failed'|'scanning'|
   const kind = inferKind(m)
   if (['REJECTED','BLOCKED'].includes(st)) return 'rejected'
   if (['FAILED','ERROR'].includes(st))     return 'failed'
+  if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) return 'ready'
+
   if (kind === 'video') {
     if (looksProcessedForVideo(m)) return 'ready'
-    if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED'].includes(st)) return 'scanning'
+    if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) return 'scanning'
     return 'processing'
   }
-  if (hasPublicUrl(m)) return 'ready'
-  if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) return 'ready'
-  if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED'].includes(st))  return 'scanning'
+
+  if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) return 'scanning'
   return 'processing'
 }
+
 const floorProcessingProgress = (t: UploadTask) => {
   if (['scanning','processing','finalizing'].includes(t.status)) t.progress = Math.max(t.progress || 0, 95)
 }
@@ -233,27 +234,62 @@ export const useMediaStore = defineStore('media', {
     async subscribeRealtime(t: UploadTask) {
       if (!t.id || t.rtBound) return
       const name = `media.${t.id}`
-      console.log('name: ', name)
       const ch = await subscribePrivate(name)
+
       const handler = (p: any) => {
         t.media = { ...(t.media || {}), ...p }
+
         const prog = typeof p?.progress === 'number' ? p.progress : pickProgress(t.media)
         if (prog !== null && t.status !== 'ready') t.progress = Math.min(100, Number(prog))
+
         const st = norm(p?.status || pickStatus(t.media))
 
-        if (['REJECTED','BLOCKED'].includes(st)) { t.status = 'rejected'; this.unsubscribeRealtime(t); return }
-        if (['FAILED','ERROR'].includes(st))     { t.status = 'failed';   this.unsubscribeRealtime(t); return }
+        if (['REJECTED','BLOCKED'].includes(st)) {
+          t.status = 'rejected'
+          this.unsubscribeRealtime(t)
+          return
+        }
+
+        if (['FAILED','ERROR'].includes(st)) {
+          t.status = 'failed'
+          this.unsubscribeRealtime(t)
+          return
+        }
 
         if (t.kind === 'video') {
-          if (looksProcessedForVideo(t.media)) { t.status='ready'; t.progress=100; this.unsubscribeRealtime(t); return }
+          if (looksProcessedForVideo(t.media)) {
+            t.status = 'ready'
+            t.progress = 100
+            this.unsubscribeRealtime(t)
+            return
+          }
           if (['SCANNED','UPLOADED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) {
-            t.status = 'processing'; floorProcessingProgress(t); return
+            t.status = 'processing'
+            floorProcessingProgress(t)
+            return
           }
         }
 
-        if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st) || hasPublicUrl(t.media)) { t.status='ready'; t.progress=100; this.unsubscribeRealtime(t); return }
-        if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) { t.status = st === 'SCANNING' ? 'scanning' : 'processing'; floorProcessingProgress(t); return }
+        if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) {
+          t.status = 'ready'
+          t.progress = 100
+          this.unsubscribeRealtime(t)
+          return
+        }
+
+        if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) {
+          t.status = ['SCANNING','SCANNED'].includes(st) ? 'scanning' : 'processing'
+          floorProcessingProgress(t)
+          return
+        }
+
+        if (st === 'DELETED') {
+          this.unsubscribeRealtime(t)
+          this.cleanupTask(t)
+          return
+        }
       }
+
       ch.unbind('MediaUpdated')
       ch.bind('MediaUpdated', handler)
       t.rtName = name
@@ -275,9 +311,39 @@ export const useMediaStore = defineStore('media', {
     stopPolling() {},
 
     cancelUpload(t: UploadTask) {
+      if (!t) return
       if (t.abort) { try { t.abort.abort() } catch { /* empty */ } }
-      this.unsubscribeRealtime(t)
-      t.status = 'error'
+      if (t.id) {
+        this.deleteMediaOnServer(t.id).finally(() => this.cleanupTask(t))
+      } else {
+        this.cleanupTask(t)
+      }
     },
+
+    async deleteMediaOnServer(id: number) {
+      try {
+        await ensureCsrfCookie()
+        await api.delete(`media/${id}`)
+      } catch (e) {
+        console.log(e) }
+    },
+
+    cleanupTask(t: UploadTask) {
+      try { this.unsubscribeRealtime(t) } catch { /* empty */ }
+      if (t.abort) { try { t.abort.abort() } catch { /* empty */ } }
+      if (t.sig && this.bySig[t.sig]) delete this.bySig[t.sig]
+      if (t.uid && this.tasks[t.uid]) delete this.tasks[t.uid]
+      this.queue = this.queue.filter(x => x.uid !== t.uid)
+    },
+
+    async removeDraftMedia(t: UploadTask) {
+      if (!t) return
+      try {
+        if (t.id) await this.deleteMediaOnServer(t.id)
+      } finally {
+        this.cleanupTask(t)
+      }
+    },
+
   },
 })

@@ -1,0 +1,84 @@
+{
+  "post": {
+    "form": {
+      "content": "Content",
+      "content_placeholder": "Write something...",
+      "visibility": "Visibility",
+      "status": "Status",
+      "publish_at": "Publish at"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private",
+      "friends": "Friends"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "media": {
+      "gallery": {
+        "empty": "No media yet",
+        "preview": "Preview",
+        "image_alt": "Image preview",
+        "move_up": "Move up",
+        "move_down": "Move down"
+      },
+      "uploader": {
+        "drop_or_click": "Drop files here or click to upload",
+        "hint": "Images, videos, audio and documents are supported.",
+        "pick_button": "Choose files"
+      }
+    },
+    "actions": {
+      "save": "Save",
+      "publish": "Publish",
+      "remove": "Remove",
+      "create": "Create Post",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleting": "Deleting…"
+    },
+    "errors": {
+      "generic": "Something went wrong."
+    },
+    "card": {
+      "media": "Media",
+      "text_only": "Text only",
+      "more": "+{count} more",
+      "count": {
+        "images": "{count} photos",
+        "videos": "{count} videos",
+        "audios": "{count} audio",
+        "documents": "{count} docs"
+      }
+    },
+    "postlist": {
+      "title": "My Posts",
+      "loading": { "auth": "Loading your account…" },
+      "empty": {
+        "auth": {
+          "title": "Sign in to see your posts",
+          "subtitle": "The dashboard shows only your own posts"
+        },
+        "none": {
+          "title": "No posts yet",
+          "subtitle": "Create your first post"
+        }
+      },
+      "actions": {
+        "create": "Create Post",
+        "loading": "Loading…",
+        "load_more": "Load more"
+      },
+      "confirm": {
+        "title": "Delete post",
+        "message": "Are you sure you want to delete this post?",
+        "cancel": "Cancel",
+        "deleting": "Deleting…",
+        "delete": "Delete"
+      }
+    }
+  }
+}

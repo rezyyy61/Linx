@@ -6,6 +6,9 @@ use App\Enums\MediaStatus;
 use App\Enums\MediaType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -23,10 +26,13 @@ use Illuminate\Support\Facades\Storage;
  * @property int|null $height
  * @property array|null $meta
  * @property array|null $processed
+ * @property \Illuminate\Support\Carbon|null $deleted_at
  */
 class Media extends Model
 {
     use HasFactory;
+    use Prunable;
+    use SoftDeletes;
 
     protected $fillable = [
         'disk',
@@ -77,6 +83,10 @@ class Media extends Model
 
     public function publicUrl(): ?string
     {
+        if ($this->trashed()) {
+            return null;
+        }
+
         try {
             return Storage::disk('s3_public')->url($this->key);
         } catch (\Throwable) {
@@ -95,5 +105,19 @@ class Media extends Model
             name: 'mediable',
             table: 'mediables'
         )->withPivot('collection', 'order_column')->withTimestamps();
+    }
+
+    public function prunable()
+    {
+        return static::onlyTrashed()->where('deleted_at', '<=', now()->subDays(config('media.prune_ttl_days', 30)));
+    }
+
+    protected function pruning()
+    {
+        try {
+            Storage::disk($this->disk ?: 's3')->delete($this->key);
+        } catch (\Throwable $e) {
+            Log::warning('Prune delete failed', ['id' => $this->id, 'disk' => $this->disk, 'key' => $this->key, 'e' => $e->getMessage()]);
+        }
     }
 }

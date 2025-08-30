@@ -11,4 +11,5 @@ enum MediaStatus: string
     case READY = 'ready';
     case REJECTED = 'rejected';
     case FAILED = 'failed';
+    case DELETED = 'deleted';
 }

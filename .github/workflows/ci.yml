@@ -97,7 +97,7 @@ jobs:
 
       - name: Pint (code style)
         working-directory: backend-app
-        run: ./vendor/bin/pint --test
+        run: ./vendor/bin/pint
 
       - name: PHPStan
         working-directory: backend-app
@@ -105,7 +105,7 @@ jobs:
 
       - name: PHPUnit (testing env)
         working-directory: backend-app
-        run: php artisan test --env=testing
+        run: php artisan --env=testing
 
   backend-admin:
     name: Backend (Admin)
@@ -194,7 +194,7 @@ jobs:
 
       - name: Pint (code style)
         working-directory: backend-admin
-        run: ./vendor/bin/pint --test
+        run: ./vendor/bin/pint
 
       - name: PHPStan
         working-directory: backend-admin
@@ -202,7 +202,7 @@ jobs:
 
       - name: PHPUnit (testing env)
         working-directory: backend-admin
-        run: php artisan test --env=testing || true
+        run: php artisan --env=testing || true
 
   frontend-app:
     name: Frontend (App)
