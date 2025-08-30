@@ -1,5 +1,8 @@
 <template>
-  <div :class="['rte-wrapper w-full', isFullScreen ? 'fixed inset-0 z-[60] bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm p-4 sm:p-6' : '']">
+  <div
+    :class="['rte-wrapper w-full', isFullScreen ? 'fixed inset-0 z-[60] bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm p-4 sm:p-6' : '']"
+    dir="ltr"
+  >
     <div :class="['rte-panel mx-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl overflow-hidden', isFullScreen ? 'w-full max-w-5xl h-[85vh] shadow-2xl ring-1 ring-gray-200 dark:ring-gray-700' : '']">
       <div
         ref="toolbarEl"

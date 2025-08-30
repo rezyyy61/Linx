@@ -96,16 +96,15 @@ class ProcessMediaJob implements ShouldQueue
                     break;
 
                 case 'document':
-                    if ($ext === 'pdf') {
-                        $pdf = new PdfProcessor($media->disk ?: 's3');
-                        $res = $pdf->process($srcTmp, $s3BaseDir, $baseNameNoExt);
-                        $processed['document'] = $res['variants'];
-                        $meta = $media->meta ?? [];
-                        $meta['pdf'] = ['pages' => $res['meta']['pages'] ?? null];
-                        $media->meta = $meta;
-                    } else {
-                        Log::info('Document type not implemented (only pdf now)', ['id' => $media->id, 'ext' => $ext]);
-                    }
+                    $doc = new PdfProcessor($media->disk ?: 's3');
+                    $res = $doc->process($srcTmp, $s3BaseDir, $baseNameNoExt);
+                    $processed['document'] = $res['variants'];
+                    $meta = $media->meta ?? [];
+                    $meta['document'] = [
+                        'pages' => $res['meta']['pages'] ?? null,
+                        'converted' => true,
+                    ];
+                    $media->meta = $meta;
                     break;
 
                 case 'audio':
@@ -191,7 +190,19 @@ class ProcessMediaJob implements ShouldQueue
         if (str_starts_with($mime, 'audio/')) {
             return 'audio';
         }
-        if (in_array($mime, ['application/pdf', 'application/x-pdf'])) {
+        $docMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'application/vnd.ms-excel.sheet.macroenabled.12',
+            'application/vnd.ms-powerpoint.presentation.macroenabled.12',
+        ];
+        if (in_array($mime, $docMimes, true)) {
             return 'document';
         }
 
@@ -225,6 +236,19 @@ class ProcessMediaJob implements ShouldQueue
             str_starts_with($mime, 'image/') => 'jpg',
             str_starts_with($mime, 'video/') => 'mp4',
             str_starts_with($mime, 'audio/') => 'm4a',
+            // ↓ اگر MIME سند بود ولی پسوند نداریم
+            in_array($mime, [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'text/plain',
+                'application/vnd.ms-excel.sheet.macroenabled.12',
+                'application/vnd.ms-powerpoint.presentation.macroenabled.12',
+            ], true) => 'pdf',
             default => 'bin',
         };
     }
@@ -246,7 +270,7 @@ class ProcessMediaJob implements ShouldQueue
 
     private function docExts(): array
     {
-        return ['pdf'];
+        return ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
     }
 
     private function downloadTo($disk, string $key, string $destPath): void
