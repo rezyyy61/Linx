@@ -5,7 +5,7 @@ const DashboardHomePage = () => import('@/modules/dashboard/pages/DashboardHomeP
 
 const PostsLayout = () => import('@/modules/dashboard/pages/posts/layout/PostsLayout.vue')
 const PostsListPage = () => import('@/modules/dashboard/pages/posts/pages/ListPage.vue')
-const PostsCreatePage = () => import('@/modules/dashboard/pages/posts/pages/CreatePage.vue')
+const PostsCreatePage = () => import('@/modules/dashboard/pages/posts/pages/CreatePost.vue')
 const PostsEditPage = () => import('@/modules/dashboard/pages/posts/pages/EditPage.vue')
 const PostsDetailPage = () => import('@/modules/dashboard/pages/posts/pages/DetailPage.vue')
 
