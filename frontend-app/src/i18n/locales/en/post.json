@@ -38,7 +38,8 @@
       "create": "Create Post",
       "cancel": "Cancel",
       "delete": "Delete",
-      "deleting": "Deleting…"
+      "deleting": "Deleting…",
+      "save_draft": "Save draft"
     },
     "errors": {
       "generic": "Something went wrong."
@@ -78,6 +79,27 @@
         "cancel": "Cancel",
         "deleting": "Deleting…",
         "delete": "Delete"
+      },
+      "header": {
+        "search": "Search",
+        "search_placeholder": "Search posts…",
+        "visibility": "Visibility",
+        "visibility_all": "All",
+        "visibility_public": "Public",
+        "visibility_private": "Private",
+        "visibility_friends": "Friends",
+        "status": "Status",
+        "status_all": "All",
+        "status_draft": "Draft",
+        "status_published": "Published",
+        "status_archived": "Archived",
+        "date_from": "From date",
+        "date_to": "To date",
+        "sort": "Sort",
+        "sort_newest": "Newest first",
+        "sort_oldest": "Oldest first",
+        "reset": "Reset",
+        "apply": "Apply"
       }
     }
   }

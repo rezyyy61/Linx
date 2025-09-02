@@ -20,7 +20,7 @@ class UpdatePostRequest extends FormRequest
         return [
             'content' => ['sometimes', 'nullable', 'string'],
             'visibility' => ['sometimes', 'nullable', 'in:public,friends,private'],
-            'status' => ['sometimes', 'nullable', 'in:published,draft,pending_media'],
+            'status' => ['sometimes', 'nullable', 'in:published,draft'],
             'media' => ['sometimes', 'nullable', 'array', 'max:10'],
             'media.*.id' => ['required_with:media', 'integer', 'exists:media,id'],
             'media.*.order' => ['nullable', 'integer', 'min:0'],
