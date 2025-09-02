@@ -1,3 +1,4 @@
+// src/stores/post/post.ts
 import { defineStore } from 'pinia'
 import { api, ensureCsrfCookie } from '@/lib/http'
 
@@ -26,8 +27,17 @@ export type Post = {
 export type PostPayload = {
   content?: string | null
   visibility?: 'public' | 'private' | 'friends'
-  status?: 'draft' | 'published' | 'archived'
+  status?: 'draft' | 'published'
   media?: { id: number; order?: number }[] | null
+}
+
+type ListFilters = {
+  q?: string
+  visibility?: 'public' | 'private' | 'friends'
+  status?: 'draft' | 'published' | 'archived' | 'all'
+  date_from?: string
+  date_to?: string
+  sort?: 'newest' | 'oldest'
 }
 
 function normalizePost(raw: any): Post {
@@ -49,7 +59,7 @@ function normalizePost(raw: any): Post {
     user_id: Number(raw.user_id),
     content: raw.content ?? null,
     visibility: raw.visibility ?? 'public',
-    status: raw.status ?? 'published',
+    status: (raw.status as Post['status']) ?? 'draft',
     published_at: raw.published_at ?? null,
     created_at: raw.created_at,
     updated_at: raw.updated_at,
@@ -62,7 +72,9 @@ function extractCursorFromLink(link?: string | null): string | null {
   try {
     const u = new URL(link)
     return u.searchParams.get('cursor')
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 export const usePostStore = defineStore('post', {
@@ -83,25 +95,37 @@ export const usePostStore = defineStore('post', {
   },
 
   actions: {
-    async fetchList({ userId, cursor, limit, replace = true }: { userId?: number; cursor?: string | null; limit?: number; replace?: boolean } = {}) {
+    async fetchList(
+      opts: { userId?: number; cursor?: string | null; limit?: number; replace?: boolean } & ListFilters = {}
+    ) {
       this.loadingList = true
       try {
-        const params: Record<string, any> = {}
+        const { userId, cursor, limit, replace = true, ...filters } = opts
+
+        const params: Record<string, any> = { ...filters }
         if (userId) params.user_id = userId
         if (cursor) params.cursor = cursor
         if (limit) params.per_page = limit
+
         const { data } = await api.get('posts', { params })
+
         const items: any[] = Array.isArray(data?.data) ? data.data : []
         const links = data?.links ?? {}
         const meta = data?.meta ?? {}
+
         const incomingIds: number[] = []
         for (const raw of items) {
           const p = normalizePost(raw)
           this.byId[p.id] = p
           incomingIds.push(p.id)
         }
-        if (replace) this.ids = incomingIds
-        else this.ids.push(...incomingIds.filter((id) => !this.ids.includes(id)))
+
+        if (replace) {
+          this.ids = incomingIds
+        } else {
+          for (const id of incomingIds) if (!this.ids.includes(id)) this.ids.push(id)
+        }
+
         this.nextCursor = meta?.next_cursor ?? extractCursorFromLink(links?.next)
         this.prevCursor = meta?.prev_cursor ?? extractCursorFromLink(links?.prev)
         return this.list
@@ -163,6 +187,17 @@ export const usePostStore = defineStore('post', {
       } finally {
         this.deleting = false
       }
+    },
+
+    reset() {
+      this.byId = {}
+      this.ids = []
+      this.loadingList = false
+      this.loadingOne = false
+      this.saving = false
+      this.deleting = false
+      this.nextCursor = null
+      this.prevCursor = null
     },
   },
 })

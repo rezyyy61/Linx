@@ -46,6 +46,8 @@ const norm = (v: any) => (v ?? '').toString().trim().toUpperCase()
 const extOf = (name: string) => { const i = name.lastIndexOf('.'); return i >= 0 ? name.slice(i + 1).toLowerCase() : '' }
 const unpack = <T=any>(res:any):T => (res?.data && (res.data.data ?? res.data)) as T
 
+const TYPE_POST_FQN = 'App\\Models\\Post\\Post'
+
 const inferKind = (m?: MediaRecord): MediaKind => {
   const mime = (m?.mime ?? '').toLowerCase(), typ = (m?.type ?? '').toLowerCase()
   if (mime.startsWith('video/') || typ === 'video') return 'video'
@@ -324,8 +326,11 @@ export const useMediaStore = defineStore('media', {
       try {
         await ensureCsrfCookie()
         await api.delete(`media/${id}`)
-      } catch (e) {
-        console.log(e) }
+      } catch (e:any) {
+        const code = e?.response?.status
+        if (code === 404 || code === 409) return
+        throw e
+      }
     },
 
     cleanupTask(t: UploadTask) {
@@ -343,6 +348,19 @@ export const useMediaStore = defineStore('media', {
       } finally {
         this.cleanupTask(t)
       }
+    },
+
+    async detachFromModel(mediaId: number, modelType: string, modelId: number, collection = 'post') {
+      await ensureCsrfCookie()
+      await api.post(`media/${mediaId}/detach`, {
+        model_type: modelType,
+        model_id: modelId,
+        collection,
+      })
+    },
+
+    async detachFromPost(mediaId: number, postId: number, collection = 'post') {
+      return this.detachFromModel(mediaId, TYPE_POST_FQN, postId, collection)
     },
 
   },

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 
-export function useAsync<T extends (...args:any[]) => Promise<any>>(fn: T) {
+export function useAsync<T extends (...args: any[]) => Promise<any>>(fn: T) {
   const loading = ref(false)
   const error = ref<any>(null)
   const run = async (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {

@@ -20,13 +20,63 @@ class PostController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('viewAny', PostModel::class);
-        $query = PostModel::query()->with('media')->latest('published_at');
-        if ($request->filled('user_id')) {
-            $query->where('user_id', (int) $request->get('user_id'));
-        }
-        $posts = $query->cursorPaginate(20);
 
-        return PostResource::collection($posts);
+        $perPage = min((int) $request->integer('per_page', 20), 100);
+        $sortDir = $request->get('sort') === 'oldest' ? 'asc' : 'desc';
+
+        $q = PostModel::query()
+            ->with('media');
+
+        if ($request->filled('user_id')) {
+            $q->where('user_id', (int) $request->get('user_id'));
+        }
+
+        if ($search = trim((string) $request->get('q', ''))) {
+            $q->where(function ($x) use ($search) {
+                $x->where('content', 'like', "%{$search}%");
+            });
+        }
+
+        if ($vis = $request->get('visibility')) {
+            if (in_array($vis, ['public', 'private', 'friends'], true)) {
+                $q->where('visibility', $vis);
+            }
+        }
+
+        if (($st = $request->get('status')) && $st !== 'all') {
+            if (in_array($st, ['draft', 'published'], true)) {
+                $q->where('status', $st);
+            }
+        }
+
+        $from = $request->get('date_from');
+        $to = $request->get('date_to');
+        if ($from && $to && $from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        if ($from) {
+            $q->whereRaw('DATE(COALESCE(published_at, created_at)) >= ?', [$from]);
+        }
+        if ($to) {
+            $q->whereRaw('DATE(COALESCE(published_at, created_at)) <= ?', [$to]);
+        }
+
+        $q->orderByRaw('COALESCE(published_at, created_at) '.$sortDir)
+            ->orderBy('id', $sortDir);
+
+        $posts = $q->cursorPaginate($perPage)->withQueryString();
+
+        return PostResource::collection($posts)->additional([
+            'links' => [
+                'next' => $posts->nextPageUrl(),
+                'prev' => $posts->previousPageUrl(),
+            ],
+            'meta' => [
+                'next_cursor' => optional($posts->nextCursor())->encode(),
+                'prev_cursor' => optional($posts->previousCursor())->encode(),
+            ],
+        ]);
     }
 
     public function show(PostModel $post)

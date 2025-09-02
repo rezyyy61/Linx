@@ -1,3 +1,90 @@
+<script setup lang="ts">
+import { Icon } from '@iconify/vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth/auth'
+import EmptyState from '@/modules/dashboard/pages/posts/components/postList/EmptyState.vue'
+import PostCard from '@/modules/dashboard/pages/posts/components/postList/PostCard.vue'
+import PostHeader from '@/modules/dashboard/pages/posts/components/header/PostHeader.vue'
+import { usePostStore } from '@/stores/post/post'
+
+const { t, te } = useI18n()
+const tr = (k: string) => (te(`post.${k}`) ? t(`post.${k}`) : t(k))
+defineEmits<{ create: [] }>()
+
+const router = useRouter()
+const auth = useAuthStore()
+const store = usePostStore()
+
+const userId = computed(() => auth.user?.id ?? null)
+const authLoading = computed(() => auth.loading && !auth.bootstrapDone)
+
+const posts = computed(() => store.list)
+const hasMore = computed(() => store.hasMore)
+const loading = computed(() => store.loadingList)
+const loadingMore = ref(false)
+
+const filters = ref<Record<string, any>>({})
+const sentinel = ref<HTMLElement | null>(null)
+let io: IntersectionObserver | null = null
+
+const confirmOpen = ref(false)
+const deleting = ref(false)
+const targetId = ref<number | null>(null)
+
+async function fetchFirst() {
+  if (!userId.value) return
+  await store.fetchList({ userId: userId.value, limit: 20, replace: true, ...filters.value })
+}
+async function loadMore() {
+  if (!store.nextCursor || !userId.value) return
+  loadingMore.value = true
+  try {
+    await store.fetchList({
+      userId: userId.value,
+      cursor: store.nextCursor,
+      limit: 20,
+      replace: false,
+      ...filters.value,
+    })
+  } finally { loadingMore.value = false }
+}
+
+function setupIO() {
+  if (!sentinel.value) return
+  io = new IntersectionObserver((entries) => {
+    for (const e of entries)
+      if (e.isIntersecting && hasMore.value && !loading.value && !loadingMore.value) loadMore()
+  }, { rootMargin: '400px 0px' })
+  io.observe(sentinel.value)
+}
+function destroyIO() {
+  if (io && sentinel.value) io.unobserve(sentinel.value)
+  io = null
+}
+
+function askDelete(p: any) { targetId.value = p.id; confirmOpen.value = true }
+async function confirmDelete() {
+  if (!targetId.value) return
+  deleting.value = true
+  try { await store.remove(targetId.value) }
+  finally { deleting.value = false; confirmOpen.value = false; targetId.value = null }
+}
+function goOpen(id: number) { router.push(`/dashboard/posts/${id}`) }
+function goEdit(id: number) { router.push(`/dashboard/posts/${id}/edit`) }
+
+function onApply(p: Record<string, any>) {
+  console.log('apply filters =>', p)
+  filters.value = p || {}
+  fetchFirst()
+}
+
+onMounted(async () => { await fetchFirst(); setupIO() })
+watch(() => auth.user?.id, fetchFirst)
+onBeforeUnmount(() => { destroyIO() })
+</script>
+
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between">
@@ -12,6 +99,11 @@
       </div>
       <slot name="actions" />
     </div>
+
+    <PostHeader
+      class="sticky top-2 z-10"
+      @apply="onApply"
+    />
 
     <div
       v-if="authLoading"
@@ -188,68 +280,6 @@
     </transition>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Icon } from '@iconify/vue'
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth/auth'
-import EmptyState from '@/modules/dashboard/pages/posts/components/postList/EmptyState.vue'
-import PostCard from '@/modules/dashboard/pages/posts/components/postList/PostCard.vue'
-import {usePostStore} from "@/stores/post/post";
-
-const { t, te } = useI18n()
-const tr = (k: string) => te(`post.${k}`) ? t(`post.${k}`) : t(k)
-
-defineEmits<{ create: [] }>()
-
-const router = useRouter()
-const auth = useAuthStore()
-const store = usePostStore()
-
-const userId = computed(() => auth.user?.id ?? null)
-const authLoading = computed(() => auth.loading && !auth.bootstrapDone)
-
-const posts = computed(() => store.list)
-const hasMore = computed(() => store.hasMore)
-const loading = computed(() => store.loadingList)
-const loadingMore = ref(false)
-
-const sentinel = ref<HTMLElement | null>(null)
-let io: IntersectionObserver | null = null
-
-const confirmOpen = ref(false)
-const deleting = ref(false)
-const targetId = ref<number | null>(null)
-
-async function fetchFirst() {
-  if (!userId.value) return
-  await store.fetchList({ userId: userId.value, limit: 20, replace: true })
-}
-async function loadMore() {
-  if (!store.nextCursor || !userId.value) return
-  loadingMore.value = true
-  try { await store.fetchList({ userId: userId.value, cursor: store.nextCursor, limit: 20, replace: false }) }
-  finally { loadingMore.value = false }
-}
-function setupIO() {
-  if (!sentinel.value) return
-  io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting && hasMore.value && !loading.value && !loadingMore.value) loadMore()
-  }, { rootMargin: '400px 0px' })
-  io.observe(sentinel.value)
-}
-function destroyIO() { if (io && sentinel.value) io.unobserve(sentinel.value); io = null }
-function askDelete(p: any) { targetId.value = p.id; confirmOpen.value = true }
-async function confirmDelete() { if (!targetId.value) return; deleting.value = true; try { await store.remove(targetId.value) } finally { deleting.value = false; confirmOpen.value = false; targetId.value = null } }
-function goOpen(id: number) { router.push(`/dashboard/posts/${id}`) }
-function goEdit(id: number) { router.push(`/dashboard/posts/${id}/edit`) }
-
-onMounted(async () => { await fetchFirst(); setupIO() })
-watch(() => auth.user?.id, async () => { await fetchFirst() })
-onBeforeUnmount(() => { destroyIO() })
-</script>
 
 <style scoped>
 .fade-enter-active,.fade-leave-active{transition:opacity .15s ease}

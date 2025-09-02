@@ -2,7 +2,7 @@
   "post": {
     "form": {
       "content": "محتوا",
-      "content_placeholder": "یه چیزی بنویس…",
+      "content_placeholder": "چیزی بنویسید…",
       "visibility": "نمایش",
       "status": "وضعیت",
       "publish_at": "زمان انتشار"
@@ -15,7 +15,7 @@
     "status": {
       "draft": "پیش‌نویس",
       "published": "منتشر شده",
-      "archived": "بایگانی شده"
+      "archived": "بایگانی‌شده"
     },
     "media": {
       "gallery": {
@@ -26,8 +26,8 @@
         "move_down": "انتقال به پایین"
       },
       "uploader": {
-        "drop_or_click": "فایل‌ها را اینجا رها کنید یا برای آپلود کلیک کنید",
-        "hint": "تصویر، ویدیو، صوت و اسناد پشتیبانی می‌شوند.",
+        "drop_or_click": "فایل‌ها را بکشید و رها کنید یا برای انتخاب کلیک کنید",
+        "hint": "تصویر، ویدئو، صوت و سند پشتیبانی می‌شود.",
         "pick_button": "انتخاب فایل‌ها"
       }
     },
@@ -38,15 +38,16 @@
       "create": "ایجاد پست",
       "cancel": "انصراف",
       "delete": "حذف",
-      "deleting": "در حال حذف…"
+      "deleting": "در حال حذف…",
+      "save_draft": "ذخیره پیش نویس"
     },
     "errors": {
-      "generic": "خطایی رخ داد."
+      "generic": "مشکلی پیش آمد."
     },
     "card": {
       "media": "رسانه",
       "text_only": "فقط متن",
-      "more": "+{count} مورد دیگر",
+      "more": "+{count} مورد بیشتر",
       "count": {
         "images": "{count} عکس",
         "videos": "{count} ویدئو",
@@ -63,21 +64,42 @@
           "subtitle": "داشبورد فقط پست‌های خودتان را نشان می‌دهد"
         },
         "none": {
-          "title": "هنوز پستی ندارید",
+          "title": "هنوز پستی وجود ندارد",
           "subtitle": "اولین پست خود را بسازید"
         }
       },
       "actions": {
-        "create": "ایجاد پست",
+        "create": "ساخت پست",
         "loading": "در حال بارگذاری…",
         "load_more": "نمایش بیشتر"
       },
       "confirm": {
         "title": "حذف پست",
-        "message": "از حذف این پست مطمئن هستید؟",
+        "message": "آیا از حذف این پست مطمئن هستید؟",
         "cancel": "انصراف",
         "deleting": "در حال حذف…",
         "delete": "حذف"
+      },
+      "header": {
+        "search": "جستجو",
+        "search_placeholder": "در پست‌ها جستجو کنید…",
+        "visibility": "نمایش",
+        "visibility_all": "همه",
+        "visibility_public": "عمومی",
+        "visibility_private": "خصوصی",
+        "visibility_friends": "دوستان",
+        "status": "وضعیت",
+        "status_all": "همه",
+        "status_draft": "پیش‌نویس",
+        "status_published": "منتشرشده",
+        "status_archived": "بایگانی‌شده",
+        "date_from": "از تاریخ",
+        "date_to": "تا تاریخ",
+        "sort": "مرتب‌سازی",
+        "sort_newest": "جدیدترین",
+        "sort_oldest": "قدیمی‌ترین",
+        "reset": "بازنشانی",
+        "apply": "اعمال"
       }
     }
   }
