@@ -20,7 +20,7 @@ class StorePostRequest extends FormRequest
         return [
             'content' => ['nullable', 'string'],
             'visibility' => ['nullable', 'in:public,friends,private'],
-            'status' => ['nullable', 'in:published,draft,pending_media'],
+            'status' => ['nullable', 'in:published,draft'],
             'media' => ['nullable', 'array', 'max:10'],
             'media.*.id' => ['required_with:media', 'integer', 'exists:media,id'],
             'media.*.order' => ['nullable', 'integer', 'min:0'],

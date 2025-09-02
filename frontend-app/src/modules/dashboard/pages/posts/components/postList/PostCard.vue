@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import {computed, ref} from 'vue'
 import { Icon } from '@iconify/vue'
 import { useI18n } from 'vue-i18n'
 import { excerptFromHtml, directionFor, isEmptyHtml } from '@/utils/text-utils'
+import {useMediaStore} from "@/stores/post/post.media";
 
 type MediaItem = { id: number; url?: string; mime_type?: string; width?: number | null; height?: number | null }
 type Post = {
@@ -19,6 +20,9 @@ type Post = {
 
 const props = defineProps<{ post: Post; clickable?: boolean; mine?: boolean }>()
 const emit = defineEmits<{ (e:'open'): void; (e:'edit'): void; (e:'delete'): void }>()
+
+const mediaStore = useMediaStore()
+const deleting = ref(false)
 
 const { t, te, locale } = useI18n()
 const tr = (k: string, args?: any) => te(`post.${k}`) ? t(`post.${k}`, args) : t(k, args)
@@ -55,6 +59,29 @@ const typeCounts = computed(() => {
   ].filter(x => x.count > 0)
 })
 
+function parseDateFlexible(raw?: string | null): Date | null {
+  if (!raw) return null
+  const ts = Date.parse(raw)
+  if (!Number.isNaN(ts)) return new Date(ts)
+  const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/)
+  if (m) {
+    const [, y, mo, d, h, mi, s] = m
+    return new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), s ? Number(s) : 0)
+  }
+  return null
+}
+
+const rawDate = computed(() => {
+  if (props.post.status === 'draft') return props.post.created_at || null
+  return props.post.published_at || props.post.created_at || null
+})
+
+const displayDate = computed(() => {
+  const d = parseDateFlexible(rawDate.value)
+  if (!d) return ''
+  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(d)
+})
+
 const excerpt = computed(() => {
   const html = props.post.content || ''
   if (!html || isEmptyHtml(html)) return ''
@@ -62,17 +89,25 @@ const excerpt = computed(() => {
 })
 const textDir = computed(() => directionFor(props.post.content || ''))
 
-const displayDate = computed(() => {
-  const raw = props.post.published_at || props.post.created_at
-  if (!raw) return ''
-  const d = new Date(raw)
-  if (isNaN(d.getTime())) return ''
-  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(d)
-})
-
 function onOpen() { emit('open') }
 function onEdit(e: Event) { e.stopPropagation(); emit('edit') }
-function onDelete(e: Event) { e.stopPropagation(); emit('delete') }
+async function onDelete(e: Event) {
+  e.stopPropagation()
+  if (deleting.value) return
+  deleting.value = true
+  try {
+    const postId = Number(props.post?.id)
+    const media = Array.isArray(props.post?.media) ? props.post.media : []
+    if (postId && media.length) {
+      await Promise.allSettled(
+        media.map(m => mediaStore.detachFromPost(Number(m.id), postId, 'post'))
+      )
+    }
+    emit('delete')
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -172,7 +207,7 @@ function onDelete(e: Event) { e.stopPropagation(); emit('delete') }
             icon="solar:calendar-bold-duotone"
             class="h-4 w-4"
           />
-          <span :title="post.published_at || post.created_at || ''">{{ displayDate || '—' }}</span>
+          <span :title="rawDate || ''">{{ displayDate || '—' }}</span>
         </div>
 
         <div class="flex items-center gap-2">
@@ -213,7 +248,7 @@ function onDelete(e: Event) { e.stopPropagation(); emit('delete') }
           v-else
           class="invisible line-clamp-3 text-sm leading-6"
         >
-&nbsp;
+          &nbsp;
         </p>
       </div>
     </div>

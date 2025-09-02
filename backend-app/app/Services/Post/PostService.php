@@ -15,6 +15,10 @@ class PostService
 
     private const COLLECTION = 'post';
 
+    private const STATUS_PUBLISHED = 'published';
+
+    private const STATUS_DRAFT = 'draft';
+
     public function create(array $data, User $user): PostModel
     {
         return DB::transaction(function () use ($data, $user) {
@@ -22,8 +26,11 @@ class PostService
             $post->user_id = $user->id;
             $post->content = $data['content'] ?? null;
             $post->visibility = $data['visibility'] ?? 'public';
-            $post->status = $data['status'] ?? 'published';
-            $post->published_at = $post->status === 'published' ? now() : null;
+
+            $status = $data['status'] ?? self::STATUS_DRAFT;
+            $post->status = $status;
+            $post->published_at = $status === self::STATUS_PUBLISHED ? now() : null;
+
             $post->save();
 
             if (array_key_exists('media', $data)) {
@@ -40,15 +47,23 @@ class PostService
             if (array_key_exists('content', $data)) {
                 $post->content = $data['content'];
             }
+
             if (array_key_exists('visibility', $data)) {
                 $post->visibility = $data['visibility'];
             }
+
             if (array_key_exists('status', $data)) {
                 $post->status = $data['status'];
-                if ($post->status === 'published' && is_null($post->published_at)) {
-                    $post->published_at = now();
+
+                if ($post->status === self::STATUS_PUBLISHED) {
+                    if (is_null($post->published_at)) {
+                        $post->published_at = now();
+                    }
+                } elseif ($post->status === self::STATUS_DRAFT) {
+                    $post->published_at = null;
                 }
             }
+
             $post->save();
 
             if (array_key_exists('media', $data)) {

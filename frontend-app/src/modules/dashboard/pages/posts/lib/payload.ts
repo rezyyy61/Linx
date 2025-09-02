@@ -1,7 +1,16 @@
-export type MediaRef = { id: number }
-export type PostPayload = { content?: string|null; visibility?: 'public'|'private'|'friends'; status?: 'draft'|'published'|'archived'; published_at?: string|null; media?: { id:number; order:number }[]|null }
+export type PostFields = {
+  content?: string | null
+  visibility?: 'public' | 'private' | 'friends'
+  status?: 'draft' | 'published'
+}
+export type MediaOrder = { id: number; order?: number }
 
-export function buildPostPayload(base: Partial<PostPayload>, media: MediaRef[]) {
-  const m = media.map((x, i) => ({ id: Number(x.id), order: i }))
-  return { ...base, media: m }
+export function buildPostPayload(fields: PostFields = {}, media?: MediaOrder[] | null) {
+  const out: any = {}
+  if ('content' in fields) out.content = fields.content ?? null
+  if ('visibility' in fields) out.visibility = fields.visibility
+  if ('status' in fields) out.status = fields.status
+  if (Array.isArray(media)) out.media = media
+  else if (media === null) out.media = null
+  return out
 }
