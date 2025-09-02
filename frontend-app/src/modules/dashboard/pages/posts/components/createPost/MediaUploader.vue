@@ -1,33 +1,39 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { Icon } from '@iconify/vue'
 
-const { t, te } = useI18n()
-const tr = (k: string) => te(`post.${k}`) ? t(`post.${k}`) : t(k)
+const emit = defineEmits<{ (e: 'picked', files: File[]): void }>()
 
-const emit = defineEmits<{ (e:'picked', files: File[]): void }>()
-const input = ref<HTMLInputElement|null>(null)
-const dragging = ref(false)
+const inputImg = ref<HTMLInputElement | null>(null)
+const inputVid = ref<HTMLInputElement | null>(null)
+const inputAud = ref<HTMLInputElement | null>(null)
+const inputDoc = ref<HTMLInputElement | null>(null)
 
-function pick() { input.value?.click() }
+const dragging = ref<null | 'image' | 'video' | 'audio' | 'document'>(null)
+
+function pick(kind: 'image' | 'video' | 'audio' | 'document') {
+  const map = { image: inputImg, video: inputVid, audio: inputAud, document: inputDoc }
+  map[kind].value?.click()
+}
 function onPicked(e: Event) {
   const target = e.target as HTMLInputElement
   const files = Array.from(target.files || [])
   emit('picked', files)
   target.value = ''
 }
-function onDrop(e: DragEvent) {
+function onDrop(e: DragEvent, _kind: 'image' | 'video' | 'audio' | 'document') {
   e.preventDefault()
-  dragging.value = false
+  dragging.value = null
   const files = Array.from(e.dataTransfer?.files || [])
   emit('picked', files)
 }
-function onDragOver(e: DragEvent) { e.preventDefault(); dragging.value = true }
-function onDragLeave() { dragging.value = false }
+function onDragOver(e: DragEvent, kind: 'image' | 'video' | 'audio' | 'document') {
+  e.preventDefault()
+  dragging.value = kind
+}
+function onDragLeave() { dragging.value = null }
 
-const accept = [
-  'image/*','video/*','audio/*',
+const acceptDoc = [
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -42,45 +48,113 @@ const accept = [
 </script>
 
 <template>
-  <div
-    class="group relative rounded-2xl border-2 border-dashed p-6 text-center transition
-           border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/40
-           dark:border-gray-700 dark:hover:border-indigo-500 dark:hover:bg-indigo-500/10"
-    :class="dragging ? 'border-indigo-500 bg-indigo-50/60 dark:border-indigo-400 dark:bg-indigo-500/10' : ''"
-    @click="pick"
-    @drop="onDrop"
-    @dragover="onDragOver"
-    @dragleave="onDragLeave"
-  >
-    <div class="flex flex-col items-center justify-center gap-2">
-      <Icon
-        icon="solar:upload-minimalistic-bold-duotone"
-        class="h-10 w-10 text-indigo-600 dark:text-indigo-400"
-      />
-      <div class="text-sm text-gray-700 dark:text-gray-200">
-        {{ tr('media.uploader.drop_or_click') }}
-      </div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">
-        {{ tr('media.uploader.hint') }}
-      </div>
-      <button
-        type="button"
-        class="inline-flex items-center px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-      >
-        <Icon
-          icon="solar:folder-with-files-bold-duotone"
-          class="h-5 w-5"
-        />
-        <span>{{ tr('media.uploader.pick_button') }}</span>
-      </button>
-    </div>
-    <input
-      ref="input"
-      type="file"
-      class="hidden"
-      :accept="accept"
-      multiple
-      @change="onPicked"
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
+      :class="dragging==='image' ? 'ring-2 ring-indigo-500' : ''"
+      @click="pick('image')"
+      @drop="onDrop($event,'image')"
+      @dragover="onDragOver($event,'image')"
+      @dragleave="onDragLeave"
     >
+      <div class="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <Icon
+          icon="solar:gallery-wide-bold-duotone"
+          class="h-10 w-10"
+        />
+      </div>
+      <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
+        Images
+      </div>
+      <input
+        ref="inputImg"
+        type="file"
+        class="hidden"
+        accept="image/*"
+        multiple
+        @change="onPicked"
+      >
+    </div>
+
+    <div
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
+      :class="dragging==='video' ? 'ring-2 ring-indigo-500' : ''"
+      @click="pick('video')"
+      @drop="onDrop($event,'video')"
+      @dragover="onDragOver($event,'video')"
+      @dragleave="onDragLeave"
+    >
+      <div class="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <Icon
+          icon="solar:clapperboard-play-bold-duotone"
+          class="h-10 w-10"
+        />
+      </div>
+      <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
+        Videos
+      </div>
+      <input
+        ref="inputVid"
+        type="file"
+        class="hidden"
+        accept="video/*"
+        multiple
+        @change="onPicked"
+      >
+    </div>
+
+    <div
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
+      :class="dragging==='audio' ? 'ring-2 ring-indigo-500' : ''"
+      @click="pick('audio')"
+      @drop="onDrop($event,'audio')"
+      @dragover="onDragOver($event,'audio')"
+      @dragleave="onDragLeave"
+    >
+      <div class="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <Icon
+          icon="solar:music-note-2-bold-duotone"
+          class="h-10 w-10"
+        />
+      </div>
+      <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
+        Audio
+      </div>
+      <input
+        ref="inputAud"
+        type="file"
+        class="hidden"
+        accept="audio/*"
+        multiple
+        @change="onPicked"
+      >
+    </div>
+
+    <div
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
+      :class="dragging==='document' ? 'ring-2 ring-indigo-500' : ''"
+      @click="pick('document')"
+      @drop="onDrop($event,'document')"
+      @dragover="onDragOver($event,'document')"
+      @dragleave="onDragLeave"
+    >
+      <div class="mx-auto mb-2 flex h-20 w-20 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+        <Icon
+          icon="solar:file-text-bold-duotone"
+          class="h-10 w-10"
+        />
+      </div>
+      <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
+        Documents
+      </div>
+      <input
+        ref="inputDoc"
+        type="file"
+        class="hidden"
+        :accept="acceptDoc"
+        multiple
+        @change="onPicked"
+      >
+    </div>
   </div>
 </template>

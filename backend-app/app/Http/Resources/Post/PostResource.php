@@ -28,6 +28,8 @@ class PostResource extends JsonResource
             'visibility' => $post->visibility,
             'status' => $post->status,
             'published_at' => $post->published_at?->toIso8601String(),
+            'created_at' => $post->created_at?->toIso8601String(),
+            'updated_at' => $post->updated_at?->toIso8601String(),
             'author' => [
                 'id' => $post->user_id,
                 'name' => $authorName,

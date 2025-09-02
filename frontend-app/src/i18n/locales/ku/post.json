@@ -3,81 +3,103 @@
     "form": {
       "content": "ناوەڕۆک",
       "content_placeholder": "شتێک بنووسە…",
-      "visibility": "دەرکەوتن",
+      "visibility": "بینراوی",
       "status": "دۆخ",
       "publish_at": "کاتی بڵاوکردن"
     },
     "visibility": {
       "public": "گشتی",
       "private": "تایبەت",
-      "friends": "هاورێیان"
+      "friends": "هاوڕێیان"
     },
     "status": {
-      "draft": "ڕەشنووس",
+      "draft": "پێشنووس",
       "published": "بڵاوکراوە",
       "archived": "ئەرشیفکراو"
     },
     "media": {
       "gallery": {
-        "empty": "هێشتا میدیایەک نییە",
+        "empty": "هێشتا مێدیایەک نییە",
         "preview": "پێشبینین",
         "image_alt": "پێشبینینی وێنە",
-        "move_up": "بڕۆ سەرەوە",
-        "move_down": "بڕۆ خوارەوە"
+        "move_up": "گواستنەوە بۆ سەرەوە",
+        "move_down": "گواستنەوە بۆ خوارەوە"
       },
       "uploader": {
-        "drop_or_click": "پەڕگەکان لێرە بکێشرەوە یان کرتە بکە بۆ بارکردن",
-        "hint": "وێنە، ڤیدیۆ، دەنگ و بەڵگەنامە پشتگیری دەکرێن.",
+        "drop_or_click": "پەڕگەکان بکێشە و بیخە یان بۆ هەڵبژاردن کرتە بکە",
+        "hint": "وێنە، ڤیدیۆ، دەنگ و بەڵگەنامە پشتیوان دەکرێن.",
         "pick_button": "هەڵبژاردنی پەڕگەکان"
       }
     },
     "actions": {
-      "save": "پاشەکەوت",
-      "publish": "بڵاوکردنەوە",
+      "save": "پاشەکەوتکردن",
+      "publish": "بڵاوکردن",
       "remove": "سڕینەوە",
       "create": "دروستکردنی پۆست",
-      "cancel": "هەڵوەشاندنەوە",
+      "cancel": "پاشگەزبوونەوە",
       "delete": "سڕینەوە",
-      "deleting": "لە سڕینەوەدایە…"
+      "deleting": "لە سڕینەوەدایە…",
+      "save_draft": "پاشەکەوتکردنی پێشنووس"
     },
     "errors": {
-      "generic": "هەڵەیەک ڕوویدا."
+      "generic": "کێشەیەک ڕوویدا."
     },
     "card": {
-      "media": "میدیا",
+      "media": "مێدیا",
       "text_only": "تەنها دەق",
-      "more": "+{count} زیاتر",
+      "more": "+{count} شت زیاتر",
       "count": {
         "images": "{count} وێنە",
         "videos": "{count} ڤیدیۆ",
         "audios": "{count} دەنگ",
-        "documents": "{count} بەڵگە"
+        "documents": "{count} بەڵگەنامە"
       }
     },
     "postlist": {
       "title": "پۆستەکانم",
-      "loading": { "auth": "هەژمارت بار دەبێت…" },
+      "loading": { "auth": "لە بارکردنی هەژمارتدایە…" },
       "empty": {
         "auth": {
-          "title": "چوونەژوورەوە بکە بۆ بینینی پۆستەکانت",
-          "subtitle": "داشبۆرد تەنها پۆستە کەسییەکانت پیشان دەدات"
+          "title": "بۆ بینینی پۆستەکان بچۆ ژوورەوە",
+          "subtitle": "داشبۆرد تەنها پۆستەکانی خۆت پیشان دەدات"
         },
         "none": {
-          "title": "هێشتا پۆست نییە",
+          "title": "هێشتا پۆستێک نییە",
           "subtitle": "یەکەم پۆستەکەت دروست بکە"
         }
       },
       "actions": {
         "create": "دروستکردنی پۆست",
-        "loading": "باردەکردن…",
-        "load_more": "زیاتر ببینە"
+        "loading": "لە بارکردندایە…",
+        "load_more": "زیاتر پیشان بدە"
       },
       "confirm": {
         "title": "سڕینەوەی پۆست",
-        "message": "دڵنیایت دەته‌وێت ئەم پۆستە بسڕیتەوە؟",
-        "cancel": "هەڵوەشاندنەوە",
+        "message": "دڵنیایت لە سڕینەوەی ئەم پۆستە؟",
+        "cancel": "پاشگەزبوونەوە",
         "deleting": "لە سڕینەوەدایە…",
         "delete": "سڕینەوە"
+      },
+      "header": {
+        "search": "گەڕان",
+        "search_placeholder": "لەناو پۆستەکان بگەڕێ…",
+        "visibility": "بینراوی",
+        "visibility_all": "هه‌موو",
+        "visibility_public": "گشتی",
+        "visibility_private": "تایبەت",
+        "visibility_friends": "هاوڕێیان",
+        "status": "دۆخ",
+        "status_all": "هه‌موو",
+        "status_draft": "پێشنووس",
+        "status_published": "بڵاوکراوە",
+        "status_archived": "ئەرشیفکراو",
+        "date_from": "لە ڕێکەوتی",
+        "date_to": "بۆ ڕێکەوتی",
+        "sort": "ڕیزکردن",
+        "sort_newest": "نوێترین",
+        "sort_oldest": "کەهنەترین",
+        "reset": "ڕێکخستنەوە",
+        "apply": "جێبەجێکردن"
       }
     }
   }

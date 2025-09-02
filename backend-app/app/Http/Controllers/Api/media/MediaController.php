@@ -38,4 +38,11 @@ class MediaController extends Controller
     {
         return new MediaResource($media);
     }
+
+    public function destroy(Media $media, MediaService $svc)
+    {
+        $svc->deleteIfOrphan($media);
+
+        return response()->noContent();
+    }
 }
