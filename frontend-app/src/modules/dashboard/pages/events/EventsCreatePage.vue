@@ -1,32 +1,31 @@
-<template>
-  <div>
-    <PageHeader
-      :title="title"
-      :description="description"
-    />
-    <div class="bg-white border rounded-xl p-4 max-w-2xl">
-      <div class="text-gray-500">
-        Form coming soon
-      </div>
-    </div>
-  </div>
-  <MediaUpload />
-</template>
-
 <script setup lang="ts">
-import PageHeader from "../../components/PageHeader.vue";
-import { computed } from "vue";
-import { useRoute } from "vue-router";
-import MediaUpload from "@/components/MediaUpload.vue";
-
-const route = useRoute();
-const map: Record<string, { title: string; desc: string }> = {
-  "posts.create": { title: "Create Post", desc: "Add a new post" },
-  "events.create": { title: "Create Event", desc: "Add a new event" },
-  "campaigns.create": { title: "Create Campaign", desc: "Add a new campaign" },
-  "announcements.create": { title: "Create Announcement", desc: "Add a new announcement" },
-};
-const meta = map[route.name?.toString() || "posts.create"] || map["posts.create"];
-const title = computed(() => meta.title);
-const description = computed(() => meta.desc);
+import { Icon } from "@iconify/vue";
+import EventWizard from "./components/EventWizard.vue";
+import PageContainer from "@/modules/dashboard/pages/events/layout/PageContainer.vue";
 </script>
+
+<template>
+  <PageContainer>
+    <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <router-link
+            to="/dashboard/events"
+            class="inline-flex items-center gap-2 rounded border px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+          >
+            <Icon
+              icon="mdi:arrow-left"
+              class="w-4 h-4"
+            />
+            <span>{{ $t("common.back") }}</span>
+          </router-link>
+          <h1 class="text-2xl font-semibold text-red-500 my-4">
+            {{ $t("event.create.title") }}
+          </h1>
+        </div>
+      </div>
+
+      <EventWizard />
+    </div>
+  </PageContainer>
+</template>
