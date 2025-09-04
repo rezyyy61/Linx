@@ -235,6 +235,8 @@ services:
       APP_ENV: local
       QUEUE_CONNECTION: redis
       TMPDIR: /tmp
+      HOME: /var/www/html
+      XDG_CONFIG_HOME: /var/www/html/.config
     volumes:
       - ./backend-app:/var/www/html
 

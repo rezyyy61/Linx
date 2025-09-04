@@ -1,6 +1,7 @@
 FROM php:8.3-cli-alpine
 
 # ابزارهای پایه + ویدیو/پی‌دی‌اف/تصویر
+# deploy/docker/media-worker/Dockerfile
 RUN apk add --no-cache \
     bash git curl unzip openssl \
     icu-libs libzip oniguruma \
@@ -8,7 +9,7 @@ RUN apk add --no-cache \
     libwebp-tools \
     perl-image-exiftool tiff jpeg libpng librsvg \
     fontconfig ttf-dejavu font-liberation \
-    libreoffice \
+    libreoffice libreoffice-writer libreoffice-calc \
     font-noto font-noto-cjk font-noto-emoji
 
 RUN apk add --no-cache --virtual .build-deps \

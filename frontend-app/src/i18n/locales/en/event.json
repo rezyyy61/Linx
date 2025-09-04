@@ -1,0 +1,165 @@
+{
+  "common": {
+    "back": "Back",
+    "clear": "Clear",
+    "remove": "Remove",
+    "next": "Next",
+    "select": "Select",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "event": {
+    "common": {
+      "back": "Back",
+      "loading": "Loading..."
+    },
+    "list": {
+      "title": "My Events",
+      "searchPlaceholder": "Search by title…",
+      "onlyPublished": "Only published",
+      "table": {
+        "title": "Title",
+        "start": "Start",
+        "published": "Published",
+        "cover": "Cover",
+        "actions": "Actions"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "actions": {
+        "create": "Create event",
+        "edit": "Edit",
+        "delete": "Delete",
+        "apply": "Apply",
+        "prev": "Previous",
+        "next": "Next",
+        "noResults": "No results found.",
+        "confirmDelete": "This will permanently delete the event. Continue?"
+      },
+      "pagination": {
+        "label": "Page {page} of {pages} — Total: {total}"
+      }
+    },
+    "create": {
+      "title": "Create Event"
+    },
+    "edit": {
+      "title": "Edit event: {title}"
+    },
+    "wizard": {
+      "steps": {
+        "details": "Details",
+        "typeAccess": "Type & Access",
+        "media": "Media",
+        "review": "Review & Create"
+      }
+    },
+    "form": {
+      "fields": {
+        "title": "Title",
+        "description": "Description",
+        "startsAt": "Start time",
+        "endsAt": "End time",
+        "timezone": "Timezone",
+        "publishAt": "Publish at",
+        "location": "Location",
+        "capacity": "Capacity",
+        "isPublished": "Published",
+        "type": "Type",
+        "visibility": "Visibility",
+        "joinUrl": "Join URL",
+        "platform": "Platform",
+        "passcode": "Passcode",
+        "instructions": "Instructions",
+        "visibleBefore": "Visible before (min)",
+        "accessCode": "Access code",
+        "ogTitle": "OG Title",
+        "ogDescription": "OG Description"
+      },
+      "placeholders": {
+        "title": "e.g. Press conference",
+        "description": "Event details…",
+        "location": "City, venue…",
+        "capacity": "Enter capacity",
+        "date": "YYYY-MM-DD",
+        "time": "HH:MM",
+        "timezone": "e.g. Europe/Amsterdam",
+        "joinUrl": "https://…",
+        "ogTitle": "Social preview title",
+        "ogDescription": "Social preview description"
+      },
+      "errors": {
+        "titleRequired": "Title is required",
+        "startsAtRequired": "Start time is required",
+        "endsAfterStart": "End time must be after start time",
+        "capacityMin": "Capacity must be at least 1",
+        "submitFailed": "Submitting failed. Please check the form.",
+        "timezoneRequired": "Timezone is required",
+        "joinUrlRequired": "Join URL is required for online or hybrid events",
+        "accessCodeRequired": "Access code is required for private events"
+      },
+      "actions": {
+        "submitCreate": "Create event",
+        "submitEdit": "Save changes",
+        "cancel": "Cancel"
+      }
+    },
+    "types": {
+      "in_person": "In-person",
+      "online": "Online",
+      "hybrid": "Hybrid"
+    },
+    "visibility": {
+      "public": "Public",
+      "unlisted": "Unlisted",
+      "private": "Private"
+    },
+    "platforms": {
+      "zoom": "Zoom",
+      "google_meet": "Google Meet",
+      "youtube": "YouTube",
+      "other": "Other"
+    },
+    "cover": {
+      "title": "Event cover",
+      "upload": "Upload & set cover",
+      "uploading": "Uploading...",
+      "error": "Upload failed",
+      "dropOrClick": "Drop an image here or click to choose",
+      "chooseFile": "Choose file"
+    },
+    "docs": {
+      "title": "Event documents",
+      "upload": "Upload documents",
+      "uploading": "Uploading...",
+      "error": "Failed to upload documents"
+    },
+    "review": {
+      "section": {
+        "event": "Event",
+        "typeAccess": "Type & Access",
+        "media": "Media"
+      },
+      "labels": {
+        "title": "Title",
+        "timezone": "Timezone",
+        "starts": "Starts",
+        "ends": "Ends",
+        "location": "Location",
+        "capacity": "Capacity",
+        "published": "Published",
+        "publishAt": "Publish at",
+        "type": "Type",
+        "visibility": "Visibility",
+        "joinUrl": "Join URL",
+        "platform": "Platform",
+        "accessCode": "Access code",
+        "cover": "Cover",
+        "documents": "Documents",
+        "none": "None"
+      }
+    }
+  }
+}

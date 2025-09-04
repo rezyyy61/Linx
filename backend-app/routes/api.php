@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Event\EventController;
 use App\Http\Controllers\Api\media\MediaAttachController;
 use App\Http\Controllers\Api\media\MediaController;
 use App\Http\Controllers\Api\Post\PostController;
@@ -70,3 +71,5 @@ Route::middleware('auth:sanctum')
             Route::put('/reorder', [ValueController::class, 'reorder'])->name('reorder');
         });
     });
+
+Route::middleware('auth:sanctum')->apiResource('events', EventController::class)->names('events');
