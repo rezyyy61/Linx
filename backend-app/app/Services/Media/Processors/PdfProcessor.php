@@ -67,26 +67,64 @@ class PdfProcessor
             return [$src, false];
         }
 
-        // تبدیل با LibreOffice (نیازمند نصب soffice)
-        $this->ensureBin('soffice');
+        $soffice = $this->resolveBin('soffice');
 
         $outDir = dirname($src);
         $outPdf = $outDir.'/'.pathinfo($src, PATHINFO_FILENAME).'.pdf';
 
-        // بعضی فرمت‌ها (doc/docx/xls/xlsx/ppt/pptx/txt) پشتیبانی می‌شوند
+        // پروفایل موقت و قابل‌نوشتن برای LO
+        $profileDir = sys_get_temp_dir().'/lo_'.bin2hex(random_bytes(5));
+        @mkdir($profileDir, 0777, true);
+        $profileUri = 'file://'.$profileDir; // میشه شبیه file:///tmp/lo_xxx
+
         $cmd = [
-            'soffice', '--headless',
+            $soffice,
+            '--headless', '--nologo', '--nofirststartwizard', '--nolockcheck',
+            '-env:UserInstallation='.$profileUri,
             '--convert-to', 'pdf',
             '--outdir', $outDir,
             $src,
         ];
-        $this->runOrFail($cmd);
+
+        // ENV های امن برای اجرا
+        $env = [
+            'HOME' => sys_get_temp_dir(),
+            'XDG_CONFIG_HOME' => sys_get_temp_dir(),
+            'LANG' => 'en_US.UTF-8',
+        ];
+
+        $this->runOrFail($cmd, $env);
 
         if (! is_file($outPdf)) {
             throw new \RuntimeException('LibreOffice: converted PDF not found for '.$src);
         }
 
+        // پاکسازی پروفایل موقتی
+        try {
+            @unlink($profileDir.'/registrymodifications.xcu');
+            @rmdir($profileDir);
+        } catch (\Throwable) {
+        }
+
         return [$outPdf, true];
+    }
+
+    private function resolveBin(string $bin): string
+    {
+        $p = new \Symfony\Component\Process\Process(['sh', '-lc', 'command -v '.escapeshellarg($bin)]);
+        $p->setTimeout(5);
+        $p->run();
+        $out = trim($p->getOutput());
+        if ($p->isSuccessful() && $out !== '') {
+            return $out;
+        }
+
+        foreach (['/usr/bin/'.$bin, '/usr/local/bin/'.$bin, '/usr/lib/libreoffice/program/'.$bin] as $path) {
+            if (is_file($path) || is_link($path)) {
+                return $path;
+            }
+        }
+        throw new \RuntimeException("Required binary not available: {$bin}");
     }
 
     private function pages(string $path): ?int
@@ -120,24 +158,38 @@ class PdfProcessor
         fclose($stream);
     }
 
-    private function runOrFail(array $cmd): void
+    private function runOrFail(array $cmd, array $env = []): void
     {
-        $p = new Process($cmd);
+        // env پیش‌فرض + env‌های پاس‌داده‌شده
+        $defaultEnv = [
+            'HOME' => getenv('HOME') ?: '/tmp',
+            'XDG_CONFIG_HOME' => getenv('XDG_CONFIG_HOME') ?: '/tmp',
+        ];
+        $p = new Process($cmd, null, $env + $defaultEnv);
         $p->setTimeout(180);
         $p->run();
         if (! $p->isSuccessful()) {
-            throw new \RuntimeException('Process failed: '.implode(' ', $cmd).' :: '.$p->getErrorOutput());
+            throw new \RuntimeException('Process failed: '.implode(' ', array_map('escapeshellarg', $cmd)).' :: '.$p->getErrorOutput());
         }
     }
 
     private function ensureBin(string $bin): void
     {
-        // ساده‌ترین چک: اجرای --version
-        $p = new Process([$bin, '--version']);
+        // 1) ساده‌ترین و مطمئن‌ترین چک: آیا در PATH هست؟
+        $p = new \Symfony\Component\Process\Process(['sh', '-lc', 'command -v '.escapeshellarg($bin)]);
         $p->setTimeout(5);
         $p->run();
-        if (! $p->isSuccessful()) {
-            throw new \RuntimeException("Required binary not available: {$bin}");
+        if ($p->isSuccessful() && trim($p->getOutput()) !== '') {
+            return;
         }
+
+        // 2) مسیرهای رایج fallback (Alpine/Debian)
+        foreach (['/usr/bin/'.$bin, '/usr/local/bin/'.$bin, '/usr/lib/libreoffice/program/'.$bin] as $path) {
+            if (is_file($path) || is_link($path)) {
+                return;
+            }
+        }
+
+        throw new \RuntimeException("Required binary not available: {$bin}");
     }
 }
