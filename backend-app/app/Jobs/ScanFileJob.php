@@ -19,6 +19,18 @@ class ScanFileJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 8;
+
+    public function backoff(): array
+    {
+        return [10, 20, 40, 80, 120, 180, 240];
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addMinutes(5);
+    }
+
     public function __construct(public int $mediaId)
     {
         $this->onQueue('scan');
@@ -43,7 +55,7 @@ class ScanFileJob implements ShouldQueue
             $media->status = MediaStatus::SCANNED;
             $media->save();
             event(new MediaUpdated($media->id, ['status' => 'SCANNED']));
-            \App\Jobs\ProcessMediaJob::dispatch($media->id);
+            \App\Jobs\ProcessMediaJob::dispatch($media->id)->onQueue('media');
 
             return;
         }
@@ -59,6 +71,11 @@ class ScanFileJob implements ShouldQueue
         try {
             $result = $scanner->scanStream(fn () => $disk->readStream($media->key));
         } catch (\Throwable $e) {
+            if (str_contains($e->getMessage(), 'Connection refused') || str_contains($e->getMessage(), 'timed out')) {
+                $this->release(10);
+
+                return;
+            }
             Log::error('Scan error', ['id' => $media->id, 'key' => $media->key, 'err' => $e->getMessage()]);
             $media->status = MediaStatus::FAILED;
             $media->save();
@@ -97,6 +114,6 @@ class ScanFileJob implements ShouldQueue
         $media->save();
 
         event(new MediaUpdated($media->id, ['status' => 'SCANNED']));
-        \App\Jobs\ProcessMediaJob::dispatch($media->id);
+        \App\Jobs\ProcessMediaJob::dispatch($media->id)->onQueue('media');
     }
 }
