@@ -1,0 +1,66 @@
+{
+  "notification": {
+    "user": "User",
+
+    "follow": {
+      "request": {
+        "title": "New follow request",
+        "body": "{name} sent you a follow request"
+      },
+      "accepted": {
+        "title": "Follow request accepted",
+        "body": "{name} accepted your follow request"
+      },
+      "rejected": {
+        "title": "Follow request rejected",
+        "body": "{name} rejected your follow request"
+      },
+      "cancelled": {
+        "title": "Follow request cancelled",
+        "body": "{name} cancelled the follow request"
+      },
+      "unfollowed": {
+        "title": "Unfollowed",
+        "body": "{name} unfollowed you"
+      }
+    },
+
+    "like": {
+      "title": "New like",
+      "body": "{name} liked your post"
+    },
+
+    "comment": {
+      "title": "New comment",
+      "body": "{name} commented on your post"
+    },
+
+    "mention": {
+      "title": "You were mentioned",
+      "body": "{name} mentioned you"
+    },
+
+    "message": {
+      "title": "New message",
+      "body": "New message from {name}"
+    },
+
+    "system": {
+      "announcement": {
+        "title": "Announcement",
+        "body": "{text}"
+      },
+      "update": {
+        "title": "System update",
+        "body": "{text}"
+      }
+    },
+
+    "ago": {
+      "now": "now",
+      "m": "{n}m",
+      "h": "{n}h",
+      "d": "{n}d"
+    }
+  }
+}
