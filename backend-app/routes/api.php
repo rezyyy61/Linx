@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\Api\Event\EventController;
+use App\Http\Controllers\Api\Follow\FollowController;
+use App\Http\Controllers\Api\Follow\FollowRequestController;
 use App\Http\Controllers\Api\media\MediaAttachController;
 use App\Http\Controllers\Api\media\MediaController;
 use App\Http\Controllers\Api\Post\PostController;
 use App\Http\Controllers\Api\Profile\LinkController;
 use App\Http\Controllers\Api\Profile\ProfileController;
 use App\Http\Controllers\Api\Profile\ValueController;
+use App\Http\Controllers\Api\User\UserSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')
@@ -73,3 +76,19 @@ Route::middleware('auth:sanctum')
     });
 
 Route::middleware('auth:sanctum')->apiResource('events', EventController::class)->names('events');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/follow/{user}', [FollowRequestController::class, 'store']);
+    Route::delete('/follow/{user}', [FollowController::class, 'destroy']);
+    Route::get('/follow/requests', [FollowRequestController::class, 'index']);
+    Route::get('/follow/requests/outgoing', [FollowRequestController::class, 'outgoing']);
+    Route::post('/follow/requests/{followRequest}/accept', [FollowRequestController::class, 'accept']);
+    Route::post('/follow/requests/{followRequest}/reject', [FollowRequestController::class, 'reject']);
+    Route::post('/follow/requests/{followRequest}/cancel', [FollowRequestController::class, 'cancel']);
+});
+
+Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
+Route::get('/users/{user}/followings', [FollowController::class, 'followings']);
+Route::get('/users/{user}/suggestions', [FollowController::class, 'suggestions']);
+Route::get('/profile/me-lite', [ProfileController::class, 'meLite']);
+Route::get('/users/search', [UserSearchController::class, 'index']);
