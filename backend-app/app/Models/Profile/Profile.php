@@ -42,22 +42,22 @@ class Profile extends Model implements Mediable
             ->orderBy('mediables.order_column');
     }
 
-    public function logo()
+    public function logo(): MorphToMany
     {
         return $this->media()->wherePivot('collection', 'logo');
     }
 
-    public function cover()
+    public function cover(): MorphToMany
     {
         return $this->media()->wherePivot('collection', 'cover');
     }
 
-    public function gallery()
+    public function gallery(): MorphToMany
     {
         return $this->media()->wherePivot('collection', 'gallery');
     }
 
-    public function documents()
+    public function documents(): MorphToMany
     {
         return $this->media()->wherePivot('collection', 'document');
     }

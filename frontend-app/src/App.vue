@@ -17,8 +17,26 @@
 </template>
 
 <script setup lang="ts">
-import UiNotifications from '@/modules/auth/components/ui/UiNotifications.vue'
+import { onMounted, onBeforeUnmount, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth/auth'
+import { useFollowStore } from '@/stores/follow'
+import UiNotifications from "@/modules/auth/components/ui/UiNotifications.vue";
+
+const auth = useAuthStore()
+const follow = useFollowStore()
+
+onMounted(() => {
+  if (auth.user?.id) follow.bindRealtime()
+})
+
+watch(() => auth.user?.id, async (id) => {
+  if (id) await follow.bindRealtime()
+  else     await follow.unbindRealtime()
+}, { immediate: true })
+
+onBeforeUnmount(() => { follow.unbindRealtime() })
 </script>
+
 
 <style>
 .fade-enter-active,
