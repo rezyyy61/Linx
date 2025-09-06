@@ -3,6 +3,7 @@
 namespace App\Services\Follow;
 
 use App\Events\Follow\FriendRemoved;
+use App\Http\Resources\Profile\ProfileLiteResource;
 use App\Models\User;
 use App\Repositories\Follow\FollowRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -34,6 +35,17 @@ class FollowService implements FollowServiceInterface
 
             event(new FriendRemoved($actor->id, $target->id));
             event(new FriendRemoved($target->id, $actor->id));
+
+            $actor->loadMissing(['profile', 'profile.logo', 'profile.translations']);
+            $actorLite = (new ProfileLiteResource($actor->profile))->toArray(request());
+
+            $target->notify(new \App\Notifications\Follow\Unfollowed([
+                'id' => $actor->id,
+                'slug' => $actorLite['slug'] ?? null,
+                'username' => $actor->username ?? null,
+                'avatar' => $actorLite['avatar'] ?? null,
+            ]));
+
         });
     }
 

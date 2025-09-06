@@ -17,26 +17,39 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth/auth'
-import { useFollowStore } from '@/stores/follow'
-import UiNotifications from "@/modules/auth/components/ui/UiNotifications.vue";
+import { onMounted, onBeforeUnmount, watch } from "vue"
+import { useAuthStore } from "@/stores/auth/auth"
+import { useFollowStore } from "@/stores/follow"
+import { useNotificationsStore } from "@/modules/notifications/store"
+import UiNotifications from "@/modules/auth/components/ui/UiNotifications.vue"
 
 const auth = useAuthStore()
 const follow = useFollowStore()
+const notifications = useNotificationsStore()
 
 onMounted(() => {
-  if (auth.user?.id) follow.bindRealtime()
+  notifications.hydrateFromCache()
+  if (auth.user?.id) {
+    notifications.onAuth(auth.user.id)
+    follow.bindRealtime()
+  }
 })
 
 watch(() => auth.user?.id, async (id) => {
-  if (id) await follow.bindRealtime()
-  else     await follow.unbindRealtime()
+  if (id) {
+    await notifications.onAuth(id)
+    await follow.bindRealtime()
+  } else {
+    notifications.onLogout()
+    await follow.unbindRealtime()
+  }
 }, { immediate: true })
 
-onBeforeUnmount(() => { follow.unbindRealtime() })
+onBeforeUnmount(() => {
+  notifications.onLogout()
+  follow.unbindRealtime()
+})
 </script>
-
 
 <style>
 .fade-enter-active,
