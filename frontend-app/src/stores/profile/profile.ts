@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { api, ensureCsrfCookie } from "@/lib/http";
+import { getMyProfileLite, type UserLite } from "@/services/profile"
 
 type ID = number;
 
@@ -98,6 +99,8 @@ export const useProfileStore = defineStore("profile", {
   state: () => ({
     profile: null as Profile | null,
     user: null as User | null,
+    meLite: null as UserLite | null,
+    meLiteLoading: false,
     loading: false,
     error: null as string | null,
   }),
@@ -111,6 +114,9 @@ export const useProfileStore = defineStore("profile", {
       const m = this.logo as Media | null;
       return pickUrl(m) || fallbackUrl(m?.key);
     },
+    meAvatar: (s) => s.meLite?.avatar ?? "",
+    meName:   (s) => s.meLite?.name ?? "",
+    meColor:  (s) => s.meLite?.avatar_color ?? null,
   },
   actions: {
     async fetchMe() {
@@ -125,6 +131,16 @@ export const useProfileStore = defineStore("profile", {
         throw e;
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchMeLite() {
+      if (this.meLiteLoading) return
+      this.meLiteLoading = true
+      try {
+        this.meLite = await getMyProfileLite()
+      } finally {
+        this.meLiteLoading = false
       }
     },
 

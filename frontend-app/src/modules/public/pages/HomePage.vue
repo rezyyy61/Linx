@@ -4,6 +4,7 @@ import { ref, shallowRef, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth/auth";
 import HeroSection from "@/modules/public/components/HeroSection.vue";
 import FeedSubnav from "@/modules/public/components/FeedSubnav.vue";
+import RightDock from "@/components/rightDock/RightDock.vue";
 
 type TabKey =
   | "feed"
@@ -55,7 +56,7 @@ watch(current, (v) => {
     class="min-h-dvh bg-gray-50 text-gray-900 dark:bg-zinc-900 dark:text-zinc-100"
     dir="auto"
   >
-    <div class="mx-auto grid  gap-8 px-4 sm:px-6 lg:px-8">
+    <div class="mx-auto grid gap-8 px-4 sm:px-6 lg:px-8">
       <HeroSection />
 
       <FeedSubnav
@@ -67,6 +68,7 @@ watch(current, (v) => {
         <component :is="CurrentComp" />
       </div>
     </div>
+
+    <RightDock />
   </section>
 </template>
-
