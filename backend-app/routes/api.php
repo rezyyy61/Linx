@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\Campaign\CampaignController;
+use App\Http\Controllers\Api\Campaign\ContentController;
+use App\Http\Controllers\Api\Campaign\DonationController;
+use App\Http\Controllers\Api\Campaign\StatsController;
+use App\Http\Controllers\Api\Campaign\SupporterController;
 use App\Http\Controllers\Api\Event\EventController;
 use App\Http\Controllers\Api\Follow\FollowController;
 use App\Http\Controllers\Api\Follow\FollowRequestController;
@@ -99,4 +104,30 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
     Route::post('{id}/read', [NotificationController::class, 'read'])->whereNumber('id');
     Route::post('read-all', [NotificationController::class, 'readAll']);
     Route::delete('{id}', [NotificationController::class, 'destroy'])->whereNumber('id');
+});
+
+
+Route::middleware('auth:sanctum')->prefix('campaigns')->group(function () {
+    Route::get('/', [CampaignController::class, 'index']);
+    Route::post('/', [CampaignController::class, 'store']);
+
+    Route::get('{campaign}', [CampaignController::class, 'show']);
+    Route::put('{campaign}', [CampaignController::class, 'update'])->middleware('can:update,campaign');
+
+    Route::post('{campaign}/contents', [ContentController::class, 'store'])
+        ->middleware(['can:update,campaign','throttle:campaign-content']);
+
+    Route::put('{campaign}/contents/{content}', [ContentController::class, 'update'])
+        ->middleware(['can:update,campaign','throttle:campaign-content']);
+
+    Route::patch('{campaign}/contents/{content}/schedule', [ContentController::class, 'schedule'])
+        ->middleware(['can:update,campaign','throttle:campaign-content']);
+
+    Route::post('{campaign}/follow', [SupporterController::class, 'follow'])
+        ->middleware('throttle:campaign-follow');
+
+    Route::post('{campaign}/donate', [DonationController::class, 'store'])
+        ->middleware('throttle:campaign-donate');
+
+    Route::get('{campaign}/stats', [StatsController::class, 'show']);
 });
