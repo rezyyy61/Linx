@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Follow\FollowController;
 use App\Http\Controllers\Api\Follow\FollowRequestController;
 use App\Http\Controllers\Api\media\MediaAttachController;
 use App\Http\Controllers\Api\media\MediaController;
+use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\Api\Post\PostController;
 use App\Http\Controllers\Api\Profile\LinkController;
 use App\Http\Controllers\Api\Profile\ProfileController;
@@ -92,3 +93,10 @@ Route::get('/users/{user}/followings', [FollowController::class, 'followings']);
 Route::get('/users/{user}/suggestions', [FollowController::class, 'suggestions']);
 Route::get('/profile/me-lite', [ProfileController::class, 'meLite']);
 Route::get('/users/search', [UserSearchController::class, 'index']);
+
+Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::post('{id}/read', [NotificationController::class, 'read'])->whereNumber('id');
+    Route::post('read-all', [NotificationController::class, 'readAll']);
+    Route::delete('{id}', [NotificationController::class, 'destroy'])->whereNumber('id');
+});
