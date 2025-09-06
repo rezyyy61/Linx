@@ -70,21 +70,18 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue'
-import PanelNotifications from './panels/PanelNotifications.vue'
-import PanelNetwork from './panels/PanelNetwork.vue'
-import PanelMessages from './panels/PanelMessages.vue'
-import PanelQuick from './panels/PanelQuick.vue'
+import { Icon } from "@iconify/vue"
+import PanelNotifications from "./panels/PanelNotifications.vue"
+import PanelNetwork from "./panels/PanelNetwork.vue"
+import PanelMessages from "./panels/PanelMessages.vue"
+import PanelQuick from "./panels/PanelQuick.vue"
 
 defineProps<{
-  tab: 'notifications'|'network'|'messages'|'quick'
+  tab: "notifications" | "network" | "messages" | "quick"
   title: string
   notifications: Array<any>
   messages: Array<any>
 }>()
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+const emit = defineEmits<{ (e: "close"): void }>()
 </script>
