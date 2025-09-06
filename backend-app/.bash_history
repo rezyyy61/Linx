@@ -43,3 +43,20 @@ php artisan optimize:clear
 php artisan optimize:clear
 php artisan optimize:clear
 exit
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan optimize:clear
+php artisan make:migration create_follow_requests_table
+php artisan migrate
+php artisan make:model Follow/FollowRequest
+php artisan make:policy Follow/FollowRequestPolicy --model="App\Models\Follow\FollowRequest"
+php artisan cache:clear && php artisan route:clear
+php artisan make:controller Api/Follow/FollowRequestController
+php artisan optimize:clear
+exit

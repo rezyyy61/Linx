@@ -1,55 +1,49 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { RouterLink, useRouter } from "vue-router";
-import { Icon } from "@iconify/vue";
-import { useAuthStore } from "@/stores/auth/auth";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue"
+import { RouterLink, useRouter } from "vue-router"
+import { Icon } from "@iconify/vue"
+import { useAuthStore } from "@/stores/auth/auth"
+import { useProfileStore } from "@/stores/profile/profile"
+import AvatarUser from "@/components/shared/AvatarUser.vue";
 
-const router = useRouter();
-const auth = useAuthStore();
-const userOpen = ref(false);
-const root = ref<HTMLElement | null>(null);
+const router = useRouter()
+const auth = useAuthStore()
+const profile = useProfileStore()
 
-const user = computed(() => auth.user);
-const initials = computed(() =>
-  (user.value?.name || "U")
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase(),
-);
-const avatar = computed<string>(() => (user.value as any)?.avatar_url || "");
+const userOpen = ref(false)
+const root = ref<HTMLElement | null>(null)
 
-function toggleUser() {
-  userOpen.value = !userOpen.value;
-}
+const user = computed(() => auth.user)
+
+const displayName = computed(() => profile.meLite?.name || user.value?.name || "User")
+const displayEmail = computed(() => user.value?.email || "")
+
+const avatarUrl = computed<string>(() => profile.meLite?.avatar || "")
+const avatarColor = computed<string | null>(() => profile.meLite?.avatar_color ?? null)
+
+function toggleUser() { userOpen.value = !userOpen.value }
 async function signOut() {
-  await auth.logout();
-  userOpen.value = false;
-  router.push({ name: "home" });
+  await auth.logout()
+  userOpen.value = false
+  router.push({ name: "home" })
 }
 function onClickOutside(e: MouseEvent) {
-  if (root.value && !root.value.contains(e.target as Node))
-    userOpen.value = false;
+  if (root.value && !root.value.contains(e.target as Node)) userOpen.value = false
 }
-function onEsc(e: KeyboardEvent) {
-  if (e.key === "Escape") userOpen.value = false;
-}
+function onEsc(e: KeyboardEvent) { if (e.key === "Escape") userOpen.value = false }
 
-onMounted(() => {
-  document.addEventListener("click", onClickOutside);
-  document.addEventListener("keydown", onEsc);
-});
+onMounted(async () => {
+  document.addEventListener("click", onClickOutside)
+  document.addEventListener("keydown", onEsc)
+  if (!profile.meLite && !profile.meLiteLoading) {
+    await profile.fetchMeLite()
+  }
+})
 onBeforeUnmount(() => {
-  document.removeEventListener("click", onClickOutside);
-  document.removeEventListener("keydown", onEsc);
-});
-watch(
-  () => router.currentRoute.value.fullPath,
-  () => {
-    userOpen.value = false;
-  },
-);
+  document.removeEventListener("click", onClickOutside)
+  document.removeEventListener("keydown", onEsc)
+})
+watch(() => router.currentRoute.value.fullPath, () => { userOpen.value = false })
 </script>
 
 <template>
@@ -59,21 +53,20 @@ watch(
   >
     <button
       type="button"
-      class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-red-500 to-red-700 text-white font-semibold shadow-md ring-2 ring-white/80 dark:ring-zinc-800"
+      class="inline-flex items-center justify-center rounded-full font-semibold shadow-md ring-2 ring-white/80 dark:ring-zinc-800"
       aria-haspopup="menu"
       :aria-expanded="userOpen ? 'true' : 'false'"
       @click="toggleUser"
     >
-      <img
-        v-if="avatar"
-        :src="avatar"
-        alt=""
-        class="h-9 w-9 rounded-full object-cover"
-      >
-      <span
-        v-else
-        class="text-xs select-none"
-      >{{ initials }}</span>
+      <AvatarUser
+        :src="avatarUrl"
+        :name="displayName"
+        :color="avatarColor"
+        size="md"
+        rounded="full"
+        :ring="false"
+        alt="User avatar"
+      />
     </button>
 
     <transition name="menu">
@@ -83,13 +76,14 @@ watch(
         role="menu"
       >
         <div class="px-4 py-3 border-b border-gray-100 dark:border-zinc-800">
-          <p
-            class="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate"
-          >
-            {{ user?.name }}
+          <p class="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate">
+            {{ displayName }}
           </p>
-          <p class="text-xs text-gray-600 dark:text-zinc-400 truncate">
-            {{ user?.email }}
+          <p
+            v-if="displayEmail"
+            class="text-xs text-gray-600 dark:text-zinc-400 truncate"
+          >
+            {{ displayEmail }}
           </p>
         </div>
 
@@ -141,9 +135,7 @@ watch(
 <style scoped>
 .menu-enter-active,
 .menu-leave-active {
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
+  transition: opacity 120ms ease, transform 120ms ease;
   transform-origin: top right;
 }
 .menu-enter-from,

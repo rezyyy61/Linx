@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\ProfileUpdateRequest;
+use App\Http\Resources\Profile\ProfileLiteResource;
 use App\Http\Resources\Profile\ProfileResource;
 use App\Services\Profile\ProfileUpdateService;
 use Illuminate\Http\Request;
@@ -33,6 +34,24 @@ class ProfileController extends Controller
                     'email' => $user->email,
                 ],
             ],
+        ]);
+    }
+
+    public function meLite(Request $request)
+    {
+        $user = $request->user();
+
+        $profile = $user->profile()
+            ->with([
+                'translations',
+                'logo' => fn ($q) => $q->withPivot('collection', 'order_column')->limit(1),
+                'user',
+            ])
+            ->firstOrFail();
+
+        return response()->json([
+            'ok' => true,
+            'data' => new ProfileLiteResource($profile),
         ]);
     }
 

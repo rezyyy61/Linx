@@ -1,0 +1,49 @@
+{
+ "follow": {
+   "tabs": {
+     "friends": "Friends",
+     "suggestions": "Suggestions",
+     "requests": "Requests"
+   },
+   "common": {
+     "loading": "Loading…",
+     "nothing": "Nothing to show.",
+     "cancel": "Cancel"
+   },
+   "empty": {
+     "friends": "No friends yet.",
+     "suggestions": "No suggestions right now.",
+     "requests": "No requests."
+   },
+   "actions": {
+     "follow": "Follow",
+     "unfollow": "Unfollow",
+     "followBack": "Follow back",
+     "requested": "Requested",
+     "sending": "Sending…",
+     "connected": "Connected",
+     "accept": "Accept",
+     "reject": "Reject",
+     "accepting": "Accepting…",
+     "rejecting": "Rejecting…"
+   },
+   "confirm": {
+     "unfollowTitle": "Unfollow user?",
+     "unfollowText": "They will be removed from your friends list.",
+     "rejectTitle": "Reject request?",
+     "rejectText": "You can’t undo this action."
+   },
+   "text": {
+     "wantsToFollowYou": "wants to follow you"
+   },
+   "search": {
+     "placeholder": "Search users…",
+     "loading": "Searching…",
+     "empty": "No users found.",
+     "loadMore": "Load more"
+   }
+ },
+  "common": {
+    "cancel": "Cancel"
+  }
+}
