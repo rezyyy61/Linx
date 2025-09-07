@@ -83,5 +83,6 @@ defineProps<{
   messages: Array<any>
 }>()
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits<{ (e: "close"): void }>()
 </script>
