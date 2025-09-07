@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Announcement\Announcement;
 use App\Models\Campaign\Campaign;
 use App\Models\Event\Event;
 use App\Models\Follow\FollowRequest;
 use App\Models\Post\Post as PostModel;
 use App\Models\User;
+use App\Policies\Announcement\AnnouncementPolicy;
 use App\Policies\Campaign\CampaignPolicy;
 use App\Policies\Event\EventPolicy;
 use App\Policies\Follow\FollowPolicy;
@@ -23,6 +25,7 @@ class AuthServiceProvider extends ServiceProvider
         User::class => FollowPolicy::class,
         FollowRequest::class => FollowRequestPolicy::class,
         Campaign::class => CampaignPolicy::class,
+        Announcement::class => AnnouncementPolicy::class,
     ];
 
     public function boot(): void
