@@ -1,0 +1,30 @@
+{
+  "announcement": {
+    "loading": "Loading...",
+    "actions": { "save": "Save", "cancel": "Cancel", "edit": "Edit", "delete": "Delete" },
+    "list": {
+      "title": "Announcements",
+      "create": "New announcement",
+      "searchPlaceholder": "Search by title...",
+      "onlyPinned": "Only pinned",
+      "sort": { "publish": "Publish time", "created": "Created", "updated": "Updated", "pinned": "Pinned" },
+      "pageInfo": "Page {page} of {last} — Total: {total}"
+    },
+    "empty": { "noItems": "No announcements yet", "createFirst": "Create your first announcement" },
+    "create": { "title": "Create announcement", "submit": "Create announcement" },
+    "edit": { "title": "Edit announcement" },
+    "table": { "cover": "Cover", "title": "Title", "visibility": "Visibility", "publishAt": "Publish at", "actions": "Actions" },
+    "confirm": { "delete": "Are you sure to delete this announcement?" },
+    "visibility": { "all": "All", "public": "Public", "members": "Members", "supporters": "Supporters", "private": "Private" },
+    "form": {
+      "title": { "label": "Title", "placeholder": "Announcement title" },
+      "slug": { "label": "Slug", "placeholder": "Optional unique identifier" },
+      "body": { "label": "Body", "placeholder": "Write the announcement content" },
+      "visibility": { "label": "Visibility" },
+      "publishAt": { "label": "Publish at" },
+      "pinned": { "label": "Pin this announcement" }
+    },
+    "cover": { "title": "Cover", "uploading": "Uploading...", "dropOrClick": "Drop a file here or click to upload", "chooseFile": "PNG, JPG up to 10MB" },
+    "docs": { "title": "Documents", "uploading": "Uploading...", "dropOrClick": "Drop files here or click to upload", "chooseFile": "Any supported files", "uploadHint": "Upload documents by clicking here" }
+  }
+}
