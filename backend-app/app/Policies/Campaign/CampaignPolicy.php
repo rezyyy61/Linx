@@ -1,17 +1,23 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Policies\Campaign;
 
 use App\Models\Campaign\Campaign;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CampaignPolicy
 {
-    public function view(?User $user, Campaign $campaign): bool
+    use HandlesAuthorization;
+
+    public function viewAny(User $user): bool
     {
         return true;
+    }
+
+    public function view(User $user, Campaign $campaign): bool
+    {
+        return $user->id === $campaign->owner_id;
     }
 
     public function create(User $user): bool
@@ -21,6 +27,21 @@ class CampaignPolicy
 
     public function update(User $user, Campaign $campaign): bool
     {
-        return (int) $campaign->owner_id === (int) $user->id;
+        return $user->id === $campaign->owner_id;
+    }
+
+    public function delete(User $user, Campaign $campaign): bool
+    {
+        return $user->id === $campaign->owner_id;
+    }
+
+    public function restore(User $user, Campaign $campaign): bool
+    {
+        return $user->id === $campaign->owner_id;
+    }
+
+    public function forceDelete(User $user, Campaign $campaign): bool
+    {
+        return false;
     }
 }

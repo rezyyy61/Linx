@@ -13,9 +13,9 @@ const EventsListPage = () => import('@/modules/dashboard/pages/events/EventsList
 const EventsCreatePage = () => import('@/modules/dashboard/pages/events/EventsCreatePage.vue')
 const EventsEditPage = () => import('@/modules/dashboard/pages/events/EventsEditPage.vue')
 
-const CampaignsListPage = () => import('@/modules/dashboard/pages/campaigns/CampaignsListPage.vue')
-const CampaignsCreatePage = () => import('@/modules/dashboard/pages/campaigns/CampaignsCreatePage.vue')
-const CampaignsEditPage = () => import('@/modules/dashboard/pages/campaigns/CampaignsEditPage.vue')
+const CampaignsListPage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsListPage.vue')
+const CampaignsCreatePage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsCreatePage.vue')
+const CampaignsEditPage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsEditPage.vue')
 
 const AnnouncementsListPage = () => import('@/modules/dashboard/pages/announcements/AnnouncementsListPage.vue')
 const AnnouncementsCreatePage = () => import('@/modules/dashboard/pages/announcements/AnnouncementsCreatePage.vue')

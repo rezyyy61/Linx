@@ -1,12 +1,11 @@
-<!-- /src/modules/dashboard/pages/events/components/EventCoverUploader.vue -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import { useMediaStore, type UploadTask } from "@/stores/post/post.media";
-import { useFileUpload } from "@/modules/dashboard/pages/events/composables/useFileUpload";
+import { useFileUpload } from "@/modules/dashboard/pages/campaigns/composables/useFileUpload";
 
 const props = defineProps<{
-  eventId?: number;
+  campaignId?: number;
   currentCoverUrl?: string | null;
 }>();
 
@@ -16,7 +15,7 @@ const emit = defineEmits<{
   (e: "cleared"): void;
 }>();
 
-const FQN_EVENT = "App\\Models\\Event\\Event";
+const FQN_CAMPAIGN = "App\\Models\\Campaign\\Campaign";
 
 const mediaStore = useMediaStore();
 const { attachSingle } = useFileUpload();
@@ -35,7 +34,6 @@ function onChoose(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
   if (task.value) remove(false);
-
   const t = mediaStore.createTask(file, "image");
   task.value = t;
   mediaStore.enqueueTask(t);
@@ -47,8 +45,8 @@ async function onAfterReady() {
   const url = (media.public_url || media.url || null) as string | null;
   previewUrl.value = url;
 
-  if (props.eventId) {
-    await attachSingle(task.value.id, FQN_EVENT, props.eventId, "event-cover", 0);
+  if (props.campaignId) {
+    await attachSingle(task.value.id, FQN_CAMPAIGN, props.campaignId, "campaign-cover", 0);
     emit("updated");
   } else {
     emit("selected", { id: task.value.id, url });
@@ -57,10 +55,8 @@ async function onAfterReady() {
 
 async function remove(deleteServer = true) {
   try {
-    if (task.value) {
-      if (props.eventId && task.value.id) { /* empty */ } else {
-        if (deleteServer) await mediaStore.removeDraftMedia(task.value);
-      }
+    if (task.value && deleteServer && !props.campaignId) {
+      await mediaStore.removeDraftMedia(task.value);
     }
   } finally {
     task.value = null;
@@ -93,7 +89,7 @@ onBeforeUnmount(() => {
           class="w-5 h-5 text-gray-500"
         />
         <h3 class="font-semibold">
-          {{ $t("event.cover.title") }}
+          {{ $t("campaign.cover.title") }}
         </h3>
       </div>
       <div class="text-xs">
@@ -104,7 +100,7 @@ onBeforeUnmount(() => {
           <Icon
             icon="mdi:progress-clock"
             class="w-4 h-4"
-          /> {{ $t("event.cover.uploading") }}
+          /> {{ $t("campaign.cover.uploading") }}
         </span>
         <span
           v-else-if="ready"
@@ -119,9 +115,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="flex gap-4">
-      <div
-        class="h-32 w-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center"
-      >
+      <div class="h-32 w-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
         <img
           v-if="previewUrl"
           :src="previewUrl"
@@ -147,10 +141,10 @@ onBeforeUnmount(() => {
             />
             <div class="text-sm">
               <div class="font-medium">
-                {{ $t("event.cover.dropOrClick") }}
+                {{ $t("campaign.cover.dropOrClick") }}
               </div>
               <div class="text-gray-500">
-                {{ $t("event.cover.chooseFile") }}
+                {{ $t("campaign.cover.chooseFile") }}
               </div>
             </div>
           </div>
