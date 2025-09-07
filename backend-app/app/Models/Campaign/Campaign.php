@@ -1,69 +1,106 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models\Campaign;
 
+use App\Contracts\Mediable;
+use App\Models\Media;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Str;
 
-class Campaign extends Model
+class Campaign extends Model implements Mediable
 {
     use HasFactory;
 
     protected $table = 'campaigns';
 
     protected $fillable = [
+        'owner_id',
         'title',
-        'slug',
         'goal',
         'description',
-        'status',
         'starts_at',
         'ends_at',
-        'owner_id',
+        'status',
+        'donation_enabled',
+        'slug',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'donation_enabled' => 'boolean',
+        'goal' => 'float',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (self $m) {
+            if (empty($m->slug)) {
+                $m->slug = static::uniqueSlug($m->title ?: 'campaign');
+            }
+        });
+
+        static::updating(function (self $m) {
+            if (empty($m->slug) && ! empty($m->title)) {
+                $m->slug = static::uniqueSlug($m->title, $m->id);
+            }
+        });
+    }
+
+    public static function uniqueSlug(string $base, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($base) ?: 'campaign';
+        $slug = $base;
+        $i = 2;
+
+        while (
+            static::where('slug', $slug)
+                ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
+    }
 
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function personas(): HasMany
+    public function media(): MorphToMany
     {
-        return $this->hasMany(CampaignPersona::class);
+        return $this->morphToMany(Media::class, 'mediable', 'mediables')
+            ->withPivot(['collection', 'order_column'])
+            ->withTimestamps()
+            ->orderBy('mediables.order_column');
     }
 
-    public function contents(): HasMany
+    public function covers(): MorphToMany
     {
-        return $this->hasMany(CampaignContent::class);
+        return $this->media()->wherePivot('collection', 'campaign-cover');
     }
 
-    public function supporters(): HasMany
+    public function documents(): MorphToMany
     {
-        return $this->hasMany(CampaignSupporter::class);
+        return $this->media()->wherePivot('collection', 'campaign-document');
     }
 
-    public function donations(): HasMany
+    public function getCoverUrlAttribute(): ?string
     {
-        return $this->hasMany(Donation::class);
+        $m = $this->relationLoaded('covers') ? $this->covers->first() : $this->covers()->first();
+
+        return $m instanceof Media ? $m->publicUrl() : null;
     }
 
-    public function scopeStatus($query, string $status)
+    public function donationIntents()
     {
-        return $query->where('status', $status);
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'running');
     }
 }

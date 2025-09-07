@@ -1,4 +1,3 @@
-
 import { api, ensureCsrfCookie } from "@/lib/http";
 import { useMediaStore } from "@/stores/post/post.media";
 
@@ -11,7 +10,7 @@ export type PresignResp = {
 
 export type UploadedMedia = { id: number; url: string | null };
 
-const FQN_EVENT = "App\\Models\\Event\\Event";
+const FQN_CAMPAIGN = "App\\Models\\Campaign\\Campaign";
 
 export function useFileUpload() {
   const mediaStore = useMediaStore();
@@ -33,7 +32,6 @@ export function useFileUpload() {
 
   async function finalize(mediaId: number, extra: Record<string, unknown> = {}) {
     await ensureCsrfCookie();
-    // بک‌اند خودش size/mime را می‌خواند؛ اگر بخواهی می‌توانی mime را هم بدهی
     await api.post(`/media/${mediaId}/finalize`, extra);
   }
 
@@ -41,7 +39,7 @@ export function useFileUpload() {
     mediaId: number,
     modelType: string,
     modelId: number,
-    collection = "event-cover",
+    collection = "campaign-cover",
     order = 0
   ) {
     await ensureCsrfCookie();
@@ -57,7 +55,7 @@ export function useFileUpload() {
     mediaId: number,
     modelType: string,
     modelId: number,
-    collection = "event-document",
+    collection = "campaign-document",
     order = 0
   ) {
     await ensureCsrfCookie();
@@ -83,44 +81,38 @@ export function useFileUpload() {
     });
   }
 
-  // --- Helpers برای Event -----------------------------------------------------
-  async function attachCoverToEvent(mediaId: number, eventId: number) {
-    return attachSingle(mediaId, FQN_EVENT, eventId, "event-cover", 0);
-  }
-  async function attachDocToEvent(mediaId: number, eventId: number, order = 0) {
-    return attach(mediaId, FQN_EVENT, eventId, "event-document", order);
-  }
-  async function detachFromEvent(mediaId: number, eventId: number, collection?: "event-cover" | "event-document") {
-    return detachFromModel(mediaId, FQN_EVENT, eventId, collection);
+  async function attachCoverToCampaign(mediaId: number, campaignId: number) {
+    return attachSingle(mediaId, FQN_CAMPAIGN, campaignId, "campaign-cover", 0);
   }
 
-  // --- High-level (با استور realtime و نوار پیشرفت) --------------------------
+  async function attachDocToCampaign(mediaId: number, campaignId: number, order = 0) {
+    return attach(mediaId, FQN_CAMPAIGN, campaignId, "campaign-document", order);
+  }
+
+  async function detachFromCampaign(mediaId: number, campaignId: number, collection?: "campaign-cover" | "campaign-document") {
+    return detachFromModel(mediaId, FQN_CAMPAIGN, campaignId, collection);
+  }
+
   async function uploadOne(file: File, kind: "image" | "document"): Promise<UploadedMedia> {
-    // مسیر کامل: presign → PUT → finalize → fetch(public_url)
     const task = mediaStore.createTask(file, kind);
     await mediaStore.presign(task);
     await mediaStore.uploadToS3(task);
-    // finalize با mime صحیح
     await mediaStore.finalize(task, { mime: task.contentType });
-
     const media = await mediaStore.fetchMedia(task.id!);
     const url = (media.public_url || media.url || null) as string | null;
     return { id: task.id!, url };
   }
 
   return {
-    // low-level
     presign,
     putToS3,
     finalize,
     attachSingle,
     attach,
     detachFromModel,
-    // helpers for events
-    attachCoverToEvent,
-    attachDocToEvent,
-    detachFromEvent,
-    // high-level
+    attachCoverToCampaign,
+    attachDocToCampaign,
+    detachFromCampaign,
     uploadOne,
   };
 }

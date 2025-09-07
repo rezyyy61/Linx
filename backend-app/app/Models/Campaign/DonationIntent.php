@@ -1,32 +1,33 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models\Campaign;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Donation extends Model
+class DonationIntent extends Model
 {
     use HasFactory;
 
-    protected $table = 'donations';
+    protected $table = 'donation_intents';
 
     protected $fillable = [
         'campaign_id',
-        'supporter_id',
+        'requester_email',
         'amount',
         'currency',
-        'provider',
-        'provider_ref',
+        'message',
         'status',
+        'token',
+        'sent_at',
         'paid_at',
         'meta',
     ];
 
     protected $casts = [
+        'amount' => 'decimal:2',
+        'sent_at' => 'datetime',
         'paid_at' => 'datetime',
         'meta' => 'array',
     ];
@@ -34,10 +35,5 @@ class Donation extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
-    }
-
-    public function supporter(): BelongsTo
-    {
-        return $this->belongsTo(CampaignSupporter::class, 'supporter_id');
     }
 }
