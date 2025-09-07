@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Announcement\AnnouncementController;
 use App\Http\Controllers\Api\Campaign\CampaignController;
 use App\Http\Controllers\Api\Campaign\CampaignDonationController;
 use App\Http\Controllers\Api\Event\EventController;
@@ -110,3 +111,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('campaigns/{campaign}/donation-intents/{intent}/mark-paid', [CampaignDonationController::class, 'markPaid']);
     Route::post('campaigns/{campaign}/donation-intents/{intent}/schedule-email', [CampaignDonationController::class, 'scheduleEmail']);
 });
+
+Route::middleware('auth:sanctum')->apiResource('announcements', AnnouncementController::class);
