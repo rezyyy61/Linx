@@ -1,0 +1,116 @@
+{
+  "campaign": {
+    "loading": "Loading...",
+    "errors": {
+      "generic": "Something went wrong"
+    },
+    "status": {
+      "draft": "Draft",
+      "running": "Running",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "actions": {
+      "create": "Create",
+      "refresh": "Refresh",
+      "save": "Save",
+      "back": "Back",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "list": {
+      "title": "Campaigns",
+      "create": "New campaign",
+      "searchPlaceholder": "Search by title...",
+      "onlyRunning": "Only running",
+      "clear": "Clear",
+      "sort": {
+        "starts": "Start",
+        "created": "Created",
+        "updated": "Updated"
+      },
+      "pageInfo": "Page {page} of {last} — Total: {total}"
+    },
+    "empty": {
+      "noCampaigns": "No campaigns yet",
+      "createFirst": "Create your first campaign"
+    },
+    "create": {
+      "title": "Create campaign",
+      "submit": "Create campaign"
+    },
+    "edit": {
+      "title": "Edit campaign"
+    },
+    "table": {
+      "cover": "Cover",
+      "title": "Title",
+      "start": "Start",
+      "status": "Status",
+      "donation": "Donations",
+      "period": "Period",
+      "actions": "Actions",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "confirm": {
+      "delete": "Are you sure to delete this campaign?"
+    },
+    "form": {
+      "title": {
+        "label": "Title",
+        "placeholder": "Campaign title"
+      },
+      "goal": {
+        "label": "Goal",
+        "placeholder": "e.g., Increase supporters in district X"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Write a short description"
+      },
+      "startsAt": {
+        "label": "Starts at"
+      },
+      "endsAt": {
+        "label": "Ends at"
+      },
+      "status": {
+        "label": "Status"
+      },
+      "donationEnabled": {
+        "label": "Enable donations"
+      },
+      "cover": {
+        "label": "Cover media ID",
+        "placeholder": "e.g. 123"
+      },
+      "documents": {
+        "label": "Document media IDs",
+        "placeholder": "e.g. 10, 12, 45"
+      },
+      "slug": {
+        "label": "Slug",
+        "placeholder": "Optional unique identifier"
+      }
+    },
+    "cover": {
+      "title": "Cover",
+      "uploading": "Uploading...",
+      "dropOrClick": "Drop a file here or click to upload",
+      "chooseFile": "PNG, JPG up to 10MB"
+    },
+    "docs": {
+      "title": "Documents",
+      "uploading": "Uploading...",
+      "upload": "Upload documents by clicking here"
+    },
+    "content": {
+      "actions": {
+        "cancel": "Cancel"
+      }
+    }
+  }
+}

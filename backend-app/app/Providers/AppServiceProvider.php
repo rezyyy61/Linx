@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use App\Notifications\JobFailedAlert;
+use App\Services\Campaign\CampaignService;
+use App\Services\Campaign\CampaignServiceInterface;
+use App\Services\Campaign\DonationIntentService;
+use App\Services\Campaign\DonationIntentServiceInterface;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
@@ -15,7 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CampaignServiceInterface::class, CampaignService::class);
+        $this->app->bind(DonationIntentServiceInterface::class, DonationIntentService::class);
     }
 
     /**
