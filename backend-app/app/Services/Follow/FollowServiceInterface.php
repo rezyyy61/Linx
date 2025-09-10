@@ -16,4 +16,6 @@ interface FollowServiceInterface
     public function followings(User $user, int $perPage = 15): LengthAwarePaginator;
 
     public function suggestions(User $user, int $limit = 10);
+
+    public function mutuals(User $a, User $b, int $perPage = 15): LengthAwarePaginator;
 }

@@ -1,0 +1,39 @@
+{
+  "toast": {
+    "member": {
+      "accepted": "Membership accepted",
+      "rejected": "Invitation rejected",
+      "removed": "Member removed",
+      "removeFailed": "Failed to remove member",
+      "confirmRemove": "Remove {name} from members?",
+      "unknown": "this user",
+      "invite": {
+        "confirm": "Invite {name} to your members?",
+        "sent": "Invitation sent",
+        "failed": "Failed to send invitation"
+      }
+    },
+    "friend": {
+      "confirmRemoveOne": "Remove {name} from friends?",
+      "confirmRemoveMany": "Remove {n} friends?",
+      "removedOne": "Friend removed",
+      "removedMany": "{n} friends removed",
+      "removePartial": "{ok} removed, {fail} failed",
+      "removeFailOne": "Failed to remove friend",
+      "noneSelected": "No friends selected",
+      "unknown": "this user"
+    },
+    "action": {
+      "invite": "Send invite",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "ok": "OK",
+      "close": "Close"
+    },
+    "generic": {
+      "saved": "Saved",
+      "deleted": "Deleted",
+      "error": "Something went wrong"
+    }
+  }
+}

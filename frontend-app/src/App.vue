@@ -12,6 +12,7 @@
         <component :is="Component" />
       </transition>
       <UiNotifications />
+      <ToastContainer />
     </RouterView>
   </div>
 </template>
@@ -22,6 +23,7 @@ import { useAuthStore } from "@/stores/auth/auth"
 import { useFollowStore } from "@/stores/follow"
 import { useNotificationsStore } from "@/modules/notifications/store"
 import UiNotifications from "@/modules/auth/components/ui/UiNotifications.vue"
+import ToastContainer from "@/modules/toast/ToastContainer.vue";
 
 const auth = useAuthStore()
 const follow = useFollowStore()
