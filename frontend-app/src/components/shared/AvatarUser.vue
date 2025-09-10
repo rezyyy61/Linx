@@ -1,8 +1,12 @@
 <template>
   <div
-    :class="wrapperClass"
+    :class="[wrapperClass, zoomable && showImage ? 'cursor-zoom-in' : '']"
     :style="wrapperStyle"
     :aria-label="altText"
+    :role="zoomable && showImage ? 'button' : undefined"
+    :tabindex="zoomable && showImage ? 0 : undefined"
+    @click="onClick"
+    @keydown.enter.space.prevent="onClick"
   >
     <img
       v-if="showImage"
@@ -25,15 +29,39 @@
     </div>
     <slot />
   </div>
+
+  <transition name="fade">
+    <div
+      v-if="lightbox && src"
+      class="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+      :class="overlayClass"
+      @click.self="close"
+    >
+      <div class="relative max-w-[90vw] max-h-[90vh]">
+        <img
+          :src="src"
+          :alt="altText"
+          class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
+        >
+        <button
+          class="absolute -top-3 -right-3 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur px-2 py-1 text-xs border dark:border-slate-700 shadow"
+          @click.stop="close"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, onMounted, onBeforeUnmount } from "vue"
 import { Icon } from "@iconify/vue"
 
 type SizeKey = "xs" | "sm" | "md" | "lg" | "xl" | "2xl"
 type RoundedKey = "full" | "xl" | "lg" | "md" | "none"
 type RingKey = "none" | "indigo" | "zinc" | "emerald" | "sky" | "rose"
+type OverlayTone = "dark" | "light"
 
 const props = defineProps<{
   src?: string | null
@@ -46,6 +74,8 @@ const props = defineProps<{
   fallback?: "initials" | "icon"
   icon?: string
   alt?: string
+  zoomable?: boolean
+  overlayTone?: OverlayTone
 }>()
 
 const broken = ref(false)
@@ -54,6 +84,8 @@ const rounded = computed<RoundedKey>(() => props.rounded ?? "full")
 const ringColor = computed<RingKey>(() => props.ringColor ?? "indigo")
 const fallbackMode = computed(() => props.fallback ?? "initials")
 const iconName = computed(() => props.icon ?? "mdi:account")
+const zoomable = computed(() => !!props.zoomable)
+const overlayTone = computed<OverlayTone>(() => props.overlayTone ?? "dark")
 
 const sizeMap: Record<SizeKey, string> = { xs:"w-6 h-6", sm:"w-8 h-8", md:"w-10 h-10", lg:"w-12 h-12", xl:"w-16 h-16", "2xl":"w-20 h-20" }
 const textMap: Record<SizeKey, string> = { xs:"text-[10px]", sm:"text-xs", md:"text-sm", lg:"text-base", xl:"text-xl", "2xl":"text-2xl" }
@@ -125,4 +157,31 @@ const fallbackClass = computed(() => [
 ])
 
 function onError() { broken.value = true }
+
+/* Lightbox */
+const lightbox = ref(false)
+const overlayClass = computed(() =>
+  overlayTone.value === "light"
+    ? "bg-white/80 dark:bg-white/70"
+    : "bg-black/70"
+)
+
+function onClick() {
+  if (!zoomable.value || !showImage.value) return
+  lightbox.value = true
+}
+function close() {
+  lightbox.value = false
+}
+function onKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') close()
+}
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity .15s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
