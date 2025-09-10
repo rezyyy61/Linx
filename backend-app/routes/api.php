@@ -8,6 +8,10 @@ use App\Http\Controllers\Api\Follow\FollowController;
 use App\Http\Controllers\Api\Follow\FollowRequestController;
 use App\Http\Controllers\Api\media\MediaAttachController;
 use App\Http\Controllers\Api\media\MediaController;
+use App\Http\Controllers\Api\Member\ContentController;
+use App\Http\Controllers\Api\Member\ContentTargetController;
+use App\Http\Controllers\Api\Member\MembershipController;
+use App\Http\Controllers\Api\Member\MyMembershipController;
 use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\Api\Post\PostController;
 use App\Http\Controllers\Api\Profile\LinkController;
@@ -94,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
 Route::get('/users/{user}/followings', [FollowController::class, 'followings']);
 Route::get('/users/{user}/suggestions', [FollowController::class, 'suggestions']);
+Route::get('/users/{user}/mutuals', [FollowController::class, 'mutuals']);
 Route::get('/profile/me-lite', [ProfileController::class, 'meLite']);
 Route::get('/users/search', [UserSearchController::class, 'index']);
 
@@ -113,3 +118,40 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->apiResource('announcements', AnnouncementController::class);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('users/{user}/members')->group(function () {
+        Route::get('/', [MembershipController::class, 'index']);
+        Route::post('/', [MembershipController::class, 'store']);
+    });
+
+    Route::get('/users/{user}/my-memberships', [MyMembershipController::class, 'index']);
+    Route::patch('/my-memberships/{membership}', [MyMembershipController::class, 'update']);
+    Route::post('/my-memberships/{membership}/leave', [MyMembershipController::class, 'leave']);
+
+    Route::prefix('memberships/{membership}')->group(function () {
+        Route::post('/accept', [MembershipController::class, 'accept']);
+        Route::post('/reject', [MembershipController::class, 'reject']);
+        Route::delete('/', [MembershipController::class, 'destroy']);
+    });
+
+    Route::prefix('users/{user}/member-contents')->group(function () {
+        Route::get('/', [ContentController::class, 'index']);
+        Route::post('/', [ContentController::class, 'store']);
+    });
+
+    Route::prefix('member-contents/{content}')->group(function () {
+        Route::put('/', [ContentController::class, 'update']);
+        Route::delete('/', [ContentController::class, 'destroy']);
+        Route::post('/schedule', [ContentController::class, 'schedule']);
+
+        Route::get('/targets', [ContentTargetController::class, 'index']);
+    });
+
+    Route::prefix('member-content-targets/{target}')->group(function () {
+        Route::post('/sent', [ContentTargetController::class, 'markSent']);
+        Route::post('/failed', [ContentTargetController::class, 'markFailed']);
+        Route::post('/opened', [ContentTargetController::class, 'markOpened']);
+        Route::post('/clicked', [ContentTargetController::class, 'markClicked']);
+    });
+});

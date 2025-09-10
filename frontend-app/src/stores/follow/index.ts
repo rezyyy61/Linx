@@ -16,19 +16,24 @@ function removeId(arr: number[], id: number) {
 export const useFollowStore = defineStore("follow", () => {
   const state = ref<FollowState>({
     meId: null,
-
     followerIds: [],
     followingIds: [],
     suggestionIds: [],
-
     requestIds: [],
     requestsById: {},
-
     outgoingRequestIds: [],
     outgoingByTargetId: {},
-
     loading: false,
   })
+  const followersPage = ref(1)
+  const followingsPage = ref(1)
+  const followersCursor = ref<string|null>(null)
+  const followingsCursor = ref<string|null>(null)
+  const followersHasMore = ref(true)
+  const followingsHasMore = ref(true)
+  const loadingFollowers = ref(false)
+  const loadingFollowings = ref(false)
+
 
   const entities = useUserEntities()
 
@@ -76,29 +81,60 @@ export const useFollowStore = defineStore("follow", () => {
   }
 
   async function loadFollowers(userId?: number | string) {
-    const id = userId ?? (await ensureMe())
-    if (!id) return
-    state.value.loading = true
+    if (loadingFollowers.value || !followersHasMore.value) return
+    const id = userId ?? (await ensureMe()); if (!id) return
+    loadingFollowers.value = true
     try {
-      const { data } = await api.getFollowers(id)
-      const payload = data?.data ?? data
-      const items: UserLite[] = Array.isArray(payload) ? payload : payload?.data ?? []
+      const params: any = { per_page: 50 }
+      if (followersCursor.value) params.cursor = followersCursor.value
+      else params.page = followersPage.value
+      const resp = await api.getFollowers(id, params)
+      const data = resp?.data ?? resp
+      const items: UserLite[] = Array.isArray(data) ? data : (data?.data ?? [])
       entities.upsertMany(items)
-      state.value.followerIds = items.map(u => u.id)
-    } finally { state.value.loading = false }
+      const ids = items.map(u => u.id)
+      const next = state.value.followerIds.slice()
+      ids.forEach(x => { if (!next.includes(x)) next.push(x) })
+      state.value.followerIds = next
+      const meta = data?.meta ?? data
+      const nextCursor = meta?.next_cursor ?? data?.next_cursor ?? null
+      if (nextCursor) { followersCursor.value = nextCursor; followersHasMore.value = true }
+      else {
+        const cp = meta?.current_page ?? data?.current_page ?? followersPage.value
+        const lp = meta?.last_page ?? data?.last_page ?? cp
+        followersHasMore.value = cp < lp || ids.length > 0
+        followersPage.value = cp + 1
+      }
+    } finally { loadingFollowers.value = false }
   }
 
+
   async function loadFollowings(userId?: number | string) {
-    const id = userId ?? (await ensureMe())
-    if (!id) return
-    state.value.loading = true
+    if (loadingFollowings.value || !followingsHasMore.value) return
+    const id = userId ?? (await ensureMe()); if (!id) return
+    loadingFollowings.value = true
     try {
-      const { data } = await api.getFollowings(id)
-      const payload = data?.data ?? data
-      const items: UserLite[] = Array.isArray(payload) ? payload : payload?.data ?? []
+      const params: any = { per_page: 50 }
+      if (followingsCursor.value) params.cursor = followingsCursor.value
+      else params.page = followingsPage.value
+      const resp = await api.getFollowings(id, params)
+      const data = resp?.data ?? resp
+      const items: UserLite[] = Array.isArray(data) ? data : (data?.data ?? [])
       entities.upsertMany(items)
-      state.value.followingIds = items.map(u => u.id)
-    } finally { state.value.loading = false }
+      const ids = items.map(u => u.id)
+      const next = state.value.followingIds.slice()
+      ids.forEach(x => { if (!next.includes(x)) next.push(x) })
+      state.value.followingIds = next
+      const meta = data?.meta ?? data
+      const nextCursor = meta?.next_cursor ?? data?.next_cursor ?? null
+      if (nextCursor) { followingsCursor.value = nextCursor; followingsHasMore.value = true }
+      else {
+        const cp = meta?.current_page ?? data?.current_page ?? followingsPage.value
+        const lp = meta?.last_page ?? data?.last_page ?? cp
+        followingsHasMore.value = cp < lp || ids.length > 0
+        followingsPage.value = cp + 1
+      }
+    } finally { loadingFollowings.value = false }
   }
 
   async function loadSuggestions(userId?: number | string) {

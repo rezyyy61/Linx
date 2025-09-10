@@ -1,4 +1,12 @@
-export type NotificationKind = "follow.accepted" | "follow.rejected" | "follow.unfollowed" | string
+export type NotificationKind =
+  | "follow.accepted"
+  | "follow.rejected"
+  | "follow.unfollowed"
+  | "member.invited"
+  | "member.accepted"
+  | "member.rejected"
+  | string
+
 
 export interface ActorLite {
   id: number

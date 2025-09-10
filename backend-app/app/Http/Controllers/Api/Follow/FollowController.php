@@ -15,7 +15,7 @@ class FollowController extends Controller
 {
     public function __construct(private FollowServiceInterface $service)
     {
-        $this->middleware('auth:sanctum')->only(['store', 'destroy']);
+        $this->middleware('auth:sanctum')->only(['store', 'destroy', 'mutuals']);
     }
 
     public function store(FollowStoreRequest $request, User $user)
@@ -64,11 +64,20 @@ class FollowController extends Controller
     {
         $limit = (int) $request->integer('limit', 10);
 
-        $list = $this->service->suggestions($user, $limit)
-            ->loadMissing(['profile', 'profile.logo', 'profile.translations']);
+        $list = $this->service->suggestions($user, $limit);
 
-        $profiles = $list->pluck('profile');
+        $profiles = $list->map(fn ($u) => $u->profile);
 
         return ProfileLiteResource::collection($profiles);
+    }
+
+    public function mutuals(Request $request, User $user): AnonymousResourceCollection
+    {
+        $me = $request->user();
+        $perPage = (int) $request->integer('per_page', 15);
+
+        $paginator = $this->service->mutuals($me, $user, $perPage);
+
+        return ProfileLiteResource::collection($paginator);
     }
 }

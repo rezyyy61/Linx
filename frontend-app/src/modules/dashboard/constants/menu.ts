@@ -11,5 +11,6 @@ export const dashboardMenu: MenuItem[] = [
   { label: "Events", icon: "solar:calendar-linear", toName: "events.list", permission: "events.view" },
   { label: "Campaigns", icon: "solar:leaf-linear", toName: "campaigns.list", permission: "campaigns.view" },
   { label: "Announcements", icon: "mdi:bullhorn-outline", toName: "announcements.list", permission: "announcements.view" },
-  { label: "Profile", icon: "solar:user-linear", toName: "profile.edit" }
+  { label: "Profile", icon: "solar:user-linear", toName: "profile.edit" },
+  { label: 'Audience', toName: 'audience.followers', icon: 'mdi:account-group' }
 ];

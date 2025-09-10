@@ -6,6 +6,8 @@ use App\Models\Announcement\Announcement;
 use App\Models\Campaign\Campaign;
 use App\Models\Event\Event;
 use App\Models\Follow\FollowRequest;
+use App\Models\Member\MemberContentTarget;
+use App\Models\Member\Membership;
 use App\Models\Post\Post as PostModel;
 use App\Models\User;
 use App\Policies\Announcement\AnnouncementPolicy;
@@ -13,9 +15,13 @@ use App\Policies\Campaign\CampaignPolicy;
 use App\Policies\Event\EventPolicy;
 use App\Policies\Follow\FollowPolicy;
 use App\Policies\Follow\FollowRequestPolicy;
+use App\Policies\Member\ContentPolicy;
+use App\Policies\Member\ContentTargetPolicy;
+use App\Policies\Member\MembershipPolicy;
 use App\Policies\Post\PostPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Mail\Mailables\Content;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -26,6 +32,9 @@ class AuthServiceProvider extends ServiceProvider
         FollowRequest::class => FollowRequestPolicy::class,
         Campaign::class => CampaignPolicy::class,
         Announcement::class => AnnouncementPolicy::class,
+        Membership::class => MembershipPolicy::class,
+        Content::class => ContentPolicy::class,
+        MemberContentTarget::class => ContentTargetPolicy::class,
     ];
 
     public function boot(): void

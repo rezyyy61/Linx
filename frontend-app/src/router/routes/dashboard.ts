@@ -1,4 +1,6 @@
+// src/modules/dashboard/dashboard.routes.ts
 import type { RouteRecordRaw } from 'vue-router'
+import MyMembershipsListPage from "@/modules/dashboard/pages/audience/pages/members/MyMembershipsListPage.vue";
 
 const DashboardLayout = () => import('@/modules/dashboard/layout/DashboardLayout.vue')
 const DashboardHomePage = () => import('@/modules/dashboard/pages/DashboardHomePage.vue')
@@ -20,6 +22,10 @@ const CampaignsEditPage = () => import('@/modules/dashboard/pages/campaigns/page
 const AnnouncementsListPage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsListPage.vue')
 const AnnouncementsCreatePage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsCreatePage.vue')
 const AnnouncementsEditPage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsEditPage.vue')
+
+const AudienceLayout = () => import('@/modules/dashboard/pages/audience/AudienceLayout.vue')
+const FollowersListPage = () => import('@/modules/dashboard/pages/audience/pages/friends/FriendsListPage.vue')
+const MembersListPage = () => import('@/modules/dashboard/pages/audience/pages/members/MembersListPage.vue')
 
 const ProfileEditPage = () => import('@/modules/dashboard/pages/profile/ProfileEditPage.vue')
 
@@ -53,6 +59,18 @@ export default {
     { path: 'announcements', name: 'announcements.list', component: AnnouncementsListPage, meta: { permission: 'announcements.view' } },
     { path: 'announcements/create', name: 'announcements.create', component: AnnouncementsCreatePage, meta: { permission: 'announcements.create' } },
     { path: 'announcements/:id/edit', name: 'announcements.edit', component: AnnouncementsEditPage, meta: { permission: 'announcements.edit' } },
+
+    {
+      path: 'audience',
+      component: AudienceLayout,
+      meta: { permission: 'audience.view' },
+      children: [
+        { path: '', redirect: { name: 'audience.followers' } },
+        { path: 'followers', name: 'audience.followers', component: FollowersListPage, meta: { permission: 'audience.view' } },
+        { path: 'members', name: 'audience.members', component: MembersListPage, meta: { permission: 'audience.view' } },
+        { path: 'members', name: 'audience.MyMemberships', component: MyMembershipsListPage, meta: { permission: 'audience.view' } }
+      ]
+    },
 
     { path: 'profile', name: 'profile.edit', component: ProfileEditPage }
   ]

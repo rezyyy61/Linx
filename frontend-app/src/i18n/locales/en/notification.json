@@ -1,6 +1,7 @@
 {
   "notification": {
     "user": "User",
+    "empty": "No notifications — all clear ✨",
 
     "follow": {
       "request": {
@@ -22,6 +23,21 @@
       "unfollowed": {
         "title": "Unfollowed",
         "body": "{name} unfollowed you"
+      }
+    },
+
+    "member": {
+      "invited": {
+        "title": "Membership invitation",
+        "body": "{name} invited you to become a member"
+      },
+      "accepted": {
+        "title": "Membership accepted",
+        "body": "{name} accepted your membership invitation"
+      },
+      "rejected": {
+        "title": "Membership rejected",
+        "body": "{name} rejected your membership invitation"
       }
     },
 
@@ -61,6 +77,10 @@
       "m": "{n}m",
       "h": "{n}h",
       "d": "{n}d"
+    },
+    "toast": {
+      "memberAccepted": "Membership accepted",
+      "memberRejected": "Invitation rejected"
     }
   }
 }
