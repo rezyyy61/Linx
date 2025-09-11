@@ -2,7 +2,6 @@
 <script setup lang="ts">
 import { ref, shallowRef, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth/auth";
-import HeroSection from "@/modules/public/components/HeroSection.vue";
 import FeedSubnav from "@/modules/public/components/FeedSubnav.vue";
 import RightDock from "@/components/rightDock/RightDock.vue";
 
@@ -57,11 +56,11 @@ watch(current, (v) => {
     dir="auto"
   >
     <div class="mx-auto grid gap-8 px-4 sm:px-6 lg:px-8">
-      <HeroSection />
+      <!--      <HeroSection />-->
 
       <FeedSubnav
         v-model="current"
-        class="border-b border-gray-200 dark:border-zinc-700"
+        class="border-b mt-6 border-gray-200 dark:border-zinc-700"
       />
 
       <div class="rounded-xl border border-gray-200 bg-white p-0 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">

@@ -1,14 +1,26 @@
 <template>
-  <section class="grid gap-6">
-    <div
-      class="rounded-2xl border border-gray-200 bg-white p-8 shadow-md dark:border-zinc-800 dark:bg-zinc-900"
-    >
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-        Feed
-      </h2>
-      <p class="mt-2 text-base text-gray-700 dark:text-zinc-300">
-        This is the feed tab content.
-      </p>
-    </div>
-  </section>
+  <div class="grid grid-cols-12 gap-6">
+    <!-- Left Sidebar -->
+    <aside class="col-span-3">
+      <LeftSidebar />
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="col-span-6 space-y-6">
+      <PostList />
+      <LightboxRoot />
+    </main>
+
+    <!-- Right Sidebar -->
+    <aside class="col-span-3">
+      <RightSidebar />
+    </aside>
+  </div>
 </template>
+
+<script setup lang="ts">
+import LeftSidebar from './pages/LeftSidebar.vue'
+import RightSidebar from './pages/RightSidebar.vue'
+import PostList from './pages/PostList.vue'
+import LightboxRoot from "@/modules/public/postCard/lightbox/LightboxRoot.vue";
+</script>
