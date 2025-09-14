@@ -2,11 +2,13 @@
   <section
     v-if="safeHtml"
     class="mb-3"
+    :dir="dirAttr"
   >
     <div
       ref="box"
       v-safe-html="safeHtml"
       class="prose prose-zinc max-w-none whitespace-pre-wrap text-[15px] leading-relaxed text-zinc-800 dark:prose-invert dark:text-zinc-200"
+      :class="dirAttr==='rtl' ? 'text-right' : 'text-left'"
       :style="clamped ? { maxHeight: maxH + 'px', overflow: 'hidden' } : {}"
     />
     <div
@@ -66,6 +68,15 @@ function sanitizeHtml(input: string) {
       if ((n === 'href' || n === 'src') && /^\s*javascript:/i.test(v)) el.removeAttribute(a.name)
       if (n === 'src' && v && !/^(https?:|data:image\/|\/)/i.test(v)) el.removeAttribute(a.name)
       if (n === 'href' && v && !/^(https?:|mailto:|\/)/i.test(v)) el.removeAttribute(a.name)
+      if (n === 'style') {
+        // فقط خاصیت‌های background رو پاک کن
+        const cleaned = v
+          .replace(/background(-color)?\s*:[^;]+;?/gi, '')
+          .replace(/background\s*:[^;]+;?/gi, '')
+          .trim()
+        if (cleaned) el.setAttribute('style', cleaned); else el.removeAttribute('style')
+      }
+
     })
     if (el.tagName.toLowerCase() === 'a') {
       const a = el as HTMLAnchorElement
@@ -76,6 +87,7 @@ function sanitizeHtml(input: string) {
       im.loading = 'lazy'; im.decoding = 'async'; im.referrerPolicy = 'no-referrer'
       im.classList.add('rounded-xl','max-w-full','h-auto')
     }
+
   })
   return doc.body.innerHTML
 }
@@ -84,7 +96,6 @@ function enrichHtmlPreservingTags(html: string): string {
   if (!html) return ''
   const doc = new DOMParser().parseFromString(html, 'text/html')
   const SKIP = new Set(['a','code','pre','script','style'])
-
   function hasSkipAncestor(n: Node) {
     let p = (n.parentElement as HTMLElement | null)
     while (p) {
@@ -93,7 +104,6 @@ function enrichHtmlPreservingTags(html: string): string {
     }
     return false
   }
-
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
   const nodes: Text[] = []
   let cur: Node | null
@@ -103,7 +113,6 @@ function enrichHtmlPreservingTags(html: string): string {
     if (hasSkipAncestor(t)) continue
     nodes.push(t)
   }
-
   for (const tn of nodes) {
     const raw = tn.nodeValue || ''
     const htmlFrag = parseRichText(raw)
@@ -115,8 +124,6 @@ function enrichHtmlPreservingTags(html: string): string {
   return doc.body.innerHTML
 }
 
-
-
 function escapeHtmlFallback(s: string) {
   return s
     .replace(/&/g,'&amp;')
@@ -127,14 +134,12 @@ function escapeHtmlFallback(s: string) {
     .replace(/\n/g,'<br/>')
 }
 
-
 const processedHtml = computed(() => {
   const input = props.html || ''
   const seemsHtml = props.treatAsHtml ?? /<\/?[a-z][\s\S]*>/i.test(input)
   const parseOn = props.parseEntities !== false
   if (!parseOn) return input
   if (!input.trim()) return ''
-
   const out = !seemsHtml ? parseRichText(input) : enrichHtmlPreservingTags(input)
   if (!/<a\s/i.test(out) && /(@[A-Za-z0-9_]{2,30}|#[\p{L}\d_]{2,50}|https?:\/\/|www\.)/u.test(input)) {
     return parseRichText(input)
@@ -142,10 +147,19 @@ const processedHtml = computed(() => {
   return out
 })
 
-
-
 const safeHtmlFull = computed(() => props.sanitize === false ? processedHtml.value : sanitizeHtml(processedHtml.value))
 const safeHtml = computed(() => safeHtmlFull.value)
+
+function textFromHtml(html: string) {
+  const doc = new DOMParser().parseFromString(html || '', 'text/html')
+  return (doc.body.textContent || '').trim()
+}
+const dirAttr = computed<'rtl'|'ltr'>(() => {
+  const t = textFromHtml(safeHtmlFull.value)
+  const rtl = (t.match(/[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/gu) || []).length
+  const ltr = (t.match(/[A-Za-z]/g) || []).length
+  return rtl > ltr ? 'rtl' : 'ltr'
+})
 
 const box = ref<HTMLElement | null>(null)
 const maxH = ref(0)
@@ -178,7 +192,6 @@ onBeforeUnmount(() => {
   if (ro && box.value) ro.unobserve(box.value)
   ro = null
 })
-
 watch([safeHtml, clampLines, readerThresholdLines], () => measure())
 
 const vSafeHtml: Directive<HTMLElement, string> = {
@@ -188,90 +201,49 @@ const vSafeHtml: Directive<HTMLElement, string> = {
 </script>
 
 <style scoped>
-:deep(a[data-entity]) {
-  text-decoration: none;
-  font-weight: 500;
-  transition: color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+/* --- hard reset for entities (override any old chip styles) --- */
+:deep(a[data-entity]),
+:deep(span[data-entity]) {
+  display: inline !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
 
-:deep(a[data-entity]:focus-visible) {
-  outline: 2px solid rgba(99,102,241,.55);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
-/* لینک‌ها */
+/* link style (no bg) */
 :deep(a[data-entity="link"]) {
-  color: #4338ca;
-  border-bottom: 1px dashed rgba(67,56,202,.45);
-  padding-bottom: 1px;
+  color: #4338ca !important;
+  text-decoration: underline !important;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
-:deep(a[data-entity="link"]:hover) {
-  color: #3730a3;
-  border-bottom-color: rgba(67,56,202,.8);
+:deep(.dark a[data-entity="link"]) { color: #a5b4fc !important; }
+
+/* mention/hashtag only color change (no bg/border) */
+:deep(a[data-entity="mention"]),
+:deep(span[data-entity="mention"]) {
+  color: #1d4ed8 !important;
 }
-:deep(.dark a[data-entity="link"]) {
-  color: #a5b4fc;
-  border-bottom-color: rgba(165,180,252,.45);
-}
-:deep(.dark a[data-entity="link"]:hover) {
-  color: #c7d2fe;
-  border-bottom-color: rgba(165,180,252,.8);
+:deep(.dark a[data-entity="mention"]),
+:deep(.dark span[data-entity="mention"]) {
+  color: #93c5fd !important;
 }
 
-/* منشن‌ها: پِل‌های آبی */
-:deep(a[data-entity="mention"]) {
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;
-  padding: .125rem .375rem;
-  border-radius: 9999px;
-  background: rgba(59,130,246,.10);
-  color: #1d4ed8;
-  border: 1px solid rgba(59,130,246,.20);
-  line-height: 1;
+:deep(a[data-entity="hashtag"]),
+:deep(span[data-entity="hashtag"]) {
+  color: #6d28d9 !important;
 }
-:deep(a[data-entity="mention"]:hover) {
-  background: rgba(59,130,246,.14);
-  border-color: rgba(59,130,246,.3);
-}
-:deep(.dark a[data-entity="mention"]) {
-  background: rgba(59,130,246,.12);
-  color: #93c5fd;
-  border-color: rgba(59,130,246,.25);
-}
-:deep(.dark a[data-entity="mention"]:hover) {
-  background: rgba(59,130,246,.18);
-  border-color: rgba(59,130,246,.35);
+:deep(.dark a[data-entity="hashtag"]),
+:deep(.dark span[data-entity="hashtag"]) {
+  color: #c4b5fd !important;
 }
 
-/* هشتگ‌ها: پِل‌های بنفش */
-:deep(a[data-entity="hashtag"]) {
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;
-  padding: .125rem .375rem;
-  border-radius: 9999px;
-  background: rgba(168,85,247,.10);
-  color: #6d28d9;
-  border: 1px solid rgba(168,85,247,.20);
-  line-height: 1;
-}
-:deep(a[data-entity="hashtag"]:hover) {
-  background: rgba(168,85,247,.14);
-  border-color: rgba(168,85,247,.3);
-}
-:deep(.dark a[data-entity="hashtag"]) {
-  background: rgba(168,85,247,.12);
-  color: #c4b5fd;
-  border-color: rgba(168,85,247,.25);
-}
-:deep(.dark a[data-entity="hashtag"]:hover) {
-  background: rgba(168,85,247,.18);
-  border-color: rgba(168,85,247,.35);
+/* optional hover tone */
+:deep(a[data-entity]:hover),
+:deep(span[data-entity]:hover) {
+  filter: brightness(1.05);
 }
 
 </style>
-

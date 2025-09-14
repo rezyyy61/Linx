@@ -89,7 +89,7 @@
                 <img
                   :src="current.url"
                   :alt="current.alt || ''"
-                  class="mx-auto max-h-[80vh] w-auto object-contain"
+                  class="mx-auto w-auto object-contain svh-max"
                   draggable="false"
                 >
               </div>
@@ -98,7 +98,7 @@
                 class="relative w-full"
               >
                 <video
-                  class="mx-auto max-h-[80vh] w-auto"
+                  class="mx-auto w-auto svh-max"
                   :poster="current.poster"
                   controls
                   playsinline
@@ -160,4 +160,8 @@ const safeBtnStyle = computed(() => ({
 <style scoped>
 .lb-fade-enter-active,.lb-fade-leave-active{transition:opacity .18s ease}
 .lb-fade-enter-from,.lb-fade-leave-to{opacity:0}
+.svh-max{max-height:calc(100svh - 2rem)}
+@supports not (height: 100svh){
+  .svh-max{max-height:calc(100vh - 2rem)}
+}
 </style>

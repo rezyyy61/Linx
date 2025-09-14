@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Post;
 
+use App\Events\Public\Post\PublicPostCreated;
+use App\Events\Public\Post\PublicPostDeleted;
+use App\Events\Public\Post\PublicPostUpdated;
 use App\Models\Media;
 use App\Models\Post\Post as PostModel;
 use App\Models\User;
@@ -21,7 +24,7 @@ class PostService
 
     public function create(array $data, User $user): PostModel
     {
-        return DB::transaction(function () use ($data, $user) {
+        $post = DB::transaction(function () use ($data, $user) {
             $post = new PostModel;
             $post->user_id = $user->id;
             $post->content = $data['content'] ?? null;
@@ -39,11 +42,19 @@ class PostService
 
             return $this->loadPostMedia($post);
         });
+
+        DB::afterCommit(function () use ($post) {
+            if ($this->isPubliclyVisible($post)) {
+                broadcast(new PublicPostCreated($post));
+            }
+        });
+
+        return $post;
     }
 
     public function update(PostModel $post, array $data): PostModel
     {
-        return DB::transaction(function () use ($post, $data) {
+        $post = DB::transaction(function () use ($post, $data) {
             if (array_key_exists('content', $data)) {
                 $post->content = $data['content'];
             }
@@ -72,13 +83,27 @@ class PostService
 
             return $this->loadPostMedia($post);
         });
+
+        DB::afterCommit(function () use ($post) {
+            if ($this->isPubliclyVisible($post)) {
+                broadcast(new PublicPostUpdated($post));
+            }
+        });
+
+        return $post;
     }
 
     public function delete(PostModel $post): void
     {
+        $id = $post->id;
+
         DB::transaction(function () use ($post) {
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
             $post->delete();
+        });
+
+        DB::afterCommit(function () use ($id) {
+            broadcast(new PublicPostDeleted($id));
         });
     }
 
@@ -113,22 +138,14 @@ class PostService
             return;
         }
 
-        $existingIds = Media::query()
-            ->whereIn('id', array_keys($prepared))
-            ->pluck('id')
-            ->all();
-
+        $existingIds = Media::query()->whereIn('id', array_keys($prepared))->pluck('id')->all();
         if ($existingIds === []) {
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
 
             return;
         }
 
-        $currentIds = $post->media()
-            ->wherePivot('collection', self::COLLECTION)
-            ->pluck('media.id')
-            ->all();
-
+        $currentIds = $post->media()->wherePivot('collection', self::COLLECTION)->pluck('media.id')->all();
         $desiredIds = $existingIds;
         $toDetach = array_diff($currentIds, $desiredIds);
         if (! empty($toDetach)) {
@@ -150,5 +167,10 @@ class PostService
         return $post->load(['media' => function ($q) {
             $q->wherePivot('collection', self::COLLECTION)->orderBy('mediables.order_column');
         }]);
+    }
+
+    private function isPubliclyVisible(PostModel $post): bool
+    {
+        return $post->status === self::STATUS_PUBLISHED && $post->visibility === 'public';
     }
 }
