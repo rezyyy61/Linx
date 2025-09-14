@@ -40,8 +40,11 @@
           </div>
           <div class="border-t border-zinc-200 p-4 dark:border-zinc-800">
             <CommentComposer
-              :avatar="meAvatar"
+              :logged-in="loggedIn"
+              :avatar-url="avatarUrl"
+              :avatar-color="avatarColor"
               @submit="onSubmitRoot"
+              @login="goLogin"
             />
           </div>
         </div>
@@ -54,17 +57,26 @@
 import CommentsList from './CommentsList.vue'
 import CommentComposer from './CommentComposer.vue'
 import { useComments } from '@/modules/public/postCard/composables/useComments'
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth/auth'
+import { useProfileStore } from '@/stores/profile/profile'
 
 const props = defineProps<{ postId: string; open: boolean }>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'added'): void }>()
 
-const { add } = useComments()
-const meAvatar = 'https://i.pravatar.cc/80?u=me'
+const { add } = useComments(props.postId)
 
-function onSubmitRoot(text: string) {
-  add(props.postId, text)
+const auth = useAuthStore()
+const profile = useProfileStore()
+const loggedIn = computed(() => !!auth.user)
+const avatarUrl = computed<string | null>(() => profile.meLite?.avatar ?? null)
+const avatarColor = computed<string | null>(() => profile.meLite?.avatar_color ?? null)
+
+async function onSubmitRoot(text: string) {
+  await add(props.postId, text)
   emit('added')
 }
+function goLogin() { window.location.href = '/login' }
 </script>
 
 <style scoped>

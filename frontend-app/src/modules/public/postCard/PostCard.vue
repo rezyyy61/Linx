@@ -1,11 +1,12 @@
 <template>
   <article
     ref="root"
-    class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-900"
+    class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-800"
     tabindex="0"
   >
     <PostCardHeader
       :avatar="post.author.avatarUrl ?? undefined"
+      :color="post.author.avatarColor ?? undefined"
       :name="post.author.name"
       :username="post.author.username"
       :created-at="post.createdAt"
@@ -24,7 +25,7 @@
     <PostText
       :html="post.text || ''"
       :parse-entities="true"
-      :treat-as-html="false"
+      :treat-as-html="true"
       :clamp-lines="6"
       :reader-threshold-lines="24"
     />
@@ -37,6 +38,8 @@
         :gid="post.id"
       />
     </section>
+
+    <LikesPreview :post-id="post.id" />
 
     <PostCardFooter
       :likes="counts[post.id]?.likes ?? post.counts.likes"
@@ -83,6 +86,7 @@ import InlineComments from "@/modules/public/postCard/footer/comments/InlineComm
 import SharePanel from "@/modules/public/postCard/footer/share/SharePanel.vue";
 import PostCardHeader from "@/modules/public/postCard/header/PostCardHeader.vue";
 import PostText from "@/modules/public/postCard/content/text/PostText.vue";
+import LikesPreview from "@/modules/public/postCard/footer/likes/LikesPreview.vue";
 
 const props = defineProps<{ post: Post }>()
 
