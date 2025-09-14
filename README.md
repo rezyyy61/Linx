@@ -258,7 +258,7 @@ docker compose exec -T php php artisan test --env=testing
 **Run manually (frontend-app):**
 
 ```bash
-docker compose run --rm -T frontend sh -lc 'cd /app && npm run lint'
+docker compose run --rm -T frontend sh -lc 'cd /app && npm run lint:fix'
 docker compose run --rm -T frontend sh -lc 'cd /app && npm run type-check'
 docker compose run --rm -T frontend sh -lc 'cd /app && npm run test:unit'
 ```

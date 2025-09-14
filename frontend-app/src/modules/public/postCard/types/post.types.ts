@@ -1,12 +1,13 @@
 import type { AnyMedia } from './media.types'
 
-export type Visibility = 'public' | 'followers' | 'private' | 'unlisted'
+export type Visibility = 'public' | 'private' | 'unlisted' | 'friends' | 'followers'
 
 export interface UserSummary {
   id: string
   name: string
   username: string
   avatarUrl?: string | null
+  avatarColor?: string | null
   verified?: boolean
 }
 
@@ -30,4 +31,5 @@ export interface Post {
   isPinned?: boolean
   isRepost?: boolean
   originalPostId?: string | null
+  liked?: boolean
 }
