@@ -62,13 +62,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useComments, type CommentSort } from '@/modules/public/postCard/composables/useComments'
 import FlatThread from './FlatThread.vue'
 
 const emit = defineEmits<{ (e:'added'): void }>()
 const props = defineProps<{ postId: string; pageSize?: number }>()
-const { roots, sort } = useComments()
+const { roots, sort, loadFirst, loadMore: _loadMore } = useComments(props.postId)
 
 const sortBy = ref<CommentSort>('newest')
 const pageSize = computed(() => props.pageSize ?? 3)
@@ -78,5 +78,13 @@ const rootItems = computed(() => sort(roots(props.postId), sortBy.value))
 const totalPages = computed(() => Math.max(1, Math.ceil(rootItems.value.length / pageSize.value)))
 const pageItems = computed(() => rootItems.value.slice(0, page.value * pageSize.value))
 
-function loadMore() { if (page.value < totalPages.value) page.value += 1 }
+function loadMore() {
+  page.value += 1
+  if (page.value * pageSize.value > rootItems.value.length) {
+    _loadMore(props.postId)
+  }
+}
+
+onMounted(() => { void loadFirst(props.postId) })
+
 </script>

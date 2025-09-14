@@ -1,5 +1,3 @@
-dispatch((new App\Jobs\PingJob)->onConnection('redis')->onQueue('default'));
-dispatch(function () {
-    \Log::info('🧪 Horizon closure job running...');
-    sleep(5); // عمداً طولانی تا تو داشبورد دیده بشه
-})->onConnection('redis')->onQueue('default');
+$p = \App\Models\Post\Post::with('media')->find(121);
+$p->media->pluck('id'); 
+\DB::table('mediables')->where('mediable_id',121)->get(); 

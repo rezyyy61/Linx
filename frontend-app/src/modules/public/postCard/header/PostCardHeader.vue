@@ -1,10 +1,14 @@
 <template>
   <header class="mb-3 flex items-start gap-3">
-    <img
-      :src="avatar || defaultAvatar"
-      alt=""
-      class="h-10 w-10 rounded-full object-cover"
-    >
+    <AvatarUser
+      :src="avatar "
+      :color="color"
+      :name="name"
+      size="sm"
+      rounded="full"
+      ring
+      zoomable
+    />
     <div class="min-w-0 flex-1">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -42,15 +46,16 @@
 import { computed } from 'vue'
 import PostHeaderMenu from './PostHeaderMenu.vue'
 import { useTimeAgo } from '../composables/useTimeAgo'
+import AvatarUser from "@/components/shared/AvatarUser.vue";
 const props = defineProps<{
   avatar?: string
+  color?: string
   name: string
   createdAt: string
   isFollowing?: boolean
   isOwner?: boolean
 }>()
 defineEmits<{ (e:'toggle-follow'):void; (e:'edit'):void; (e:'delete'):void; (e:'copy'):void; (e:'report'):void; (e:'share'):void }>()
-const defaultAvatar = 'https://i.pravatar.cc/80?u=default'
 const { timeAgo } = useTimeAgo()
 const time = computed(()=> timeAgo(props.createdAt))
 </script>

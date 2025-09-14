@@ -13,3 +13,5 @@ Broadcast::channel('media.{id}', function ($user = null, $id = null) {
 Broadcast::channel('user.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
+
+Broadcast::channel('public.posts', fn () => true);

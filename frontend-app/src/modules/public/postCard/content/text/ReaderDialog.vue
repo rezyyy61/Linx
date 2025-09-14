@@ -225,14 +225,14 @@
                   ref="scrollArea"
                   class="focus-ring max-h-[70vh] overflow-y-auto rounded-xl border border-white/10 bg-white/[0.03] p-5"
                   :class="contentThemeClass"
-                  @scroll="onScroll"
                 >
                   <div
                     ref="contentEl"
                     v-safe-html="effectiveHtml"
+                    :dir="dirAttr"
                     :style="contentStyle"
                     class="prose-base mx-auto whitespace-pre-wrap break-words"
-                    :class="[widthClass, proseClass]"
+                    :class="[widthClass, proseClass, dirAttr==='rtl' ? 'text-right' : 'text-left']"
                   />
                 </div>
 
@@ -302,10 +302,9 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import type { Directive, CSSProperties } from 'vue'
 
-
-
 const props = defineProps<{ open: boolean; html: string; sanitize?: boolean }>()
 const emit = defineEmits<{ (e:'close'): void }>()
+
 function sanitizeHtml(input: string) {
   const doc = new DOMParser().parseFromString(input || '', 'text/html')
   const dangerous = ['script','style','iframe','object','embed','link','meta']
@@ -321,16 +320,11 @@ function sanitizeHtml(input: string) {
     })
     if (el.tagName.toLowerCase() === 'a') {
       const a = el as HTMLAnchorElement
-      if (a.href) {
-        a.rel = 'noopener nofollow ugc'
-        a.target = '_blank'
-      }
+      if (a.href) { a.rel = 'noopener nofollow ugc'; a.target = '_blank' }
     }
     if (el.tagName.toLowerCase() === 'img') {
       const im = el as HTMLImageElement
-      im.loading = 'lazy'
-      im.decoding = 'async'
-      im.referrerPolicy = 'no-referrer'
+      im.loading = 'lazy'; im.decoding = 'async'; im.referrerPolicy = 'no-referrer'
       im.classList.add('rounded-xl','max-w-full','h-auto')
     }
     if (el.tagName.toLowerCase() === 'pre') {
@@ -369,6 +363,17 @@ const contentThemeClass = computed(() => {
   if (prefs.value.theme === 'light') return 'bg-white text-zinc-900'
   if (prefs.value.theme === 'sepia') return 'bg-amber-50 text-zinc-900'
   return 'text-zinc-100'
+})
+
+function textFromHtml(html: string) {
+  const doc = new DOMParser().parseFromString(html || '', 'text/html')
+  return (doc.body.textContent || '').trim()
+}
+const dirAttr = computed<'rtl'|'ltr'>(() => {
+  const t = textFromHtml(effectiveHtml.value)
+  const rtl = (t.match(/[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/gu) || []).length
+  const ltr = (t.match(/[A-Za-z]/g) || []).length
+  return rtl > ltr ? 'rtl' : 'ltr'
 })
 
 const scrollArea = ref<HTMLElement|null>(null)
@@ -493,7 +498,7 @@ function printDoc() {
     pre{background:#0b1220;color:#e5e7eb;border-radius:12px;padding:16px;overflow:auto}
     code{background:rgba(0,0,0,.08);border-radius:8px;padding:2px 4px}
   </style></head>
-  <body>${safeHtml.value}</body></html>`
+  <body dir="${dirAttr.value}">${safeHtml.value}</body></html>`
   w.document.write(htmlDoc)
   w.document.close()
   w.focus()
@@ -572,14 +577,9 @@ watch(() => props.open, async v => {
 })
 
 const vSafeHtml: Directive<HTMLElement, string> = {
-  mounted(el, binding) {
-    el.innerHTML = binding.value || ''
-  },
-  updated(el, binding) {
-    if (binding.value !== binding.oldValue) el.innerHTML = binding.value || ''
-  }
+  mounted(el, binding) { el.innerHTML = binding.value || '' },
+  updated(el, binding) { if (binding.value !== binding.oldValue) el.innerHTML = binding.value || '' }
 }
-
 </script>
 
 <style scoped>
@@ -598,8 +598,8 @@ const vSafeHtml: Directive<HTMLElement, string> = {
 .prose-base :where(h2){font-size:1.25rem;line-height:1.3}
 .prose-base :where(h3){font-size:1.125rem;line-height:1.35}
 .prose-base :where(p,li){font-size:1rem}
-.prose-base :where(ul){list-style:disc;padding-left:1.25rem}
-.prose-base :where(ol){list-style:decimal;padding-left:1.25rem}
-.prose-base :where(blockquote){border-left:3px solid rgba(255,255,255,.2);padding-left:.75rem;opacity:.9}
+.prose-base :where(ul){list-style:disc;padding-inline-start:1.25rem}
+.prose-base :where(ol){list-style:decimal;padding-inline-start:1.25rem}
+.prose-base :where(blockquote){border-inline-start:3px solid rgba(255,255,255,.2);padding-inline-start:.75rem;opacity:.9}
 .prose-base :where(a){text-decoration:underline;text-underline-offset:3px}
 </style>
