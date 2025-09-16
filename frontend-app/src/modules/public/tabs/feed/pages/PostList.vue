@@ -1,31 +1,48 @@
 <template>
-  <div class="space-y-4">
+  <div
+    ref="rootEl"
+    class="space-y-4"
+  >
     <PostCard
       v-for="p in items"
       :key="p.id"
       :post="p"
     />
-    <button
-      class="mt-4 rounded-lg border px-3 py-1.5"
-      @click="loadMore"
+
+    <div
+      v-if="loading"
+      class="space-y-3 pt-2"
     >
-      Load more
-    </button>
+      <div
+        v-for="i in 3"
+        :key="'sk-'+i"
+        class="rounded-2xl border border-zinc-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-zinc-900/50 animate-pulse"
+      >
+        <div class="mb-2 h-4 w-1/3 rounded bg-zinc-200 dark:bg-zinc-700" />
+        <div class="h-3 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+    </div>
+
+    <div
+      v-show="hasMore"
+      ref="sentinel"
+      class="h-8"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import PostCard from '@/modules/public/postCard/PostCard.vue'
 import { usePublicFeed } from '@/modules/public/postCard/composables/usePublicFeed'
 import { useFeedRealtime } from '@/modules/public/postCard/composables/useFeedRealtime'
 import { usePostActions } from '@/modules/public/postCard/composables/usePostActions'
-import { onMounted, onBeforeUnmount } from 'vue'
 
-const { items, loadMore } = usePublicFeed()
+const { items, loadMore, hasMore, loading } = usePublicFeed()
 const { ensure, setCounts } = usePostActions()
 
 async function initAfterLoad() {
-  await loadMore()
+  if (!items.value.length) await loadMore()
   for (const p of items.value) ensure(p)
 }
 
@@ -37,10 +54,46 @@ const { start, stop } = useFeedRealtime(items, {
   onCounts: (id, counts) => setCounts(id, counts),
 })
 
+const rootEl = ref<HTMLElement | null>(null)
+const sentinel = ref<HTMLElement | null>(null)
+let io: IntersectionObserver | null = null
+
+function getScrollParent(el: HTMLElement | null): HTMLElement | null {
+  let p: HTMLElement | null = el?.parentElement || null
+  while (p) {
+    const oy = getComputedStyle(p).overflowY
+    if (/(auto|scroll|overlay)/i.test(oy)) return p
+    p = p.parentElement
+  }
+  return null
+}
+
+async function onIntersect(entries: IntersectionObserverEntry[]) {
+  const e = entries[0]
+  if (!e.isIntersecting) return
+  if (!hasMore.value || loading.value) return
+  await loadMore()
+}
+
+function setupIO() {
+  if (io) io.disconnect()
+  const root = getScrollParent(rootEl.value)
+  io = new IntersectionObserver(onIntersect, {
+    root: root || null,
+    rootMargin: '600px 0px 0px 0px',
+    threshold: 0
+  })
+  if (sentinel.value) io.observe(sentinel.value)
+}
+
 onMounted(async () => {
   await initAfterLoad()
+  setupIO()
   await start()
 })
 
-onBeforeUnmount(() => { void stop() })
+onBeforeUnmount(() => {
+  if (io) io.disconnect()
+  void stop()
+})
 </script>

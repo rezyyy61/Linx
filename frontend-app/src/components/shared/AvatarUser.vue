@@ -6,7 +6,8 @@
     :role="zoomable && showImage ? 'button' : undefined"
     :tabindex="zoomable && showImage ? 0 : undefined"
     @click="onClick"
-    @keydown.enter.space.prevent="onClick"
+    @keydown.enter.prevent="onClick"
+    @keydown.space.prevent="onClick"
   >
     <img
       v-if="showImage"
@@ -18,6 +19,7 @@
     <div
       v-else
       :class="fallbackClass"
+      :style="fallbackStyle"
     >
       <Icon
         v-if="useIcon"
@@ -82,14 +84,15 @@ const broken = ref(false)
 const size = computed<SizeKey>(() => props.size ?? "md")
 const rounded = computed<RoundedKey>(() => props.rounded ?? "full")
 const ringColor = computed<RingKey>(() => props.ringColor ?? "indigo")
-const fallbackMode = computed(() => props.fallback ?? "initials")
+/* ✅ پیش‌فرض: آیکن */
+const fallbackMode = computed(() => props.fallback ?? "icon")
 const iconName = computed(() => props.icon ?? "mdi:account")
 const zoomable = computed(() => !!props.zoomable)
 const overlayTone = computed<OverlayTone>(() => props.overlayTone ?? "dark")
 
 const sizeMap: Record<SizeKey, string> = { xs:"w-6 h-6", sm:"w-8 h-8", md:"w-10 h-10", lg:"w-12 h-12", xl:"w-16 h-16", "2xl":"w-20 h-20" }
 const textMap: Record<SizeKey, string> = { xs:"text-[10px]", sm:"text-xs", md:"text-sm", lg:"text-base", xl:"text-xl", "2xl":"text-2xl" }
-const iconMap: Record<SizeKey, number> = { xs:12, sm:14, md:16, lg:20, xl:24, "2xl":28 }
+const iconMap: Record<SizeKey, number> = { xs:16, sm:18, md:20, lg:20, xl:24, "2xl":28 }
 const roundedMap: Record<RoundedKey, string> = { full:"rounded-full", xl:"rounded-2xl", lg:"rounded-xl", md:"rounded-lg", none:"rounded-none" }
 const ringMap: Record<RingKey, string> = {
   none:"", indigo:"ring-indigo-500 dark:ring-indigo-400", zinc:"ring-zinc-400 dark:ring-zinc-500",
@@ -107,6 +110,15 @@ function normHex(c?: string | null) {
   if (/^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return "#" + v
   return null
 }
+const palette = [
+  "#ef4444","#f97316","#f59e0b","#84cc16","#10b981","#06b6d4",
+  "#3b82f6","#6366f1","#8b5cf6","#a855f7","#ec4899","#14b8a6","#71717a"
+]
+function hashStr(s: string) { let h = 0; for (let i=0;i<s.length;i++) h = (h<<5)-h + s.charCodeAt(i) | 0; return Math.abs(h) }
+function colorFromName(name?: string | null) {
+  const idx = hashStr((name ?? "?").trim()) % palette.length
+  return palette[idx]
+}
 function hexToRgb(hex: string) {
   const h = hex.replace("#","")
   const d = h.length === 3 ? h.split("").map(x=>x+x).join("") : h
@@ -119,8 +131,32 @@ function contrastOn(hex: string) {
   return yiq >= 128 ? "#111827" : "#ffffff"
 }
 
-const bgHex = computed(() => normHex(props.color))
-const textColor = computed(() => bgHex.value ? contrastOn(bgHex.value) : "#ffffff")
+const inputHex = computed(() => normHex(props.color))
+const autoBgHex = computed(() => inputHex.value ?? colorFromName(props.name))
+const textOnBg = computed(() => contrastOn(autoBgHex.value))
+
+const wrapperClass = computed(() => [
+  "inline-flex items-center justify-center overflow-hidden select-none",
+  sizeMap[size.value],
+  roundedMap[rounded.value],
+  props.ring ? ["ring-2", ringMap[ringColor.value]] : "",
+])
+
+const wrapperStyle = computed(() => showImage.value ? {} : ({ backgroundColor: autoBgHex.value }))
+
+const imgClass = computed(() => ["object-cover","w-full","h-full"])
+
+const fallbackClass = computed(() => [
+  "w-full h-full flex items-center justify-center",
+  textMap[size.value],
+  "font-semibold",
+  roundedMap[rounded.value],
+])
+
+const fallbackStyle = computed(() => ({
+  backgroundColor: autoBgHex.value,
+  color: textOnBg.value
+}))
 
 const initials = computed(() => {
   const n = (props.name ?? "").trim()
@@ -133,29 +169,6 @@ const initials = computed(() => {
 
 const useIcon = computed(() => fallbackMode.value === "icon")
 
-const wrapperClass = computed(() => [
-  "inline-flex items-center justify-center overflow-hidden select-none",
-  sizeMap[size.value],
-  roundedMap[rounded.value],
-  props.ring ? ["ring-2", ringMap[ringColor.value]] : "",
-])
-
-const wrapperStyle = computed(() => {
-  if (!showImage.value) return { backgroundColor: bgHex.value ?? "" }
-  return {}
-})
-
-const imgClass = computed(() => ["object-cover","w-full","h-full"])
-
-const fallbackClass = computed(() => [
-  "w-full h-full flex items-center justify-center",
-  textMap[size.value],
-  "font-semibold",
-  roundedMap[rounded.value],
-  bgHex.value ? "" : "bg-zinc-200 dark:bg-zinc-700",
-  { color: textColor.value }
-])
-
 function onError() { broken.value = true }
 
 /* Lightbox */
@@ -165,17 +178,9 @@ const overlayClass = computed(() =>
     ? "bg-white/80 dark:bg-white/70"
     : "bg-black/70"
 )
-
-function onClick() {
-  if (!zoomable.value || !showImage.value) return
-  lightbox.value = true
-}
-function close() {
-  lightbox.value = false
-}
-function onKey(e: KeyboardEvent) {
-  if (e.key === 'Escape') close()
-}
+function onClick() { if (!zoomable.value || !showImage.value) return; lightbox.value = true }
+function close() { lightbox.value = false }
+function onKey(e: KeyboardEvent) { if (e.key === 'Escape') close() }
 
 onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))

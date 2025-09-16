@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Models\Post;
 
 use App\Contracts\Mediable;
+use App\Models\Comment\Comment;
 use App\Models\Media;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -66,8 +68,13 @@ class Post extends Model implements Mediable
         return $this->hasMany(PostLike::class);
     }
 
-    public function comments(): HasMany
+    public function comments(): MorphMany
     {
-        return $this->hasMany(Comment::class);
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function rootComments(): MorphMany
+    {
+        return $this->comments()->whereNull('parent_id');
     }
 }

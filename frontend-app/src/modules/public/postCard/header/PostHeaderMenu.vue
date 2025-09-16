@@ -70,14 +70,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-const {isOwner} = defineProps<{ isOwner?: boolean }>()
+import { ref, onMounted, onBeforeUnmount, toRefs } from 'vue'
+
+const _props = withDefaults(defineProps<{ isOwner?: boolean }>(), { isOwner: false })
+const { isOwner } = toRefs(_props)
+
 const emit = defineEmits<{ (e: 'edit' | 'delete' | 'copy' | 'report' | 'share'): void }>()
 const open = ref(false)
 const root = ref<HTMLElement|null>(null)
-function onDocClick(e: MouseEvent){ if(open.value && root.value && !root.value.contains(e.target as Node)) open.value=false }
+
+function onDocClick(e: MouseEvent){
+  if(open.value && root.value && !root.value.contains(e.target as Node)) open.value=false
+}
 onMounted(()=>document.addEventListener('click', onDocClick))
 onBeforeUnmount(()=>document.removeEventListener('click', onDocClick))
+
 function emitClose(t:'edit'|'delete'|'copy'|'report'|'share'){ open.value=false; emit(t) }
 </script>
 

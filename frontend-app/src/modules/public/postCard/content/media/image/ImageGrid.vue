@@ -1,8 +1,11 @@
 <template>
   <div
     ref="root"
-    class="grid gap-2 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800"
-    :class="gridClass"
+    class="grid"
+    :class="[ gridClass,
+              props.bleed ? 'gap-0' : 'gap-2',
+              props.bleed ? '' : 'overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800'
+    ]"
   >
     <template
       v-for="(img, idx) in limited"
@@ -44,7 +47,7 @@ import { useInView } from '@/modules/public/postCard/composables/useInView'
 
 type GItem = { id: string; url: string; alt?: string; aspectRatio?: string; width?: number; height?: number }
 
-const props = defineProps<{ items: GItem[]; gid?: string }>()
+const props = defineProps<{ items: GItem[]; gid?: string; bleed?: boolean }>()
 const { open } = useLightbox()
 const { el: root, isInView } = useInView()
 
