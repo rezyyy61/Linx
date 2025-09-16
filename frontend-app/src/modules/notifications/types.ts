@@ -5,8 +5,9 @@ export type NotificationKind =
   | "member.invited"
   | "member.accepted"
   | "member.rejected"
+  | "comment.on_post"
+  | "comment.mentioned"
   | string
-
 
 export interface ActorLite {
   id: number

@@ -202,6 +202,14 @@ export const useFollowStore = defineStore("follow", () => {
     await Promise.all([loadFollowings(), loadFollowers(), loadSuggestions()])
   }
 
+
+  async function cancelRequest(targetId: number | string) {
+    const reqId = state.value.outgoingByTargetId[Number(targetId)]
+    if (!reqId) return
+    await api.cancelFollowRequest(reqId)
+    await Promise.all([loadOutgoingRequests(), loadSuggestions()])
+  }
+
   function reset() {
     state.value = {
       meId: null,
@@ -392,6 +400,7 @@ export const useFollowStore = defineStore("follow", () => {
     acceptRequest,
     rejectRequest,
     unfollow,
+    cancelRequest,
     reset,
 
     bindRealtime,

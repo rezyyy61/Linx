@@ -23,6 +23,11 @@ export async function rejectFollowRequest(requestId: number | string) {
   return api.post(`/follow/requests/${requestId}/reject`)
 }
 
+export async function cancelFollowRequest(requestId: number | string) {
+  await ensureCsrfCookie()
+  return api.post(`/follow/requests/${requestId}/cancel`)
+}
+
 export async function unfollowUser(userId: number | string) {
   await ensureCsrfCookie()
   return api.delete(`/follow/${userId}`, {
