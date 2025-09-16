@@ -23,11 +23,23 @@
           <button
             v-if="!isOwner"
             class="rounded-full px-3 py-1 text-xs font-medium text-white hover:opacity-95 dark:text-white"
-            :class="isFollowing ? 'bg-zinc-800 dark:bg-white/10' : 'bg-indigo-600'"
+            :disabled="loading"
+            :class="[
+              followState==='following' ? 'bg-zinc-800 dark:bg-white/10'
+              : followState==='pending' ? 'bg-amber-600'
+                : 'bg-indigo-600',
+              loading ? 'opacity-50 cursor-not-allowed' : ''
+            ]"
             @click="$emit('toggle-follow')"
           >
-            {{ isFollowing ? 'Unfollow' : 'Follow' }}
+            <span v-if="loading">...</span>
+            <span v-else>
+              {{ followState==='following' ? 'Unfollow'
+                : followState==='pending' ? 'Requested'
+                  : 'Follow' }}
+            </span>
           </button>
+
           <PostHeaderMenu
             :is-owner="isOwner"
             @edit="$emit('edit')"
@@ -47,14 +59,17 @@ import { computed } from 'vue'
 import PostHeaderMenu from './PostHeaderMenu.vue'
 import { useTimeAgo } from '../composables/useTimeAgo'
 import AvatarUser from "@/components/shared/AvatarUser.vue";
+
 const props = defineProps<{
   avatar?: string
   color?: string
   name: string
   createdAt: string
-  isFollowing?: boolean
   isOwner?: boolean
+  followState?: 'none' | 'pending' | 'following'
+  loading?: boolean
 }>()
+
 defineEmits<{ (e:'toggle-follow'):void; (e:'edit'):void; (e:'delete'):void; (e:'copy'):void; (e:'report'):void; (e:'share'):void }>()
 const { timeAgo } = useTimeAgo()
 const time = computed(()=> timeAgo(props.createdAt))

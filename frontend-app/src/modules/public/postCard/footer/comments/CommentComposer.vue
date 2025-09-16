@@ -57,11 +57,25 @@
 
         <div :class="wrapperCls">
           <SmartEditor
+            ref="edRef"
             v-model="html"
             variant="input"
             :placeholder="placeholder || 'Write a comment…'"
             @submit="sendPlain"
+            @mention-query="onMentionQuery"
+            @mention-close="closeMention"
           />
+
+          <MentionsPopover
+            :open="mOpen"
+            :x="mX"
+            :y="mY"
+            :items="users"
+            :active="mActive"
+            :loading="us.loading"
+            @pick="onPick"
+          />
+
           <div class="mt-2 flex items-center justify-between gap-2">
             <div class="text-xs text-zinc-400">
               {{ plainLen }}/5000
@@ -81,97 +95,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
-import { normalizeNewlines } from '@/modules/public/postCard/utils/text'
-import SmartEditor from '@/components/shared/SmartEditor.vue'
-import AvatarUser from '@/components/shared/AvatarUser.vue'
-import { useProfileStore } from "@/stores/profile/profile"
-import { useAuthStore } from "@/stores/auth/auth"
+import { computed, ref } from "vue";
+import SmartEditor from "@/components/shared/SmartEditor.vue";
+import AvatarUser from "@/components/shared/AvatarUser.vue";
+import MentionsPopover from "@/modules/public/postCard/footer/comments/MentionsPopover.vue";
+import { useUserSearchStore } from "@/stores/userSearch";
 
 const props = defineProps<{
   loggedIn: boolean
   avatarUrl?: string | null
   avatarColor?: string | null
-  name?: string | null
+  displayName?: string | null
   initialText?: string
+  replyingTo?: string | null
   placeholder?: string
   compact?: boolean
-  replyingTo?: string
-}>()
+}>();
 
 const emit = defineEmits<{
-  (e: 'submit', text: string): void
-  (e: 'cancel'): void
-  (e: 'login'): void
-}>()
+  (e: "submit", text: string): void
+  (e: "cancel"): void
+  (e: "login"): void
+}>();
 
-const auth = useAuthStore()
-const profile = useProfileStore()
-const user = computed(() => auth.user)
+const html = ref(props.initialText || "");
+const plainText = computed(() => html.value.replace(/<[^>]+>/g, "").trim());
+const plainLen = computed(() => plainText.value.length);
+const wrapperCls = computed(() => props.compact ? "rounded-xl border border-zinc-300 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900" : "rounded-xl border border-zinc-300 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900");
+const avatar = computed(() => props.avatarUrl || null);
+const color = computed(() => props.avatarColor || null);
+const displayName = computed(() => props.displayName || "");
+const replySlug = computed(() => props.replyingTo || "");
 
-const displayName = computed(() => profile.meLite?.name || user.value?.name || "User")
-const avatar = computed<string>(() => profile.meLite?.avatar || "")
-const color = computed<string | null>(() => profile.meLite?.avatar_color ?? null)
+const edRef = ref<any>(null)
+const us = useUserSearchStore()
+const mOpen = ref(false)
+const mX = ref(0)
+const mY = ref(0)
+const mActive = ref(0)
+const users = computed(() => us.results)
 
-const replySlug = computed(() => {
-  const s = (props.replyingTo || '').trim()
-  if (!s) return ''
-  return s.startsWith('@') ? s : '@' + s
-})
-
-const html = ref('<p></p>')
-watchEffect(() => {
-  if (replySlug.value) {
-    html.value = '<p></p>'
-  } else {
-    const safe = (props.initialText || '')
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    html.value = safe ? `<p>${safe}</p>` : '<p></p>'
+async function onMentionQuery(p:{ q:string; x:number; y:number }) {
+  const q = (p.q || '').trim()
+  if (q.length < 1) {
+    mOpen.value = false
+    return
   }
-})
-
-function htmlToPlain(input: string): string {
-  if (!input) return ''
-  return input
-    .replace(/<\/p>\s*<p>/gi, '\n\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(div|li|h[1-6])>/gi, '\n')
-    .replace(/<li>/gi, '- ')
-    .replace(/<[^>]+>/g, '')
-    .trim()
+  mX.value = p.x
+  mY.value = p.y + 8
+  mActive.value = 0
+  mOpen.value = true
+  await us.search(q)
 }
 
-const plainText = computed(() => htmlToPlain(html.value))
-const plainLen = computed(() => plainText.value.length)
+function closeMention() {
+  mOpen.value = false
+}
 
-const wrapperCls = computed(() =>
-  (props.compact ?? true)
-    ? 'rounded-xl border border-zinc-300 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900'
-    : 'rounded-xl border border-zinc-300 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900'
-)
+function onPick(u:{ slug:string }) {
+  requestAnimationFrame(() => {
+    // خیلی مهم: اول فوکوس بده که selection برگرده
+    edRef.value?.focus?.()
+    edRef.value?.insertMention?.(u.slug)
+    mOpen.value = false
+  })
+}
 
-function buildFinalText(typed: string) {
-  const base = normalizeNewlines(typed.slice(0, 5000), 2, 40)
-  if (!replySlug.value) return base
-  const withoutDup = base.replace(new RegExp(`^\\s*@?${replySlug.value.replace(/^@/,'')}(\\b|\\s)`, 'i'), '').trim()
-  const out = `${replySlug.value} ${withoutDup}`.trim()
-  return out.slice(0, 5000)
+
+function sendPlain() {
+  emitSubmit();
 }
 
 function emitSubmit() {
-  const typed = plainText.value
-  if (!typed.trim()) return
-  const finalText = buildFinalText(typed)
-  if (!finalText.trim()) return
-  emit('submit', finalText)
-  html.value = '<p></p>'
-}
-
-function sendPlain(textPlain: string) {
-  if (!textPlain.trim()) return
-  const finalText = buildFinalText(textPlain)
-  if (!finalText.trim()) return
-  emit('submit', finalText)
-  html.value = '<p></p>'
+  if (!plainText.value) return;
+  emit("submit", plainText.value);
+  html.value = "";
 }
 </script>

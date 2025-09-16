@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Resources\PublicApi;
 
 use App\Http\Resources\MediaResource;
+use App\Models\Comment\Comment;
 use App\Models\Media;
-use App\Models\Post\Comment;
 use App\Models\Post\Post as PostModel;
 use App\Models\Post\PostLike;
 use App\Models\Post\PostSave;
@@ -61,8 +61,12 @@ class PublicPostResource extends JsonResource
         $avatar = $logoMedia instanceof Media ? $logoMedia->publicUrl() : null;
 
         $likes = (int) PostLike::query()->where('post_id', $post->id)->count();
-        $comments = (int) Comment::query()->where('post_id', $post->id)->count();
         $saves = (int) PostSave::query()->where('post_id', $post->id)->count();
+        $comments = Comment::query()
+            ->where('commentable_type', \App\Models\Post\Post::class)
+            ->where('commentable_id', $post->id)
+            ->where('status', 'visible')
+            ->count();
 
         return [
             'id' => $post->id,

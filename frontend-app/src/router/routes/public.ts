@@ -9,6 +9,9 @@ const ForgotPasswordPage = () =>
 const ResetPasswordPage = () =>
   import("@/modules/auth/pages/ResetPassword.vue");
 
+// صفحه نمایش یک پست
+const PostPage = () => import("@/modules/public/postCard/PostPage.vue");
+
 export default {
   path: "/",
   component: PublicLayout,
@@ -38,6 +41,17 @@ export default {
       name: "reset-password",
       component: ResetPasswordPage,
       meta: { guestOnly: true },
+    },
+
+    // 👇 این روت رو اضافه کن
+    {
+      path: "p/:id",
+      name: "post.show",
+      component: PostPage,
+      props: route => ({
+        id: Number(route.params.id),
+        comment: route.query.comment ? Number(route.query.comment) : null,
+      }),
     },
   ],
 } as RouteRecordRaw;

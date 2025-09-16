@@ -9,6 +9,7 @@ export interface UserSummary {
   avatarUrl?: string | null
   avatarColor?: string | null
   verified?: boolean
+  isFollowing?: boolean
 }
 
 export interface PostCounts {
