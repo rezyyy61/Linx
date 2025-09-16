@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CampaignServiceInterface::class, CampaignService::class);
         $this->app->bind(DonationIntentServiceInterface::class, DonationIntentService::class);
+        $this->app->bind(
+            \App\Services\Comment\Contracts\CommentService::class,
+            \App\Services\Comment\CommentService::class
+        );
     }
 
     /**

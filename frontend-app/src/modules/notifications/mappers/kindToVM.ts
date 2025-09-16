@@ -1,3 +1,4 @@
+// src/modules/notifications/mappers/kindToVM.ts
 import type { NotificationRecord, NotificationVM, NotificationKind, ActorLite } from "../types"
 
 function actorOf(rec: NotificationRecord): ActorLite | null {
@@ -30,7 +31,6 @@ export function mapRecordToVM(
   const kind: NotificationKind = rec.data?.kind || ""
   const a = actorOf(rec)
   const handle = a?.slug || a?.username || null
-  const href = handle ? `/u/${handle}` : null
 
   const membershipId = pickNum(rec.data, ["membershipId", "membership_id", "entityId", "entity_id", "id"])
   const ownerId = pickNum(rec.data, ["ownerId", "owner_id"])
@@ -41,15 +41,60 @@ export function mapRecordToVM(
     title: a?.username || a?.slug || "",
     body: "",
     avatar: a?.avatar || null,
-    href,
+    href: null,
     handle,
     createdAt: rec.created_at,
     read: !!rec.read_at,
     actor: a
   }
 
+// src/modules/notifications/mappers/kindToVM.ts
+  if (kind === "comment.on_post" || kind === "comment.mentioned") {
+    const postId =
+      pickNum(rec.data, ["post_id"]) ??
+      pickNum(rec.data?.post, ["id"]) ?? null
+    const commentId =
+      pickNum(rec.data, ["comment_id"]) ??
+      pickNum(rec.data?.comment, ["id"]) ?? null
+
+    const snippet = String(
+      rec.data?.snippet ?? rec.data?.comment?.excerpt ?? ""
+    ).trim()
+
+    const title = base.title
+    const body =
+      kind === "comment.on_post"
+        ? (snippet ? `commented: ${snippet}` : "commented on your post")
+        : (snippet ? `mentioned you: ${snippet}` : "mentioned you in a comment")
+
+    // هم query و هم hash
+    const href = postId
+      ? `/p/${postId}${commentId ? `?comment=${commentId}#c-${commentId}` : ""}`
+      : null
+
+    return { ...base, title, body, href }
+  }
+
+
+  if (kind === "comment.mentioned") {
+    const postId =
+      pickNum(rec.data, ["post_id"]) ??
+      pickNum(rec.data?.post, ["id"]) ??
+      null
+    const commentId =
+      pickNum(rec.data, ["comment_id"]) ??
+      pickNum(rec.data?.comment, ["id"]) ??
+      null
+    const snippet = String(rec.data?.snippet ?? rec.data?.comment?.excerpt ?? "").trim()
+    const title = base.title
+    const body = snippet ? `mentioned you: ${snippet}` : "mentioned you in a comment"
+    const href = postId ? `/p/${postId}${commentId ? `#c-${commentId}` : ""}` : null
+    return { ...base, title, body, href }
+  }
+
   if (kind.startsWith("member.")) {
     return { ...base, membershipId, ownerId }
   }
+
   return base
 }

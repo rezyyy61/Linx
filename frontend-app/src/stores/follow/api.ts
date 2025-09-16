@@ -8,6 +8,7 @@ export {
   getFollowings,
   getSuggestions,
   unfollowUser,
+  cancelFollowRequest,
 } from "@/services/follow"
 
 export { getMyProfileLite } from "@/services/profile"

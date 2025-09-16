@@ -1,7 +1,7 @@
 <template>
   <article
     ref="root"
-    class="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-800"
+    class="rounded-2xl border border-zinc-200 bg-white p-4 overflow-hidden shadow-sm transition hover:shadow-md focus-within:ring-2 focus-within:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-800"
     tabindex="0"
   >
     <PostCardHeader
@@ -13,7 +13,9 @@
       :edited-at="post.editedAt ?? undefined"
       :is-pinned="!!post.isPinned"
       :verified="post.author.verified || false"
-      :is-owner="false"
+      :is-owner="isOwner"
+      :follow-state="followState"
+      @toggle-follow="onToggleFollow"
       @copy="() => {}"
       @share="onShare"
       @edit="() => {}"
@@ -31,11 +33,12 @@
     />
     <section
       v-if="post.media?.length"
-      class="mb-3"
+      class="-mx-4 mt-2 mb-3"
     >
       <MediaRenderer
         :items="post.media || []"
         :gid="post.id"
+        :bleed="true"
       />
     </section>
 
@@ -64,10 +67,10 @@
       @shared="onShared"
     />
 
-
     <transition name="ic-slide">
       <InlineComments
         v-if="isCommentsOpen"
+        ref="commentsRef"
         :post-id="post.id"
         @added="onCommentAddedInline"
       />
@@ -76,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import {computed, nextTick, onMounted, ref, watch} from 'vue'
 import type { Post } from './types/post.types'
 import { usePostActions } from './composables/usePostActions'
 import { useViewCounter } from './composables/useViewCounter'
@@ -87,12 +90,44 @@ import SharePanel from "@/modules/public/postCard/footer/share/SharePanel.vue";
 import PostCardHeader from "@/modules/public/postCard/header/PostCardHeader.vue";
 import PostText from "@/modules/public/postCard/content/text/PostText.vue";
 import LikesPreview from "@/modules/public/postCard/footer/likes/LikesPreview.vue";
+import {useAuthStore} from "@/stores/auth/auth";
+import { useRoute } from 'vue-router'
+import {useFollowStore} from "@/stores/follow";
 
 const props = defineProps<{ post: Post }>()
 
 const { liked, saved, counts, ensure, toggleLike, toggleSave, addShare, addView, addComment } = usePostActions()
 ensure(props.post)
 
+const auth = useAuthStore()
+const isOwner = computed(() =>
+  Number(props.post.author.id) === Number(auth.user?.id)
+)
+
+const follow = useFollowStore()
+
+const isFollowing = computed(() =>
+  follow.isConnected(props.post.author.id)
+)
+const isPending = computed(() =>
+  follow.isPendingWith(props.post.author.id)
+)
+const followState = computed<'none' | 'pending' | 'following'>(() =>
+  isFollowing.value ? 'following' : (isPending.value ? 'pending' : 'none')
+)
+
+async function onToggleFollow() {
+  if (isFollowing.value) {
+    await follow.unfollow(props.post.author.id)
+  } else if (isPending.value) {
+    await follow.cancelRequest(props.post.author.id)
+  } else {
+    await follow.sendFollow(props.post.author.id)
+  }
+}
+
+const route = useRoute()
+const commentsRef = ref<InstanceType<typeof InlineComments> | null>(null)
 function onLike() { toggleLike(props.post) }
 function onSave() { toggleSave(props.post) }
 const isShareOpen = ref(false)
@@ -104,6 +139,27 @@ const shareUrl = computed(() => {
   return `${base}/p/${props.post.id}`
 })
 
+onMounted(async () => {
+  if (!follow.followers.length) await follow.loadFollowers()
+  if (!follow.followings.length) await follow.loadFollowings()
+  await follow.loadOutgoingRequests()
+  const q = route.query.comment
+  const hash = (typeof window !== 'undefined' ? window.location.hash : '') || ''
+  const hashId = hash.startsWith('#c-') ? Number(hash.slice(3)) : null
+  if (q || hashId) {
+    isCommentsOpen.value = true
+    await nextTick()
+    const target = Number(q || hashId)
+    commentsRef.value?.reveal(target)
+  }
+})
+
+watch(() => route.query.comment, async (val) => {
+  if (!val) return
+  isCommentsOpen.value = true
+  await nextTick()
+  commentsRef.value?.reveal(Number(val))
+})
 
 const isCommentsOpen = ref(false)
 function onComment() { isCommentsOpen.value = !isCommentsOpen.value }

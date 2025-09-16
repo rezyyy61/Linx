@@ -8,14 +8,14 @@
     </div>
     <div
       v-if="!expanded && overflow"
-      class="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent dark:from-zinc-900"
+      class="pointer-events-none absolute inset-x-0 bottom-0 h-10  dark:from-zinc-700"
     />
     <div
       v-if="overflow"
       class="mt-2"
     >
       <button
-        class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+        class="text-xs mb-1 font-medium text-indigo-600 hover:underline dark:text-indigo-400"
         @click="expanded = !expanded"
       >
         {{ expanded ? 'Show less' : 'Read more' }}

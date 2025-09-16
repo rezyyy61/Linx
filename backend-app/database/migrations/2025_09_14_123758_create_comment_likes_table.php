@@ -10,14 +10,11 @@ return new class extends Migration
     {
         Schema::create('comment_likes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('comment_id');
-            $table->unsignedBigInteger('user_id');
+            $table->foreignId('comment_id')->constrained('comments')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
-
             $table->unique(['comment_id', 'user_id']);
-            $table->index(['user_id', 'comment_id']);
-            $table->foreign('comment_id')->references('id')->on('comments')->cascadeOnDelete();
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->index(['user_id', 'created_at']);
         });
     }
 

@@ -24,4 +24,9 @@ class FollowRequestPolicy
     {
         return $user->id === $request->target_id;
     }
+
+    public function cancel(User $user, FollowRequest $request): bool
+    {
+        return $user->id === $request->actor_id && $request->status === 'pending';
+    }
 }

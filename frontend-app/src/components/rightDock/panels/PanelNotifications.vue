@@ -12,6 +12,8 @@ import MemberInvited from "@/modules/notifications/components/MemberInvited.vue"
 import FollowUnfollowed from "@/modules/notifications/components/FollowUnfollowed.vue"
 import FollowAccepted from "@/modules/notifications/components/FollowAccepted.vue"
 import FollowRejected from "@/modules/notifications/components/FollowRejected.vue"
+import CommentOnPost from "@/modules/notifications/components/CommentOnPost.vue"
+import CommentMentioned from "@/modules/notifications/components/CommentMentioned.vue"
 import NotificationModalHost from "@/modules/notifications/components/NotificationModalHost.vue"
 import { useToast } from "@/modules/toast/useToast"
 
@@ -43,7 +45,9 @@ const map: Record<string, any> = {
   "member.invited": MemberInvited,
   "follow.unfollowed": FollowUnfollowed,
   "follow.accepted": FollowAccepted,
-  "follow.rejected": FollowRejected
+  "follow.rejected": FollowRejected,
+  "comment.on_post": CommentOnPost,
+  "comment.mentioned": CommentMentioned,
 }
 function resolveCmp(kind?: string){ return (kind && map[kind]) || DefaultNotification }
 
@@ -144,10 +148,10 @@ onBeforeUnmount(() => { if (io) io.disconnect() })
       <div
         v-for="i in 3"
         :key="'sk-'+i"
-        class="p-3 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-white/70 dark:bg-zinc-900/50 animate-pulse"
+        class="animate-pulse rounded-2xl border border-zinc-200/80 bg-white/70 p-3 dark:border-white/10 dark:bg-zinc-900/50"
       >
-        <div class="h-4 w-1/3 bg-zinc-200 dark:bg-zinc-700 rounded mb-2" />
-        <div class="h-3 w-2/3 bg-zinc-200 dark:bg-zinc-700 rounded" />
+        <div class="mb-2 h-4 w-1/3 rounded bg-zinc-200 dark:bg-zinc-700" />
+        <div class="h-3 w-2/3 rounded bg-zinc-200 dark:bg-zinc-700" />
       </div>
     </div>
 
@@ -155,7 +159,7 @@ onBeforeUnmount(() => { if (io) io.disconnect() })
       v-else-if="!hasMore && itemsVM.length===0"
       class="text-center text-sm text-zinc-600 dark:text-zinc-300"
     >
-      {{ t("notification.empty") }}
+      {{ $t("notification.empty") }}
     </div>
 
     <NotificationModalHost
