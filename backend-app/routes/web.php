@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Auth\GuestVerifyEmailController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
 use App\Http\Controllers\Api\Auth\PublicVerificationController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Share\ShareResolveController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
@@ -31,3 +32,7 @@ Route::prefix('api')->group(function () {
             ->name('verification.verify');
     });
 });
+
+Route::get('/'.trim(config('share.route_prefix'), '/').'/{code}', ShareResolveController::class)
+    ->middleware('throttle:resolve-share')
+    ->name('share.resolve');

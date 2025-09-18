@@ -1,7 +1,6 @@
 <template>
   <div
     :class="['rte-wrapper w-full', isFullScreen ? 'fixed inset-0 z-[60] bg-gray-100/95 dark:bg-gray-900/95 backdrop-blur-sm p-4 sm:p-6' : '']"
-    dir="ltr"
   >
     <div :class="['rte-panel mx-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl overflow-hidden', isFullScreen ? 'w-full max-w-5xl h-[85vh] shadow-2xl ring-1 ring-gray-200 dark:ring-gray-700' : '']">
       <div
@@ -100,7 +99,17 @@ onMounted(() => {
   if (!editorEl.value || !toolbarEl.value) return
   editor.value = new Quill(editorEl.value, {
     theme: 'snow',
-    modules: { toolbar: toolbarEl.value },
+    modules: {
+      toolbar: toolbarEl.value,
+      clipboard: { matchVisual: false },
+    },
+    formats: [
+      'header',
+      'bold', 'italic', 'underline', 'strike',
+      'blockquote',
+      'list', 'bullet',
+      'direction', 'align',
+    ],
   })
   editor.value.root.innerHTML = props.modelValue || '<p></p>'
   updateDirection(editor.value.getText())
@@ -108,6 +117,31 @@ onMounted(() => {
     if (!editor.value) return
     emit('update:modelValue', editor.value.root.innerHTML)
     updateDirection(editor.value.getText())
+  })
+
+  const clipboard: any = editor.value.getModule('clipboard')
+  clipboard.addMatcher(Node.ELEMENT_NODE, (_node: Element, delta: any) => {
+    if (!delta?.ops) return delta
+    delta.ops = delta.ops.map((op: any) => {
+      if (!op.attributes) return op
+      const { background: _background, color: _color, size: _size, font: _font, ...rest } = op.attributes
+      return Object.keys(rest).length ? { ...op, attributes: rest } : { insert: op.insert }
+    })
+    return delta
+  })
+  ;['H1','H2','H3','H4','H5','H6'].forEach(tag => {
+    clipboard.addMatcher(tag, (_node: Element, delta: any) => {
+      if (!delta?.ops) return delta
+      delta.ops = delta.ops.map((op: any) => {
+        if (op.insert === '\n' && op.attributes?.header) {
+          const attrs = { ...op.attributes }
+          delete attrs.header
+          return Object.keys(attrs).length ? { ...op, attributes: attrs } : { insert: '\n' }
+        }
+        return op
+      })
+      return delta
+    })
   })
 })
 
@@ -129,9 +163,6 @@ watch(() => props.modelValue, (v) => {
 .rte-panel .ql-editor { height: 100%; }
 .rte-wrapper .ql-toolbar { border: 0; border-bottom: 1px solid rgba(229,231,235,1); border-radius: 1rem 1rem 0 0; }
 .dark .rte-wrapper .ql-toolbar { border-bottom-color: rgba(55,65,81,1); }
-
-/* Overlay bg already on wrapper; remove old overlay class */
-.rte-overlay {}
 
 .dark .rte-wrapper .ql-snow .ql-picker { color: #e5e7eb; }
 .dark .rte-wrapper .ql-snow .ql-stroke,

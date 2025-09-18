@@ -1,5 +1,6 @@
 import { api, ensureCsrfCookie } from '@/lib/http'
 import { mapServerPost } from '../adapters/post.adapter'
+import { attachRepostFields } from '../adapters/repost.adapter'
 import { mapServerMiniUser, type ServerMiniUser } from '../adapters/user.adapter'
 import type { Post } from '../types/post.types'
 
@@ -24,7 +25,7 @@ export async function list(input?: { cursor?: string; per_page?: number }) {
   })
   const payload: any = res.data
   const rows = pickArray(payload)
-  const items: Post[] = rows.map(mapServerPost)
+  const items: Post[] = rows.map((raw) => attachRepostFields(mapServerPost(raw), raw))
   return { items, links: pickLinks(payload), meta: pickMeta(payload) }
 }
 
@@ -34,7 +35,7 @@ export async function get(id: string) {
   })
   const payload: any = res.data
   const raw: ServerPost = (payload && payload.data) ? payload.data : payload
-  return mapServerPost(raw)
+  return attachRepostFields(mapServerPost(raw), raw)
 }
 
 export async function toggleLike(id: string): Promise<{ liked: boolean; likes: number }> {
