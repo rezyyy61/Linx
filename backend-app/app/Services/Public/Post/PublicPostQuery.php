@@ -66,6 +66,30 @@ class PublicPostQuery
                 'media' => fn ($m) => $m
                     ->wherePivot('collection', PostModel::MEDIA_COLLECTION)
                     ->orderBy('mediables.order_column'),
+                'original' => function ($q) {
+                    $q->with([
+                        'user',
+                        'user.profile',
+                        'user.profile.translations',
+                        'user.profile.logo',
+                        'user.profile.media',
+                        'media' => fn ($m) => $m
+                            ->wherePivot('collection', PostModel::MEDIA_COLLECTION)
+                            ->orderBy('mediables.order_column'),
+                    ])->withCount([
+                        'shares as shares_count' => fn ($x) => $x->active(),
+                        'comments as comments_count' => fn ($x) => $x->where('status', 'visible'),
+                        // اختیاری: اگر روابط likes/saves داری
+                        // 'likes as likes_count',
+                        // 'saves as saves_count',
+                    ]);
+                },
+            ])
+            ->withCount([
+                'shares as shares_count' => fn ($q) => $q->active(),
+                'comments as comments_count' => fn ($q) => $q->where('status', 'visible'),
+                // 'likes as likes_count',
+                // 'saves as saves_count',
             ]);
     }
 }

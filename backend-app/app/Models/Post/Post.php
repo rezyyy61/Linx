@@ -7,6 +7,9 @@ namespace App\Models\Post;
 use App\Contracts\Mediable;
 use App\Models\Comment\Comment;
 use App\Models\Media;
+use App\Models\Share\Concerns\IsShareable;
+use App\Models\Share\Contracts\Shareable;
+use App\Models\Share\Share;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,9 +19,10 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Post extends Model implements Mediable
+class Post extends Model implements Mediable, Shareable
 {
     use HasFactory;
+    use IsShareable;
     use SoftDeletes;
 
     public const STATUS_PUBLISHED = 'published';
@@ -31,6 +35,7 @@ class Post extends Model implements Mediable
         'visibility',
         'status',
         'published_at',
+        'repost_of_id',
     ];
 
     protected $casts = [
@@ -76,5 +81,46 @@ class Post extends Model implements Mediable
     public function rootComments(): MorphMany
     {
         return $this->comments()->whereNull('parent_id');
+    }
+
+    public function getShareUrl(): string
+    {
+        return url('/posts/'.$this->getKey());
+    }
+
+    public function original(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'repost_of_id');
+    }
+
+    public function reposts(): HasMany
+    {
+        return $this->hasMany(self::class, 'repost_of_id');
+    }
+
+    public function shares()
+    {
+        return $this->morphMany(Share::class, 'shareable');
+    }
+
+    public function root(): self
+    {
+        $p = $this;
+
+        while ($p->repost_of_id) {
+            $rel = $p->getRelationValue('original');
+
+            $next = $rel instanceof self
+                ? $rel
+                : $p->original()->first();
+
+            if (! $next || $next->id === $p->id) {
+                break;
+            }
+
+            $p = $next;
+        }
+
+        return $p;
     }
 }

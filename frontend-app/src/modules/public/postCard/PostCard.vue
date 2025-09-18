@@ -24,6 +24,12 @@
       @pin-toggle="() => {}"
     />
 
+    <RepostBadge
+      v-if="originalId"
+      :original-id="originalId"
+      :username="originalUser"
+    />
+
     <PostText
       :html="post.text || ''"
       :parse-entities="true"
@@ -31,16 +37,38 @@
       :clamp-lines="6"
       :reader-threshold-lines="24"
     />
+
     <section
       v-if="post.media?.length"
       class="-mx-4 mt-2 mb-3"
     >
       <MediaRenderer
         :items="post.media || []"
-        :gid="post.id"
+        :gid="String(post.id)"
         :bleed="true"
       />
     </section>
+
+    <div
+      v-if="origLoading"
+      class="mt-3"
+    >
+      <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 animate-pulse">
+        <div class="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-700 mb-3" />
+        <div class="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
+        <div class="h-3 w-5/6 rounded bg-zinc-200 dark:bg-zinc-700" />
+      </div>
+    </div>
+
+    <div
+      v-else-if="original"
+      class="mt-3"
+    >
+      <PostPreviewCompact
+        :post="original"
+        :to="originalTo"
+      />
+    </div>
 
     <LikesPreview :post-id="post.id" />
 
@@ -58,11 +86,13 @@
       @save="onSave"
     />
 
-    <SharePanel
+    <ShareModal
       :open="isShareOpen"
-      :url="shareUrl"
+      :shareable-alias="'post'"
+      :shareable-id="Number(post.id)"
       :title="post.author.name"
       :text="post.text || ''"
+      :post="post"
       @close="isShareOpen=false"
       @shared="onShared"
     />
@@ -86,13 +116,16 @@ import { useViewCounter } from './composables/useViewCounter'
 import MediaRenderer from './content/media/MediaRenderer.vue'
 import PostCardFooter from "@/modules/public/postCard/footer/PostCardFooter.vue";
 import InlineComments from "@/modules/public/postCard/footer/comments/InlineComments.vue";
-import SharePanel from "@/modules/public/postCard/footer/share/SharePanel.vue";
 import PostCardHeader from "@/modules/public/postCard/header/PostCardHeader.vue";
 import PostText from "@/modules/public/postCard/content/text/PostText.vue";
 import LikesPreview from "@/modules/public/postCard/footer/likes/LikesPreview.vue";
 import {useAuthStore} from "@/stores/auth/auth";
 import { useRoute } from 'vue-router'
 import {useFollowStore} from "@/stores/follow";
+import { ShareModal } from '@/modules/share'
+import PostPreviewCompact from '@/modules/share/components/PostPreviewCompact.vue'
+import RepostBadge from '@/modules/share/components/RepostBadge.vue'
+import * as postsApi from '@/modules/public/postCard/api/posts'
 
 const props = defineProps<{ post: Post }>()
 
@@ -134,25 +167,71 @@ const isShareOpen = ref(false)
 function onShare() { isShareOpen.value = true }
 function onShared() { addShare(props.post); isShareOpen.value = false }
 
-const shareUrl = computed(() => {
-  const base = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${base}/p/${props.post.id}`
+const isCommentsOpen = ref(false)
+function onComment() { isCommentsOpen.value = !isCommentsOpen.value }
+function onCommentAddedInline() { addComment(props.post, 1) }
+
+const { el: root, hasCounted } = useViewCounter()
+watch(hasCounted, v => { if (v) addView(props.post) })
+
+const original = ref<any | null>(null)
+const origLoading = ref(false)
+
+const originalId = computed<number | null>(() => {
+  const p: any = props.post as any
+  if (p?.original && p.original.id) return Number(p.original.id)
+  const id = p.repostOfId ?? p.repost_of_id ?? p.originalId ?? p.original_id ?? null
+  return id ? Number(id) : null
 })
 
+const originalUser = computed<string | undefined>(() => {
+  const u = (original.value?.author?.username) || (props as any).post?.original?.author?.username
+  return typeof u === 'string' ? u : undefined
+})
+
+const originalTo = computed(() => originalId.value ? `/p/${originalId.value}` : '#')
+
+async function loadOriginal() {
+  if (!originalId.value) return
+  if (original.value) return
+  origLoading.value = true
+  try {
+    if ((props as any).post?.original) {
+      original.value = (props as any).post.original
+    } else {
+      const data = await postsApi.get(String(originalId.value))
+      original.value = data
+    }
+  } catch {
+    original.value = null
+  } finally {
+    origLoading.value = false
+  }
+}
+
 onMounted(async () => {
-  if (!follow.followers.length) await follow.loadFollowers()
-  if (!follow.followings.length) await follow.loadFollowings()
-  await follow.loadOutgoingRequests()
+  try {
+    if (auth.user) {
+      if (!follow.followers.length)  await follow.loadFollowers()
+      if (!follow.followings.length) await follow.loadFollowings()
+      await follow.loadOutgoingRequests()
+    }
+  } catch { /* empty */ }
+
   const q = route.query.comment
   const hash = (typeof window !== 'undefined' ? window.location.hash : '') || ''
   const hashId = hash.startsWith('#c-') ? Number(hash.slice(3)) : null
+
   if (q || hashId) {
     isCommentsOpen.value = true
     await nextTick()
     const target = Number(q || hashId)
     commentsRef.value?.reveal(target)
   }
+
+  if (originalId.value) await loadOriginal()
 })
+
 
 watch(() => route.query.comment, async (val) => {
   if (!val) return
@@ -161,12 +240,9 @@ watch(() => route.query.comment, async (val) => {
   commentsRef.value?.reveal(Number(val))
 })
 
-const isCommentsOpen = ref(false)
-function onComment() { isCommentsOpen.value = !isCommentsOpen.value }
-function onCommentAddedInline() { addComment(props.post, 1) }
-
-const { el: root, hasCounted } = useViewCounter()
-watch(hasCounted, v => { if (v) addView(props.post) })
+watch(originalId, async (v) => {
+  if (v && !original.value) await loadOriginal()
+})
 </script>
 
 <style scoped>
