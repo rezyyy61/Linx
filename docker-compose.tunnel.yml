@@ -1,0 +1,15 @@
+services:
+  php:
+    volumes:
+      - type: bind
+        source: ./backend-app/.env.tunnel
+        target: /var/www/html/.env
+        read_only: true
+
+  cloudflared-app:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://nginx:80 --http-host-header app.localhost
+    depends_on:
+      nginx:
+        condition: service_started
+    restart: unless-stopped

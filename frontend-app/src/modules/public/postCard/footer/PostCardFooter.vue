@@ -50,5 +50,3 @@ defineEmits<{
   (e: 'save'): void
 }>()
 </script>
-
-

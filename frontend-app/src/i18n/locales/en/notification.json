@@ -48,7 +48,11 @@
 
     "comment": {
       "title": "New comment",
-      "body": "{name} commented on your post"
+      "body": "{name} commented on your post",
+      "mentioned": {
+        "title": "You were mentioned in a comment",
+        "body": "{name} mentioned you in a comment"
+      }
     },
 
     "mention": {
