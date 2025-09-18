@@ -14,9 +14,11 @@ use App\Http\Controllers\Api\Member\MembershipController;
 use App\Http\Controllers\Api\Member\MyMembershipController;
 use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\Api\Post\PostController;
+use App\Http\Controllers\Api\Post\RepostController;
 use App\Http\Controllers\Api\Profile\LinkController;
 use App\Http\Controllers\Api\Profile\ProfileController;
 use App\Http\Controllers\Api\Profile\ValueController;
+use App\Http\Controllers\Api\Share\ShareController;
 use App\Http\Controllers\Api\User\UserSearchController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('posts', PostController::class)->parameters([
         'posts' => 'post',
     ]);
+    Route::post('/posts/{post}/repost', [RepostController::class, 'store'])->name('posts.repost.store');
+
 });
 
 Route::middleware('auth:sanctum')
@@ -154,4 +158,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/opened', [ContentTargetController::class, 'markOpened']);
         Route::post('/clicked', [ContentTargetController::class, 'markClicked']);
     });
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/share', [ShareController::class, 'store'])->name('share.store');
 });

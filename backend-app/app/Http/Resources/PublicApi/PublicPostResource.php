@@ -62,17 +62,20 @@ class PublicPostResource extends JsonResource
 
         $likes = (int) PostLike::query()->where('post_id', $post->id)->count();
         $saves = (int) PostSave::query()->where('post_id', $post->id)->count();
-        $comments = Comment::query()
+        $comments = (int) ($post->comments_count ?? Comment::query()
             ->where('commentable_type', \App\Models\Post\Post::class)
             ->where('commentable_id', $post->id)
             ->where('status', 'visible')
-            ->count();
+            ->count());
+
+        $shares = (int) ($post->shares_count ?? $post->shares()->active()->count());
 
         return [
             'id' => $post->id,
             'content' => $post->content,
             'visibility' => $post->visibility,
             'status' => $post->status,
+            'repost_of_id' => $post->repost_of_id,
             'published_at' => $post->published_at?->toIso8601String(),
             'created_at' => $post->created_at?->toIso8601String(),
             'updated_at' => $post->updated_at?->toIso8601String(),
@@ -88,7 +91,7 @@ class PublicPostResource extends JsonResource
             'counts' => [
                 'likes' => $likes,
                 'comments' => $comments,
-                'shares' => 0,
+                'shares' => $shares,
                 'saves' => $saves,
                 'views' => 0,
             ],

@@ -1,3 +1,21 @@
 $p = \App\Models\Post\Post::with('media')->find(121);
 $p->media->pluck('id'); 
 \DB::table('mediables')->where('mediable_id',121)->get(); 
+dispatch(new \App\Jobs\LogShareClick(
+    shareId: 1,           // مطمئن شو share با id=1 فعال است
+    shortCode: 'TEST',
+    ipHash: null,
+    referer: 'tinker',
+    userAgent: 'ManualTestUA',
+    occurredAt: now()->toDateTimeString()
+));
+
+dispatch(new \App\Jobs\LogShareClick(
+    shareId: 1,
+    shortCode: 'TEST',
+    ipHash: null,
+    referer: 'tinker',
+    userAgent: 'ManualTestUA',
+    occurredAt: now()->toDateTimeString()
+));
+
