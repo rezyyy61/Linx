@@ -11,3 +11,4 @@
 # TS build info
 *.tsbuildinfo
 backend-app/.env.tunnel
+frontend-app/.env.development
