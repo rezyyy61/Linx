@@ -10,3 +10,4 @@
 
 # TS build info
 *.tsbuildinfo
+backend-app/.env.tunnel
