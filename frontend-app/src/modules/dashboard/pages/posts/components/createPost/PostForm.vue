@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, type WritableComputedRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Icon } from '@iconify/vue'
-import type { Post } from '@/stores/post/post'
+import type { Post } from '@/stores/post/Post'
 import { usePostForm } from '@/modules/dashboard/pages/posts/usePostForm'
 import { normalizeApiError } from '@/modules/dashboard/pages/posts/lib/errors'
 import MediaUploader from '@/modules/dashboard/pages/posts/components/createPost/MediaUploader.vue'
@@ -11,8 +11,8 @@ import RichTextEditor from '@/modules/dashboard/pages/posts/components/text/Rich
 import PostMetaFields from '@/modules/dashboard/pages/posts/components/createPost/PostMetaFields.vue'
 import { useMediaStore } from '@/stores/post/post.media'
 import { useRouter } from 'vue-router'
-const router = useRouter()
 
+const router = useRouter()
 const { t, te } = useI18n()
 const tr = (k: string) => (te(`post.${k}`) ? t(`post.${k}`) : t(k))
 
@@ -177,7 +177,10 @@ const publishedAt = computed({
         @move="onMove"
         @reorder="onReorder"
       />
-      <MediaUploader @picked="onPicked" />
+      <MediaUploader
+        :remaining="fm.remaining"
+        @picked="onPicked"
+      />
     </div>
 
     <div class="flex flex-wrap items-center gap-3 pt-2">
@@ -201,6 +204,7 @@ const publishedAt = computed({
         />
         <span>{{ tr('actions.publish') }}</span>
       </button>
+
       <button
         v-if="isCreate"
         type="button"
@@ -242,6 +246,7 @@ const publishedAt = computed({
           />
           <span>{{ tr('actions.publish') }}</span>
         </button>
+
         <button
           type="button"
           :disabled="!canSubmit"

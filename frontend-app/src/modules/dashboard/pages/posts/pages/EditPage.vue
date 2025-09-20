@@ -26,7 +26,6 @@
       </div>
     </div>
 
-    <!-- نکته: PostForm فقط وقتی mount می‌شود که post آماده است -->
     <PostForm
       v-else-if="post"
       :initial="post"
@@ -42,7 +41,7 @@
 import { Icon } from '@iconify/vue'
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { usePostStore, type Post } from '@/stores/post/post'
+import { usePostStore, type Post } from '@/stores/post/Post'
 import PostForm from '@/modules/dashboard/pages/posts/components/createPost/PostForm.vue'
 
 const route = useRoute()
@@ -67,7 +66,6 @@ function onSaved(p: Post) {
 }
 
 function onError(err: { status:number; message:string }) {
-  // این‌جا اگر خواستی نوتیفیکیشن یا toast بزن
   console.error('edit error', err)
 }
 

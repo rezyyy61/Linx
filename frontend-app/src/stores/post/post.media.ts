@@ -1,51 +1,17 @@
+// /src/stores/post/post.media.ts
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { api, ensureCsrfCookie } from '@/lib/http'
 import { subscribePrivate, unsubscribe } from '@/lib/echo'
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'document'
-
-export type MediaRecord = {
-  id: number
-  key?: string
-  status?: string
-  type?: string
-  mime?: string
-  width?: number | null
-  height?: number | null
-  duration?: number | null
-  processed?: any
-  processing?: any
-  meta?: any
-  url?: string
-  public_url?: string
-  [k: string]: any
-}
-
-export type UploadTask = {
-  uid: string
-  sig: string
-  file: File
-  kind: MediaKind
-  id?: number
-  key?: string
-  contentType?: string
-  uploadUrl?: string
-  progress: number
-  status: 'idle'|'presigning'|'uploading'|'finalizing'|'scanning'|'processing'|'ready'|'rejected'|'failed'|'error'
-  media?: MediaRecord
-  error?: string | null
-  abort?: AbortController
-  intervalId?: number | null
-  rtName?: string
-  rtBound?: boolean
-}
+export type MediaRecord = { id:number; key?:string; status?:string; type?:string; mime?:string; width?:number|null; height?:number|null; duration?:number|null; processed?:any; processing?:any; meta?:any; url?:string; public_url?:string; [k:string]:any }
+export type UploadTask = { uid:string; sig:string; file:File; kind:MediaKind; id?:number; key?:string; contentType?:string; uploadUrl?:string; progress:number; status:'idle'|'presigning'|'uploading'|'finalizing'|'scanning'|'processing'|'ready'|'rejected'|'failed'|'error'; media?:MediaRecord; error?:string|null; abort?:AbortController; intervalId?:number|null; rtName?:string; rtBound?:boolean }
 
 const fileSig = (f: File) => `${f.name}:${f.size}:${f.lastModified}`
 const norm = (v: any) => (v ?? '').toString().trim().toUpperCase()
 const extOf = (name: string) => { const i = name.lastIndexOf('.'); return i >= 0 ? name.slice(i + 1).toLowerCase() : '' }
 const unpack = <T=any>(res:any):T => (res?.data && (res.data.data ?? res.data)) as T
-
 const TYPE_POST_FQN = 'App\\Models\\Post\\Post'
 
 const inferKind = (m?: MediaRecord): MediaKind => {
@@ -75,26 +41,30 @@ const looksProcessedForVideo = (m?: any) => {
   const mp4Video = !!(m?.processed?.video?.mp4_key || m?.processed?.video?.mp4_url || m?.processed?.video?.mp4)
   return readyish || variantsRoot || variantsVideo || mp4Root || mp4Video
 }
-
 const mapPhaseSmart = (m?: MediaRecord): 'ready'|'rejected'|'failed'|'scanning'|'processing' => {
   const st = pickStatus(m)
   const kind = inferKind(m)
   if (['REJECTED','BLOCKED'].includes(st)) return 'rejected'
   if (['FAILED','ERROR'].includes(st))     return 'failed'
   if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) return 'ready'
-
   if (kind === 'video') {
     if (looksProcessedForVideo(m)) return 'ready'
     if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) return 'scanning'
     return 'processing'
   }
-
   if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) return 'scanning'
   return 'processing'
 }
-
 const floorProcessingProgress = (t: UploadTask) => {
   if (['scanning','processing','finalizing'].includes(t.status)) t.progress = Math.max(t.progress || 0, 95)
+}
+const hasPublicUrl = (m?: MediaRecord|null) => !!(m?.public_url || m?.url)
+
+const isUsableForUI = (m?: MediaRecord|null): boolean => {
+  if (!m) return false
+  const kind = inferKind(m)
+  if (kind === 'video') return hasPublicUrl(m) && looksProcessedForVideo(m)
+  return hasPublicUrl(m)
 }
 
 export const useMediaStore = defineStore('media', {
@@ -240,56 +210,18 @@ export const useMediaStore = defineStore('media', {
 
       const handler = (p: any) => {
         t.media = { ...(t.media || {}), ...p }
-
         const prog = typeof p?.progress === 'number' ? p.progress : pickProgress(t.media)
         if (prog !== null && t.status !== 'ready') t.progress = Math.min(100, Number(prog))
-
         const st = norm(p?.status || pickStatus(t.media))
-
-        if (['REJECTED','BLOCKED'].includes(st)) {
-          t.status = 'rejected'
-          this.unsubscribeRealtime(t)
-          return
-        }
-
-        if (['FAILED','ERROR'].includes(st)) {
-          t.status = 'failed'
-          this.unsubscribeRealtime(t)
-          return
-        }
-
+        if (['REJECTED','BLOCKED'].includes(st)) { t.status = 'rejected'; this.unsubscribeRealtime(t); return }
+        if (['FAILED','ERROR'].includes(st))     { t.status = 'failed';   this.unsubscribeRealtime(t); return }
         if (t.kind === 'video') {
-          if (looksProcessedForVideo(t.media)) {
-            t.status = 'ready'
-            t.progress = 100
-            this.unsubscribeRealtime(t)
-            return
-          }
-          if (['SCANNED','UPLOADED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) {
-            t.status = 'processing'
-            floorProcessingProgress(t)
-            return
-          }
+          if (looksProcessedForVideo(t.media)) { t.status = 'ready'; t.progress = 100; this.unsubscribeRealtime(t); return }
+          if (['SCANNED','UPLOADED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) { t.status = 'processing'; floorProcessingProgress(t); return }
         }
-
-        if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) {
-          t.status = 'ready'
-          t.progress = 100
-          this.unsubscribeRealtime(t)
-          return
-        }
-
-        if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) {
-          t.status = ['SCANNING','SCANNED'].includes(st) ? 'scanning' : 'processing'
-          floorProcessingProgress(t)
-          return
-        }
-
-        if (st === 'DELETED') {
-          this.unsubscribeRealtime(t)
-          this.cleanupTask(t)
-          return
-        }
+        if (['READY','DONE','PROCESSED','COMPLETE','COMPLETED'].includes(st)) { t.status = 'ready'; t.progress = 100; this.unsubscribeRealtime(t); return }
+        if (['UPLOADED','SCANNED','QUEUED','PENDING','STARTED','SCANNING','PROCESSING'].includes(st)) { t.status = ['SCANNING','SCANNED'].includes(st) ? 'scanning' : 'processing'; floorProcessingProgress(t); return }
+        if (st === 'DELETED') { this.unsubscribeRealtime(t); this.cleanupTask(t); return }
       }
 
       ch.unbind('MediaUpdated')
@@ -309,17 +241,58 @@ export const useMediaStore = defineStore('media', {
       return unpack<MediaRecord>(res)
     },
 
+    async waitUntilReady(id: number, opts?: { tries?: number; intervalMs?: number }): Promise<MediaRecord | null> {
+      const tries = opts?.tries ?? 10
+      const intervalMs = opts?.intervalMs ?? 1000
+      let rec: MediaRecord | null = null
+      try { rec = await this.fetchMedia(id) } catch { rec = null }
+      if (isUsableForUI(rec)) return rec
+
+      let ch: any = null
+      let resolved = false
+      try {
+        ch = await subscribePrivate(`media.${id}`)
+        ch.bind('MediaUpdated', (p: any) => {
+          if (resolved) return
+          rec = { ...(rec || {}), ...(p || {}) }
+          if (isUsableForUI(rec)) { resolved = true }
+        })
+      } catch { /* empty */ }
+
+      for (let i = 0; i < tries && !resolved; i++) {
+        try {
+          const r = await this.fetchMedia(id)
+          rec = { ...(rec || {}), ...(r || {}) }
+          if (isUsableForUI(rec)) { resolved = true; break }
+        } catch { /* empty */ }
+        if (!resolved) await new Promise(r => setTimeout(r, intervalMs))
+      }
+
+      if (ch) {
+        try { ch.unbind('MediaUpdated') } catch { /* empty */ }
+        try { await unsubscribe(`media.${id}`) } catch { /* empty */ }
+      }
+      return rec
+    },
+
+    async waitUntilReadyMany(ids: number[], opts?: { tries?: number; intervalMs?: number }): Promise<Record<number, MediaRecord>> {
+      const out: Record<number, MediaRecord> = {}
+      const jobs = ids.map(async (id) => {
+        const r = await this.waitUntilReady(id, opts)
+        if (r) out[id] = r
+      })
+      await Promise.all(jobs)
+      return out
+    },
+
     startPolling() {},
     stopPolling() {},
 
     cancelUpload(t: UploadTask) {
       if (!t) return
       if (t.abort) { try { t.abort.abort() } catch { /* empty */ } }
-      if (t.id) {
-        this.deleteMediaOnServer(t.id).finally(() => this.cleanupTask(t))
-      } else {
-        this.cleanupTask(t)
-      }
+      if (t.id) { this.deleteMediaOnServer(t.id).finally(() => this.cleanupTask(t)) }
+      else { this.cleanupTask(t) }
     },
 
     async deleteMediaOnServer(id: number) {
@@ -343,25 +316,17 @@ export const useMediaStore = defineStore('media', {
 
     async removeDraftMedia(t: UploadTask) {
       if (!t) return
-      try {
-        if (t.id) await this.deleteMediaOnServer(t.id)
-      } finally {
-        this.cleanupTask(t)
-      }
+      try { if (t.id) await this.deleteMediaOnServer(t.id) }
+      finally { this.cleanupTask(t) }
     },
 
     async detachFromModel(mediaId: number, modelType: string, modelId: number, collection = 'post') {
       await ensureCsrfCookie()
-      await api.post(`media/${mediaId}/detach`, {
-        model_type: modelType,
-        model_id: modelId,
-        collection,
-      })
+      await api.post(`media/${mediaId}/detach`, { model_type: modelType, model_id: modelId, collection })
     },
 
     async detachFromPost(mediaId: number, postId: number, collection = 'post') {
       return this.detachFromModel(mediaId, TYPE_POST_FQN, postId, collection)
     },
-
   },
 })

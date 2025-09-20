@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-12 gap-6">
+  <div class="grid grid-cols-12 gap-6 p-4">
     <!-- Left Sidebar -->
     <aside class="col-span-3">
       <LeftSidebar />

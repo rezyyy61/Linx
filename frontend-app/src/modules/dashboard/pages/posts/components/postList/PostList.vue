@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth/auth'
 import EmptyState from '@/modules/dashboard/pages/posts/components/postList/EmptyState.vue'
 import PostCard from '@/modules/dashboard/pages/posts/components/postList/PostCard.vue'
 import PostHeader from '@/modules/dashboard/pages/posts/components/header/PostHeader.vue'
-import { usePostStore } from '@/stores/post/post'
+import { usePostStore } from '@/stores/post/Post'
 
 const { t, te } = useI18n()
 const tr = (k: string) => (te(`post.${k}`) ? t(`post.${k}`) : t(k))

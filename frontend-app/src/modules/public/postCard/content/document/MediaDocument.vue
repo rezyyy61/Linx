@@ -1,7 +1,7 @@
 <template>
-  <div class="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-3 dark:border-white/10">
-    <div class="flex items-center gap-3">
-      <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5">
+  <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 dark:border-white/10 dark:bg-zinc-900/70">
+    <div class="flex items-center gap-3 p-4">
+      <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-white/10 dark:bg-white/5">
         <img
           v-if="media.thumbnailUrl"
           :src="media.thumbnailUrl"
@@ -11,9 +11,10 @@
         <Icon
           v-else
           :icon="iconName"
-          class="h-7 w-7 text-zinc-300"
+          class="h-7 w-7 text-zinc-500 dark:text-zinc-300"
         />
       </div>
+
       <div class="min-w-0 flex-1">
         <div class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
           {{ media.filename }}
@@ -22,11 +23,12 @@
           {{ subtype }} {{ sizeText }}
         </div>
       </div>
+
       <div class="flex items-center gap-2">
         <button
           v-if="previewable"
-          class="rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-zinc-100 hover:bg-white/15"
-          @click="open=true"
+          class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100 dark:hover:bg-white/15"
+          @click="open = true"
         >
           Preview
         </button>
@@ -34,16 +36,19 @@
           :href="media.url"
           target="_blank"
           rel="noopener"
-          class="rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-zinc-100 hover:bg-white/15"
-        >Download</a>
+          class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100 dark:hover:bg-white/15"
+        >
+          Download
+        </a>
       </div>
     </div>
+
     <DocumentPreviewDialog
       v-if="previewable"
       :open="open"
       :src="media.url"
       :filename="media.filename"
-      @close="open=false"
+      @close="open = false"
     />
   </div>
 </template>
@@ -64,7 +69,7 @@ const ext = computed(() => {
   const i = n.lastIndexOf('.')
   return i > -1 ? n.slice(i + 1) : ''
 })
-const subtype = computed(() => ext.value ? ext.value.toUpperCase() : (mime.value.split('/')[1] || '').toUpperCase())
+const subtype = computed(() => (ext.value ? ext.value.toUpperCase() : (mime.value.split('/')[1] || '').toUpperCase()))
 const sizeText = computed(() => humanFileSize(props.media.sizeBytes))
 const previewable = computed(() => mime.value === 'application/pdf' || ext.value === 'pdf')
 const iconName = computed(() => {

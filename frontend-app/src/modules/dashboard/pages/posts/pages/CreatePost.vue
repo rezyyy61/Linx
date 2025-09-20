@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Post } from '@/stores/post/post'
+import type { Post } from '@/stores/post/Post'
 import PostForm from "@/modules/dashboard/pages/posts/components/createPost/PostForm.vue";
 
 const router = useRouter()

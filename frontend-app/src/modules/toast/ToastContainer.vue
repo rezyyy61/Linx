@@ -91,61 +91,57 @@
           class="absolute inset-0 bg-black/40 backdrop-blur-sm"
           @click="onCancel(c.id)"
         />
-        <div
-          class="relative w-full h-auto max-w-lg rounded-2xl border shadow-2xl p-4 md:p-5 bg-white/98 dark:bg-zinc-900/95"
-          :class="c.destructive ? 'border-rose-300/60 dark:border-rose-400/30' : 'border-indigo-300/60 dark:border-indigo-400/30'"
-        >
-          <button
-            class="absolute top-3 right-3 p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-white/10"
-            @click="onCancel(c.id)"
-          >
-            <Icon
-              icon="mdi:close"
-              width="18"
-              height="18"
-            />
-          </button>
 
-          <div class="flex items-start gap-3">
-            <div
-              class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-              :class="c.destructive ? 'bg-rose-50 dark:bg-rose-400/10' : 'bg-indigo-50 dark:bg-indigo-400/10'"
-            >
-              <Icon
-                :icon="c.destructive ? 'mdi:alert' : 'mdi:help-circle-outline'"
-                width="20"
-                height="20"
-                :class="c.destructive ? 'text-rose-700 dark:text-rose-200' : 'text-indigo-700 dark:text-indigo-200'"
-              />
-            </div>
-            <div class="min-w-0 flex-1">
-              <p
-                v-if="c.title"
-                class="text-base font-semibold text-zinc-900 dark:text-zinc-50"
-              >
-                {{ c.title }}
-              </p>
-              <p class="mt-0.5 text-sm text-zinc-700 dark:text-zinc-200 whitespace-pre-line break-words">
-                {{ c.message }}
-              </p>
-            </div>
+        <div
+          class="relative w-full h-auto max-w-md rounded-2xl border shadow-2xl bg-white dark:bg-zinc-900"
+          :class="c.destructive
+            ? 'border-rose-300/60 dark:border-rose-400/30'
+            : 'border-slate-200 dark:border-zinc-700'"
+        >
+          <!-- Header -->
+          <div class="flex items-center gap-2 p-4 border-b border-zinc-200 dark:border-zinc-700">
+            <Icon
+              :icon="c.destructive ? 'mdi:delete' : 'mdi:help-circle-outline'"
+              class="h-5 w-5"
+              :class="c.destructive ? 'text-rose-600' : 'text-indigo-600'"
+            />
+            <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              {{ c.title }}
+            </h3>
           </div>
 
-          <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+          <!-- Message -->
+          <div class="p-4">
+            <p class="text-sm text-zinc-700 dark:text-zinc-200">
+              {{ c.message }}
+            </p>
+          </div>
+
+          <!-- Footer buttons -->
+          <div class="flex justify-end gap-2 px-4 pb-4">
             <button
-              class="px-3 py-2 rounded-lg border text-sm"
-              :class="c.destructive
-                ? 'border-rose-300/60 dark:border-rose-400/30 bg-rose-50/80 dark:bg-rose-400/10 text-rose-700 dark:text-rose-200'
-                : 'border-indigo-300/60 dark:border-indigo-400/30 bg-indigo-50/80 dark:bg-indigo-400/10 text-indigo-700 dark:text-indigo-200'"
-              @click="onConfirm(c.id)"
-            >
-              {{ c.confirmLabel || 'Confirm' }}
-            </button>
-            <button
-              class="px-3 py-2 rounded-lg border text-sm border-zinc-300/60 dark:border-white/15 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50/70 dark:hover:bg-white/5"
+              class="px-3 py-1.5 rounded-lg border text-sm flex items-center gap-1"
               @click="onCancel(c.id)"
             >
+              <Icon
+                icon="mdi:close"
+                class="h-4 w-4"
+              />
               {{ c.cancelLabel || 'Cancel' }}
+            </button>
+
+            <button
+              class="px-3 py-1.5 rounded-lg border text-sm flex items-center gap-1"
+              :class="c.destructive
+                ? 'bg-rose-600 text-white hover:bg-rose-700 border-rose-700'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700 border-indigo-700'"
+              @click="onConfirm(c.id)"
+            >
+              <Icon
+                :icon="c.destructive ? 'mdi:delete' : 'mdi:check'"
+                class="h-4 w-4"
+              />
+              {{ c.confirmLabel || 'Confirm' }}
             </button>
           </div>
         </div>

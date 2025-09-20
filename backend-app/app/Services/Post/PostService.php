@@ -10,6 +10,7 @@ use App\Events\Public\Post\PublicPostUpdated;
 use App\Models\Media;
 use App\Models\Post\Post as PostModel;
 use App\Models\User;
+use App\Services\Media\MediaService;
 use Illuminate\Support\Facades\DB;
 
 class PostService
@@ -21,6 +22,8 @@ class PostService
     private const STATUS_PUBLISHED = 'published';
 
     private const STATUS_DRAFT = 'draft';
+
+    public function __construct(private MediaService $mediaService) {}
 
     public function create(array $data, User $user): PostModel
     {
@@ -65,7 +68,6 @@ class PostService
 
             if (array_key_exists('status', $data)) {
                 $post->status = $data['status'];
-
                 if ($post->status === self::STATUS_PUBLISHED) {
                     if (is_null($post->published_at)) {
                         $post->published_at = now();
@@ -97,12 +99,22 @@ class PostService
     {
         $id = $post->id;
 
+        $detachedIds = $post->media()
+            ->wherePivot('collection', self::COLLECTION)
+            ->pluck('media.id')
+            ->all();
+
         DB::transaction(function () use ($post) {
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
             $post->delete();
         });
 
-        DB::afterCommit(function () use ($id) {
+        DB::afterCommit(function () use ($id, $detachedIds) {
+            foreach ($detachedIds as $mid) {
+                if ($m = Media::find($mid)) {
+                    $this->mediaService->deleteIfOrphan($m);
+                }
+            }
             broadcast(new PublicPostDeleted($id));
         });
     }
@@ -114,7 +126,20 @@ class PostService
         }
 
         if ($mediaItems === []) {
+            $detachedIds = $post->media()
+                ->wherePivot('collection', self::COLLECTION)
+                ->pluck('media.id')
+                ->all();
+
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
+
+            DB::afterCommit(function () use ($detachedIds) {
+                foreach ($detachedIds as $mid) {
+                    if ($m = Media::find($mid)) {
+                        $this->mediaService->deleteIfOrphan($m);
+                    }
+                }
+            });
 
             return;
         }
@@ -133,23 +158,66 @@ class PostService
         }
 
         if ($prepared === []) {
+            $detachedIds = $post->media()
+                ->wherePivot('collection', self::COLLECTION)
+                ->pluck('media.id')
+                ->all();
+
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
+
+            DB::afterCommit(function () use ($detachedIds) {
+                foreach ($detachedIds as $mid) {
+                    if ($m = Media::find($mid)) {
+                        $this->mediaService->deleteIfOrphan($m);
+                    }
+                }
+            });
 
             return;
         }
 
-        $existingIds = Media::query()->whereIn('id', array_keys($prepared))->pluck('id')->all();
+        $existingIds = Media::query()
+            ->whereIn('id', array_keys($prepared))
+            ->pluck('id')
+            ->all();
+
         if ($existingIds === []) {
+            $detachedIds = $post->media()
+                ->wherePivot('collection', self::COLLECTION)
+                ->pluck('media.id')
+                ->all();
+
             $post->media()->wherePivot('collection', self::COLLECTION)->detach();
+
+            DB::afterCommit(function () use ($detachedIds) {
+                foreach ($detachedIds as $mid) {
+                    if ($m = Media::find($mid)) {
+                        $this->mediaService->deleteIfOrphan($m);
+                    }
+                }
+            });
 
             return;
         }
 
-        $currentIds = $post->media()->wherePivot('collection', self::COLLECTION)->pluck('media.id')->all();
+        $currentIds = $post->media()
+            ->wherePivot('collection', self::COLLECTION)
+            ->pluck('media.id')
+            ->all();
+
         $desiredIds = $existingIds;
         $toDetach = array_diff($currentIds, $desiredIds);
+
         if (! empty($toDetach)) {
             $post->media()->wherePivot('collection', self::COLLECTION)->detach($toDetach);
+
+            DB::afterCommit(function () use ($toDetach) {
+                foreach ($toDetach as $mid) {
+                    if ($m = Media::find($mid)) {
+                        $this->mediaService->deleteIfOrphan($m);
+                    }
+                }
+            });
         }
 
         foreach ($desiredIds as $id) {
