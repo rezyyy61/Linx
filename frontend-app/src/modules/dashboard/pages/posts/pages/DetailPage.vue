@@ -143,7 +143,7 @@
 import { Icon } from '@iconify/vue'
 import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { usePostStore, type Post } from '@/stores/post/post'
+import { usePostStore, type Post } from '@/stores/post/Post'
 import PostMediaViewer from '@/modules/dashboard/pages/posts/components/postList/PostMediaViewer.vue'
 import { sanitizeForDisplay, directionFor, htmlToText, isEmptyHtml } from '@/utils/text-utils'
 import SafeHtml from '@/components/SafeHtml.vue'

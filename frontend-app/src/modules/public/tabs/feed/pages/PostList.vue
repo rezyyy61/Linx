@@ -3,6 +3,17 @@
     ref="rootEl"
     class="space-y-4"
   >
+    <PublicComposerBar
+      class="mb-4"
+      @open="isComposerOpen = true"
+    />
+
+    <PublicComposerModal
+      :open="isComposerOpen"
+      @close="isComposerOpen = false"
+      @created="onPostCreated"
+    />
+
     <PostCard
       v-for="p in items"
       :key="p.id"
@@ -37,6 +48,9 @@ import PostCard from '@/modules/public/postCard/PostCard.vue'
 import { usePublicFeed } from '@/modules/public/postCard/composables/usePublicFeed'
 import { useFeedRealtime } from '@/modules/public/postCard/composables/useFeedRealtime'
 import { usePostActions } from '@/modules/public/postCard/composables/usePostActions'
+import PublicComposerBar from "@/modules/public/postCard/createPost/PublicComposerBar.vue";
+import PublicComposerModal from "@/modules/public/postCard/createPost/PublicPostComposer.vue";
+import * as postsApi from '@/modules/public/postCard/api/posts'
 
 const { items, loadMore, hasMore, loading } = usePublicFeed()
 const { ensure, setCounts } = usePostActions()
@@ -84,6 +98,14 @@ function setupIO() {
     threshold: 0
   })
   if (sentinel.value) io.observe(sentinel.value)
+}
+
+const isComposerOpen = ref(false)
+
+async function onPostCreated(p: any) {
+  const full = p?.author ? p : await postsApi.get(String(p.id))
+  ensure(full)
+  items.value.unshift(full)
 }
 
 onMounted(async () => {

@@ -1,4 +1,4 @@
-// src/stores/post/post.ts
+// src/stores/post/Post.ts
 import { defineStore } from 'pinia'
 import { api, ensureCsrfCookie } from '@/lib/http'
 

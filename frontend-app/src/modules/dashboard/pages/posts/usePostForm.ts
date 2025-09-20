@@ -1,10 +1,11 @@
 import { computed, ref } from 'vue'
-import type { Post, MediaItem } from '@/stores/post/post'
-import { usePostStore } from '@/stores/post/post'
+import type { Post, MediaItem } from '@/stores/post/Post'
+import { usePostStore } from '@/stores/post/Post'
 import { useMediaStore, type UploadTask } from '@/stores/post/post.media'
 import { validatePost } from '@/modules/dashboard/pages/posts/lib/validation'
 import { buildPostPayload } from '@/modules/dashboard/pages/posts/lib/payload'
 import { validateFile, kindOfFile } from '@/modules/dashboard/pages/posts/lib/files'
+import { emptyCounts, kindFromMime, remainingFrom, filterAllowed, MEDIA_LIMITS, type Counts } from '@/modules/dashboard/pages/posts/lib/mediaPolicy'
 
 type Keyed = { key: string; type: 'existing' | 'task'; id?: number; uid?: string }
 type GalleryItem = {
@@ -30,16 +31,9 @@ export function usePostForm(initial?: Post) {
   const published_at = ref<string | null>(initial?.published_at ?? null)
 
   const existing = ref<MediaItem[]>(Array.isArray(initial?.media) ? initial!.media.slice() : [])
-  const order = ref<Keyed[]>([
-    ...existing.value.map(m => ({ key: `e:${m.id}`, type: 'existing' as const, id: m.id })),
-  ])
+  const order = ref<Keyed[]>([...existing.value.map(m => ({ key: `e:${m.id}`, type: 'existing' as const, id: m.id }))])
 
   const tasks = computed<UploadTask[]>(() => mediaStore.list)
-  const taskByUid = computed<Record<string, UploadTask>>(() => {
-    const o: Record<string, UploadTask> = {}
-    for (const t of tasks.value) o[t.uid] = t
-    return o
-  })
 
   function ensureTaskKeys() {
     for (const t of tasks.value) {
@@ -56,36 +50,30 @@ export function usePostForm(initial?: Post) {
       if (k.type === 'existing' && k.id) {
         const m = existing.value.find(x => x.id === k.id)
         if (!m) continue
-        out.push({
-          key: k.key,
-          type: 'existing',
-          id: m.id,
-          url: m.url,
-          mime: m.mime_type,
-          width: m.width ?? null,
-          height: m.height ?? null,
-          progress: 100,
-          status: 'ready',
-        })
+        out.push({ key: k.key, type: 'existing', id: m.id, url: m.url, mime: m.mime_type, width: m.width ?? null, height: m.height ?? null, progress: 100, status: 'ready' })
       } else if (k.type === 'task' && k.uid) {
-        const t = taskByUid.value[k.uid]
+        const t = mediaStore.byUid(k.uid)
         if (!t) continue
-        out.push({
-          key: k.key,
-          type: 'task',
-          uid: t.uid,
-          id: t.id,
-          url: t.media?.public_url || t.media?.url,
-          mime: t.media?.mime || t.contentType,
-          width: t.media?.width ?? null,
-          height: t.media?.height ?? null,
-          progress: t.progress,
-          status: t.status,
-        })
+        out.push({ key: k.key, type: 'task', uid: t.uid, id: t.id, url: t.media?.public_url || t.media?.url, mime: t.media?.mime || t.contentType, width: t.media?.width ?? null, height: t.media?.height ?? null, progress: t.progress, status: t.status })
       }
     }
     return out
   })
+
+  const counts = computed<Counts>(() => {
+    const c = emptyCounts()
+    for (const m of existing.value) {
+      const k = kindFromMime(m.mime_type || '')
+      if (k) { ;(c as any)[k]++; c.total++ }
+    }
+    for (const t of tasks.value) {
+      const k = kindFromMime(String(t.media?.mime || t.contentType || ''))
+      if (k) { ;(c as any)[k]++; c.total++ }
+    }
+    return c
+  })
+
+  const remaining = computed(() => remainingFrom(counts.value))
 
   function addFiles(files: File[]) {
     const ok: File[] = []
@@ -93,7 +81,10 @@ export function usePostForm(initial?: Post) {
       const v = validateFile(f, kindOfFile(f))
       if (v.ok) ok.push(f)
     }
-    if (ok.length) mediaStore.enqueueFiles(ok)
+    if (!ok.length) return { accepted: [], rejected: files }
+    const { picked } = filterAllowed(ok, counts.value)
+    if (picked.length) mediaStore.enqueueFiles(picked)
+    return { accepted: picked, rejected: ok.filter(f => !picked.includes(f)) }
   }
 
   function move(index: number, dir: -1 | 1) {
@@ -134,16 +125,10 @@ export function usePostForm(initial?: Post) {
     let idx = 0
     for (const k of order.value) {
       if (k.type === 'existing' && k.id) {
-        if (!seen.has(k.id)) {
-          out.push({ id: k.id, order: idx++ })
-          seen.add(k.id)
-        }
+        if (!seen.has(k.id)) { out.push({ id: k.id, order: idx++ }); seen.add(k.id) }
       } else if (k.type === 'task' && k.uid) {
-        const t = taskByUid.value[k.uid]
-        if (t?.id && !seen.has(t.id)) {
-          out.push({ id: t.id, order: idx++ })
-          seen.add(t.id)
-        }
+        const t = mediaStore.byUid(k.uid)
+        if (t?.id && !seen.has(t.id)) { out.push({ id: t.id, order: idx++ }); seen.add(t.id) }
       }
     }
     return out
@@ -151,11 +136,7 @@ export function usePostForm(initial?: Post) {
 
   const payload = computed(() =>
     buildPostPayload(
-      {
-        content: content.value || null,
-        visibility: visibility.value,
-        status: status.value,
-      },
+      { content: content.value || null, visibility: visibility.value, status: status.value },
       mediaPayload.value
     )
   )
@@ -176,25 +157,11 @@ export function usePostForm(initial?: Post) {
     return p
   }
 
-  async function publishCreate() {
-    status.value = 'published'
-    return saveCreate()
-  }
-
-  async function saveDraft() {
-    status.value = 'draft'
-    return saveCreate()
-  }
+  async function publishCreate() { status.value = 'published'; return saveCreate() }
+  async function saveDraft() { status.value = 'draft'; return saveCreate() }
 
   async function publishUpdate(id: number) {
-    const override = buildPostPayload(
-      {
-        content: content.value || null,
-        visibility: visibility.value,
-        status: 'published',
-      },
-      mediaPayload.value
-    )
+    const override = buildPostPayload({ content: content.value || null, visibility: visibility.value, status: 'published' }, mediaPayload.value)
     const v = validatePost(override)
     if (!v.ok) throw v.errors
     const p = await postStore.update(id, override)
@@ -203,14 +170,7 @@ export function usePostForm(initial?: Post) {
   }
 
   async function saveDraftUpdate(id: number) {
-    const override = buildPostPayload(
-      {
-        content: content.value || null,
-        visibility: visibility.value,
-        status: 'draft',
-      },
-      mediaPayload.value
-    )
+    const override = buildPostPayload({ content: content.value || null, visibility: visibility.value, status: 'draft' }, mediaPayload.value)
     const v = validatePost(override)
     if (!v.ok) throw v.errors
     const p = await postStore.update(id, override)
@@ -234,6 +194,8 @@ export function usePostForm(initial?: Post) {
     published_at,
     gallery,
     order,
+    counts,
+    remaining,
     addFiles,
     move,
     reorder,
@@ -245,6 +207,7 @@ export function usePostForm(initial?: Post) {
     saveDraft,
     saveDraftUpdate,
     hydrate,
+    limits: MEDIA_LIMITS,
     isSaving: computed(() => postStore.saving),
   }
 }

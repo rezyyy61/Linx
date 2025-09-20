@@ -165,7 +165,6 @@ const props = defineProps<{
   profile: ProfileLite;
   pinned: boolean;
   checked: boolean;
-  /** وضعیت فعلی عضویت این پروفایل نزد من (اختیاری: 'accepted' | 'pending' | ...) */
   membershipStatus?: MS | null;
 }>()
 
@@ -190,7 +189,7 @@ const menuBtn = ref<HTMLElement | null>(null)
 const menuEl = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 const inviteLoading = ref(false)
-const invitedNow = ref(false) // قفل محلی بعد از ارسال موفق
+const invitedNow = ref(false)
 
 const isAccepted = computed(() => props.membershipStatus === 'accepted')
 const isPending  = computed(() => props.membershipStatus === 'pending')

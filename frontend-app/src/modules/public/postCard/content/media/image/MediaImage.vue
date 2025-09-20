@@ -1,3 +1,4 @@
+<!-- /src/modules/public/postCard/content/media/image/MediaImage.vue -->
 <template>
   <figure
     ref="root"
@@ -11,13 +12,29 @@
       @click="openLightbox"
     >
       <div
-        :class="['ar-box','bounded','grid','place-items-center','bg-zinc-100','dark:bg-zinc-800', isPortrait ? 'portrait px-3' : '']"
-        :style="boxVars"
+        v-if="hasNat"
+        class="auto-box grid place-items-center bg-zinc-100 dark:bg-zinc-800"
       >
         <img
           :src="media.url"
           :alt="media.alt || 'image'"
-          class="w-auto h-auto max-w-full max-h-full object-contain transition-opacity duration-300"
+          class="media"
+          :class="loaded ? 'opacity-100' : 'opacity-0'"
+          loading="lazy"
+          draggable="false"
+          @load="onLoad"
+        >
+      </div>
+
+      <div
+        v-else
+        class="preset-box grid place-items-center bg-zinc-100 dark:bg-zinc-800"
+        :style="presetStyle"
+      >
+        <img
+          :src="media.url"
+          :alt="media.alt || 'image'"
+          class="media"
           :class="loaded ? 'opacity-100' : 'opacity-0'"
           loading="lazy"
           draggable="false"
@@ -25,6 +42,7 @@
         >
       </div>
     </button>
+
     <MediaSkeleton
       v-else
       :ratio="skeletonRatio"
@@ -44,28 +62,37 @@ const props = defineProps<{ media: ImageMediaLike; gid?: string; indexInGroup?: 
 
 const natW = ref<number | null>(null)
 const natH = ref<number | null>(null)
+const loaded = ref(false)
 
-function parseAR(m: ImageMediaLike) {
-  if (m.aspectRatio) {
-    const [w, h] = m.aspectRatio.split('/').map(s => Number(s.trim()))
-    if (w > 0 && h > 0) return { w, h }
-  }
-  if (m.width && m.height) return { w: m.width, h: m.height }
-  if (natW.value && natH.value) return { w: natW.value, h: natH.value }
-  return { w: 16, h: 9 }
+function parseARStr(s?: string) {
+  if (!s) return null
+  const [w, h] = s.split('/').map(Number)
+  return w > 0 && h > 0 ? w / h : null
+}
+function naturalAR(m: ImageMediaLike) {
+  const fromProp = parseARStr(m.aspectRatio)
+  if (fromProp) return fromProp
+  if (m.width && m.height) return m.width / m.height
+  if (natW.value && natH.value) return (natW.value as number) / (natH.value as number)
+  return 1
+}
+function choosePreset(r: number) {
+  if (r < 0.95) return 4 / 5
+  if (r > 1.45) return 16 / 9
+  return 1
 }
 
-const ar = computed(() => parseAR(props.media))
-const isPortrait = computed(() => ar.value.w < ar.value.h)
+const chosenAR = computed(() => choosePreset(naturalAR(props.media)))
+const skeletonRatio = computed(() => {
+  const r = chosenAR.value
+  const w = Math.round(r * 100)
+  const h = 100
+  return `${w}/${h}`
+})
+const presetStyle = computed(() => ({ aspectRatio: String(chosenAR.value) }))
 
-const boxVars = computed(() => ({
-  '--ar-w': String(ar.value.w),
-  '--ar-h': String(ar.value.h)
-}))
-const skeletonRatio = computed(() => `${ar.value.w}/${ar.value.h}`)
+const hasNat = computed(() => !!(natW.value && natH.value))
 
-const { el: root, isInView } = useInView()
-const loaded = ref(false)
 function onLoad(e: Event) {
   const t = e.target as HTMLImageElement
   natW.value = t.naturalWidth
@@ -73,26 +100,17 @@ function onLoad(e: Event) {
   loaded.value = true
 }
 
+const { el: root, isInView } = useInView()
 const { open } = useLightbox()
 function openLightbox() {
-  const gid = props.gid || 'default'
-  open(gid, [{ id: props.media.id, type: 'image', url: props.media.url, alt: props.media.alt }], props.indexInGroup || 0)
+  open(props.gid || 'default', [{ id: props.media.id, type: 'image', url: props.media.url, alt: props.media.alt }], props.indexInGroup || 0)
 }
 </script>
 
 <style scoped>
-.ar-box { aspect-ratio: var(--ar-w) / var(--ar-h); }
-.bounded { --vh-limit: 70svh; max-height: var(--vh-limit); }
-@supports not (height: 100svh) {
-  .bounded { --vh-limit: 70vh; max-height: var(--vh-limit); }
-}
-.portrait {
-  max-width: min(100%, calc(var(--vh-limit) * (var(--ar-w) / var(--ar-h))));
-  margin-inline: auto;
-  border-radius: 0.75rem;
-}
-@supports not (aspect-ratio: 1 / 1) {
-  .ar-box { position: relative; }
-  .ar-box::before { content: ""; display: block; padding-top: calc(var(--ar-h) / var(--ar-w) * 100%); }
-}
+.auto-box{width:100%;max-height:70svh}
+@supports not (height: 100svh){.auto-box{max-height:70vh}}
+.preset-box{width:100%;max-height:70svh}
+@supports not (height: 100svh){.preset-box{max-height:70vh}}
+.media{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;transition:opacity .25s ease;display:block}
 </style>

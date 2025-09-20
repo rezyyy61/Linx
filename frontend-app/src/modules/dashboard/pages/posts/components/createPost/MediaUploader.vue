@@ -1,8 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, isRef } from 'vue'
 import { Icon } from '@iconify/vue'
 
 const emit = defineEmits<{ (e: 'picked', files: File[]): void }>()
+const props = withDefaults(
+  defineProps<{
+    remaining?: { total: number; image: number; video: number; audio: number; document: number } | any
+  }>(),
+  {
+    remaining: () => ({ total: 10, image: 10, video: 1, audio: 1, document: 3 }),
+  }
+)
+
+const remaining = computed(
+  () =>
+    (isRef(props.remaining) ? props.remaining.value : props.remaining) ??
+    { total: 0, image: 0, video: 0, audio: 0, document: 0 }
+)
 
 const inputImg = ref<HTMLInputElement | null>(null)
 const inputVid = ref<HTMLInputElement | null>(null)
@@ -43,16 +57,22 @@ const acceptDoc = [
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'text/plain',
   'application/vnd.ms-excel.sheet.macroenabled.12',
-  'application/vnd.ms-powerpoint.presentation.macroenabled.12'
+  'application/vnd.ms-powerpoint.presentation.macroenabled.12',
 ].join(',')
+
+const canImg = computed(() => remaining.value.image > 0 && remaining.value.total > 0)
+const canVid = computed(() => remaining.value.video > 0 && remaining.value.total > 0)
+const canAud = computed(() => remaining.value.audio > 0 && remaining.value.total > 0)
+const canDoc = computed(() => remaining.value.document > 0 && remaining.value.total > 0)
 </script>
+
 
 <template>
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <div
-      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
-      :class="dragging==='image' ? 'ring-2 ring-indigo-500' : ''"
-      @click="pick('image')"
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900"
+      :class="[dragging==='image' ? 'ring-2 ring-indigo-500' : '', !canImg ? 'pointer-events-none opacity-50' : '']"
+      @click="canImg && pick('image')"
       @drop="onDrop($event,'image')"
       @dragover="onDragOver($event,'image')"
       @dragleave="onDragLeave"
@@ -64,7 +84,7 @@ const acceptDoc = [
         />
       </div>
       <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
-        Images
+        Images <span class="text-xs text-gray-500">({{ remaining.image }})</span>
       </div>
       <input
         ref="inputImg"
@@ -77,9 +97,9 @@ const acceptDoc = [
     </div>
 
     <div
-      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
-      :class="dragging==='video' ? 'ring-2 ring-indigo-500' : ''"
-      @click="pick('video')"
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900"
+      :class="[dragging==='video' ? 'ring-2 ring-indigo-500' : '', !canVid ? 'pointer-events-none opacity-50' : '']"
+      @click="canVid && pick('video')"
       @drop="onDrop($event,'video')"
       @dragover="onDragOver($event,'video')"
       @dragleave="onDragLeave"
@@ -91,7 +111,7 @@ const acceptDoc = [
         />
       </div>
       <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
-        Videos
+        Videos <span class="text-xs text-gray-500">({{ remaining.video }})</span>
       </div>
       <input
         ref="inputVid"
@@ -104,9 +124,9 @@ const acceptDoc = [
     </div>
 
     <div
-      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
-      :class="dragging==='audio' ? 'ring-2 ring-indigo-500' : ''"
-      @click="pick('audio')"
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900"
+      :class="[dragging==='audio' ? 'ring-2 ring-indigo-500' : '', !canAud ? 'pointer-events-none opacity-50' : '']"
+      @click="canAud && pick('audio')"
       @drop="onDrop($event,'audio')"
       @dragover="onDragOver($event,'audio')"
       @dragleave="onDragLeave"
@@ -118,7 +138,7 @@ const acceptDoc = [
         />
       </div>
       <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
-        Audio
+        Audio <span class="text-xs text-gray-500">({{ remaining.audio }})</span>
       </div>
       <input
         ref="inputAud"
@@ -131,9 +151,9 @@ const acceptDoc = [
     </div>
 
     <div
-      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow dark:border-gray-700 dark:bg-gray-900"
-      :class="dragging==='document' ? 'ring-2 ring-indigo-500' : ''"
-      @click="pick('document')"
+      class="group cursor-pointer rounded-2xl border border-gray-300 bg-white p-4 text-center transition hover:shadow disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900"
+      :class="[dragging==='document' ? 'ring-2 ring-indigo-500' : '', !canDoc ? 'pointer-events-none opacity-50' : '']"
+      @click="canDoc && pick('document')"
       @drop="onDrop($event,'document')"
       @dragover="onDragOver($event,'document')"
       @dragleave="onDragLeave"
@@ -145,7 +165,7 @@ const acceptDoc = [
         />
       </div>
       <div class="text-sm font-medium text-gray-800 dark:text-gray-100">
-        Documents
+        Documents <span class="text-xs text-gray-500">({{ remaining.document }})</span>
       </div>
       <input
         ref="inputDoc"

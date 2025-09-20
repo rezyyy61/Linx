@@ -32,12 +32,13 @@ type ServerPost = {
   liked?: boolean
 }
 
-function packImagesAsGallery(list: AnyMedia[] | null): AnyMedia[] | null {
-  if (!list || !list.length) return null
-  if (list.some(m => m.type === 'gallery')) return list
-  const images: ImageMedia[] = list.filter(m => m.type === 'image') as ImageMedia[]
-  const others: AnyMedia[] = list.filter(m => m.type !== 'image')
-  if (images.length <= 1 || others.length > 0) return list
+function packImagesAsGallery(list: AnyMedia[] | null | undefined): AnyMedia[] {
+  if (!list || !list.length) return [];
+  if (list.some(m => m.type === 'gallery')) return list;
+  const images: ImageMedia[] = list.filter(m => m.type === 'image') as ImageMedia[];
+  const others: AnyMedia[] = list.filter(m => m.type !== 'image');
+  if (images.length <= 1 || others.length > 0) return list;
+
   const items: GalleryItem[] = images.map(img => ({
     id: img.id,
     url: img.url,
@@ -45,14 +46,15 @@ function packImagesAsGallery(list: AnyMedia[] | null): AnyMedia[] | null {
     width: img.width,
     height: img.height,
     aspectRatio: img.aspectRatio || '1/1',
-  }))
-  const gallery: GalleryMedia = { id: `gallery_${items.map(i => i.id).join('_')}`, type: 'gallery', items }
-  return [gallery]
+  }));
+  const gallery: GalleryMedia = { id: `gallery_${items.map(i => i.id).join('_')}`, type: 'gallery', items };
+  return [gallery];
 }
 
+
 export function mapServerPost(p: ServerPost): Post {
-  const raw = Array.isArray(p.media) ? p.media.map(mapServerMedia).filter(Boolean) as AnyMedia[] : []
-  const media = packImagesAsGallery(raw)
+  const raw = Array.isArray(p.media) ? p.media.map(mapServerMedia).filter(Boolean) as AnyMedia[] : [];
+  const media = packImagesAsGallery(raw);
   const a: ServerAuthor = p.author ?? { id: '', name: 'Unknown', slug: '', avatar: null }
   const visibility: Post['visibility'] =
     p.visibility === 'friends' ? 'followers'
@@ -72,7 +74,7 @@ export function mapServerPost(p: ServerPost): Post {
     editedAt: p.updated_at && p.updated_at !== p.created_at ? p.updated_at : null,
     visibility,
     text: (p.content ?? '').toString(),
-    media: media && media.length ? media : null,
+    media,
     counts: {
       likes: Number(c.likes ?? 0),
       comments: Number(c.comments ?? 0),

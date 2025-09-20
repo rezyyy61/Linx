@@ -18,8 +18,8 @@
       @toggle-follow="onToggleFollow"
       @copy="() => {}"
       @share="onShare"
-      @edit="() => {}"
-      @delete="() => {}"
+      @edit="onEdit"
+      @delete="onDelete"
       @report="() => {}"
       @pin-toggle="() => {}"
     />
@@ -40,7 +40,7 @@
 
     <section
       v-if="post.media?.length"
-      class="-mx-4 mt-2 mb-3"
+      class=" mt-2 mb-3"
     >
       <MediaRenderer
         :items="post.media || []"
@@ -97,6 +97,13 @@
       @shared="onShared"
     />
 
+    <PublicPostComposer
+      :open="isComposerOpen"
+      mode="edit"
+      :initial="composerInitial"
+      @close="isComposerOpen=false"
+    />
+
     <transition name="ic-slide">
       <InlineComments
         v-if="isCommentsOpen"
@@ -109,23 +116,26 @@
 </template>
 
 <script setup lang="ts">
-import {computed, nextTick, onMounted, ref, watch} from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import type { Post } from './types/post.types'
 import { usePostActions } from './composables/usePostActions'
 import { useViewCounter } from './composables/useViewCounter'
 import MediaRenderer from './content/media/MediaRenderer.vue'
-import PostCardFooter from "@/modules/public/postCard/footer/PostCardFooter.vue";
-import InlineComments from "@/modules/public/postCard/footer/comments/InlineComments.vue";
-import PostCardHeader from "@/modules/public/postCard/header/PostCardHeader.vue";
-import PostText from "@/modules/public/postCard/content/text/PostText.vue";
-import LikesPreview from "@/modules/public/postCard/footer/likes/LikesPreview.vue";
-import {useAuthStore} from "@/stores/auth/auth";
+import PostCardFooter from '@/modules/public/postCard/footer/PostCardFooter.vue'
+import InlineComments from '@/modules/public/postCard/footer/comments/InlineComments.vue'
+import PostCardHeader from '@/modules/public/postCard/header/PostCardHeader.vue'
+import PostText from '@/modules/public/postCard/content/text/PostText.vue'
+import LikesPreview from '@/modules/public/postCard/footer/likes/LikesPreview.vue'
+import { useAuthStore } from '@/stores/auth/auth'
 import { useRoute } from 'vue-router'
-import {useFollowStore} from "@/stores/follow";
+import { useFollowStore } from '@/stores/follow'
 import { ShareModal } from '@/modules/share'
 import PostPreviewCompact from '@/modules/share/components/PostPreviewCompact.vue'
 import RepostBadge from '@/modules/share/components/RepostBadge.vue'
 import * as postsApi from '@/modules/public/postCard/api/posts'
+import { usePostStore } from '@/stores/post/Post'
+import PublicPostComposer from '@/modules/public/postCard/createPost/PublicPostComposer.vue'
+import { useToast } from '@/modules/toast/useToast'
 
 const props = defineProps<{ post: Post }>()
 
@@ -133,30 +143,17 @@ const { liked, saved, counts, ensure, toggleLike, toggleSave, addShare, addView,
 ensure(props.post)
 
 const auth = useAuthStore()
-const isOwner = computed(() =>
-  Number(props.post.author.id) === Number(auth.user?.id)
-)
+const isOwner = computed(() => Number(props.post.author.id) === Number(auth.user?.id))
 
 const follow = useFollowStore()
-
-const isFollowing = computed(() =>
-  follow.isConnected(props.post.author.id)
-)
-const isPending = computed(() =>
-  follow.isPendingWith(props.post.author.id)
-)
-const followState = computed<'none' | 'pending' | 'following'>(() =>
-  isFollowing.value ? 'following' : (isPending.value ? 'pending' : 'none')
-)
+const isFollowing = computed(() => follow.isConnected(props.post.author.id))
+const isPending = computed(() => follow.isPendingWith(props.post.author.id))
+const followState = computed<'none' | 'pending' | 'following'>(() => (isFollowing.value ? 'following' : isPending.value ? 'pending' : 'none'))
 
 async function onToggleFollow() {
-  if (isFollowing.value) {
-    await follow.unfollow(props.post.author.id)
-  } else if (isPending.value) {
-    await follow.cancelRequest(props.post.author.id)
-  } else {
-    await follow.sendFollow(props.post.author.id)
-  }
+  if (isFollowing.value) await follow.unfollow(props.post.author.id)
+  else if (isPending.value) await follow.cancelRequest(props.post.author.id)
+  else await follow.sendFollow(props.post.author.id)
 }
 
 const route = useRoute()
@@ -189,7 +186,7 @@ const originalUser = computed<string | undefined>(() => {
   return typeof u === 'string' ? u : undefined
 })
 
-const originalTo = computed(() => originalId.value ? `/p/${originalId.value}` : '#')
+const originalTo = computed(() => (originalId.value ? `/p/${originalId.value}` : '#'))
 
 async function loadOriginal() {
   if (!originalId.value) return
@@ -212,26 +209,22 @@ async function loadOriginal() {
 onMounted(async () => {
   try {
     if (auth.user) {
-      if (!follow.followers.length)  await follow.loadFollowers()
+      if (!follow.followers.length) await follow.loadFollowers()
       if (!follow.followings.length) await follow.loadFollowings()
       await follow.loadOutgoingRequests()
     }
   } catch { /* empty */ }
-
   const q = route.query.comment
   const hash = (typeof window !== 'undefined' ? window.location.hash : '') || ''
   const hashId = hash.startsWith('#c-') ? Number(hash.slice(3)) : null
-
   if (q || hashId) {
     isCommentsOpen.value = true
     await nextTick()
     const target = Number(q || hashId)
     commentsRef.value?.reveal(target)
   }
-
   if (originalId.value) await loadOriginal()
 })
-
 
 watch(() => route.query.comment, async (val) => {
   if (!val) return
@@ -243,6 +236,58 @@ watch(() => route.query.comment, async (val) => {
 watch(originalId, async (v) => {
   if (v && !original.value) await loadOriginal()
 })
+
+const isComposerOpen = ref(false)
+const composerInitial = ref<any | null>(null)
+function normalizeInitial(p: any) {
+  const media = Array.isArray(p?.media)
+    ? p.media.map((m: any, i: number) => ({
+      id: Number(m?.id ?? i),
+      url: m?.url ?? m?.public_url ?? m?.original_url ?? m?.preview_url ?? null,
+      mime_type: String(m?.mime_type ?? m?.mime ?? m?.type ?? '').toLowerCase() || undefined,
+      width: m?.width ?? null,
+      height: m?.height ?? null,
+      order: typeof m?.order === 'number' ? m.order : i,
+    }))
+    : []
+  return {
+    id: Number(p?.id),
+    content: p?.text ?? p?.content ?? '',
+    visibility: p?.visibility ?? 'public',
+    published_at: p?.publishedAt ?? p?.published_at ?? null,
+    media,
+  }
+}
+function onEdit() {
+  if (!isOwner.value) return
+  composerInitial.value = normalizeInitial(props.post as any)
+  isComposerOpen.value = true
+}
+
+const postStore = usePostStore()
+const toast = useToast()
+
+function onDelete() {
+  if (!isOwner.value) return
+
+  toast.confirm(
+    'Delete this post?',
+    {
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await postStore.remove(Number((props.post as any).id))
+          toast.success('The post was removed.')
+        } catch (e: any) {
+          const msg = e?.message || 'Failed to delete post.'
+          toast.error(msg)
+        }
+      },
+    }
+  )
+}
 </script>
 
 <style scoped>
