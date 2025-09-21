@@ -78,4 +78,10 @@ class User extends Authenticatable implements Mediable, MustVerifyEmail
     {
         return $this->hasMany(\App\Models\Follow\FollowRequest::class, 'target_id');
     }
+
+    public function joinedEvents(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\Event\Event::class, 'event_user')
+            ->withTimestamps();
+    }
 }

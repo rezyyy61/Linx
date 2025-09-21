@@ -31,7 +31,7 @@ const loaders: Record<TabKey, () => Promise<any>> = {
   media: () => import("@/modules/public/tabs/media/MediaPage.vue"),
   campaigns: () => import("@/modules/public/tabs/campaigns/CampaignsPage.vue"),
   profiles: () => import("@/modules/public/tabs/profiles/ProfilePage.vue"),
-  events: () => import("@/modules/public/tabs/events/EventPage.vue"),
+  events: () => import("@/modules/public/tabs/events/pages/EventPage.vue"),
   announcements: () =>
     import("@/modules/public/tabs/announcements/AnnouncementsPage.vue"),
 };

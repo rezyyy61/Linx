@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Announcement\AnnouncementController;
 use App\Http\Controllers\Api\Campaign\CampaignController;
 use App\Http\Controllers\Api\Campaign\CampaignDonationController;
 use App\Http\Controllers\Api\Event\EventController;
+use App\Http\Controllers\Api\Event\EventJoinController;
 use App\Http\Controllers\Api\Follow\FollowController;
 use App\Http\Controllers\Api\Follow\FollowRequestController;
 use App\Http\Controllers\Api\media\MediaAttachController;
@@ -40,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     ]);
     Route::post('/posts/{post}/repost', [RepostController::class, 'store'])->name('posts.repost.store');
 
+    Route::post('/reposts', [RepostController::class, 'storeGeneric'])->name('reposts.store');
 });
 
 Route::middleware('auth:sanctum')
@@ -88,6 +90,11 @@ Route::middleware('auth:sanctum')
     });
 
 Route::middleware('auth:sanctum')->apiResource('events', EventController::class)->names('events');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('events/{event}/join', [EventJoinController::class, 'join']);
+    Route::delete('events/{event}/join', [EventJoinController::class, 'unjoin']);
+    Route::get('events/{event}/join', [EventJoinController::class, 'status']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/follow/{user}', [FollowRequestController::class, 'store']);

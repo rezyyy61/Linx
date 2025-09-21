@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources\Event;
 
+use App\Http\Resources\PublicApi\PublicMiniUserResource;
 use App\Models\Event\Event;
-use App\Models\Media;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
@@ -34,30 +34,31 @@ class EventResource extends JsonResource
 
             'settings' => $this->whenLoaded('settings', function () {
                 $s = $this->settings;
-
                 return [
-                    'type' => $s->type,
-                    'visibility' => $s->visibility,
-                    'join_url' => $s->join_url,
-                    'join_platform' => $s->join_platform,
-                    'join_passcode' => $s->join_passcode,
-                    'join_instructions' => $s->join_instructions,
-                    'join_visible_minutes_before' => $s->join_visible_minutes_before,
-                    'access_code' => $s->access_code,
-                    'og_title' => $s->og_title,
-                    'og_description' => $s->og_description,
+                    'type' => data_get($s, 'type'),
+                    'visibility' => data_get($s, 'visibility'),
+                    'join_url' => data_get($s, 'join_url'),
+                    'join_platform' => data_get($s, 'join_platform'),
+                    'join_passcode' => data_get($s, 'join_passcode'),
+                    'join_instructions' => data_get($s, 'join_instructions'),
+                    'join_visible_minutes_before' => data_get($s, 'join_visible_minutes_before'),
+                    'access_code' => data_get($s, 'access_code'),
+                    'og_title' => data_get($s, 'og_title'),
+                    'og_description' => data_get($s, 'og_description'),
                 ];
             }, null),
 
             'documents' => $this->whenLoaded('documents', function () {
-                $docs = $this->documents;
-
-                return $docs->map(static function (Media $m) {
+                return $this->documents->map(static function ($m) {
                     return [
-                        'id' => (int) $m->id,
-                        'url' => $m->publicUrl(),
+                        'id' => (int) data_get($m, 'id'),
+                        'url' => method_exists($m, 'publicUrl') ? $m->publicUrl() : null,
                     ];
                 })->values()->all();
+            }),
+
+            'organizer' => $this->whenLoaded('organizer', function () {
+                return new PublicMiniUserResource($this->organizer);
             }),
 
             'created_at' => optional($this->created_at)?->toISOString(),

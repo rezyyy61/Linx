@@ -4,6 +4,8 @@ namespace App\Models\Announcement;
 
 use App\Contracts\Mediable;
 use App\Models\Media;
+use App\Models\Share\Concerns\IsShareable;
+use App\Models\Share\Contracts\Shareable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-/**
- * @property-read string|null $cover_url
- */
-class Announcement extends Model implements Mediable
+class Announcement extends Model implements Mediable, Shareable
 {
     use HasFactory;
+    use IsShareable;
 
     protected $table = 'announcements';
 
@@ -35,7 +35,6 @@ class Announcement extends Model implements Mediable
         'publish_at' => 'datetime',
     ];
 
-    // اگر می‌خواهی همیشه در JSON بیاید:
     protected $appends = [
         'cover_url',
     ];
@@ -107,5 +106,10 @@ class Announcement extends Model implements Mediable
         $m = $this->covers()->first();
 
         return $m instanceof Media ? $m->publicUrl() : null;
+    }
+
+    public function getShareUrl(): string
+    {
+        return url('/announcements/'.$this->slug);
     }
 }

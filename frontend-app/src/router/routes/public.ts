@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from "vue-router";
+import eventsRoutes from "@/modules/public/tabs/events";
 
 const PublicLayout = () => import("@/layouts/PublicLayout.vue");
 const HomePage = () => import("@/modules/public/pages/HomePage.vue");
@@ -43,7 +44,6 @@ export default {
       meta: { guestOnly: true },
     },
 
-    // 👇 این روت رو اضافه کن
     {
       path: "p/:id",
       name: "post.show",
@@ -53,5 +53,7 @@ export default {
         comment: route.query.comment ? Number(route.query.comment) : null,
       }),
     },
+
+    ...eventsRoutes,
   ],
 } as RouteRecordRaw;

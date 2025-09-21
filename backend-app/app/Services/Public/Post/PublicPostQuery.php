@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Public\Post;
 
+use App\Models\Event\Event;
 use App\Models\Post\Post as PostModel;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 
 class PublicPostQuery
@@ -49,9 +52,7 @@ class PublicPostQuery
         return $this->baseQuery()->findOrFail($id);
     }
 
-    /**
-     * @return Builder<PostModel>
-     */
+    /** @return Builder<PostModel> */
     private function baseQuery(): Builder
     {
         return PostModel::query()
@@ -79,17 +80,19 @@ class PublicPostQuery
                     ])->withCount([
                         'shares as shares_count' => fn ($x) => $x->active(),
                         'comments as comments_count' => fn ($x) => $x->where('status', 'visible'),
-                        // اختیاری: اگر روابط likes/saves داری
-                        // 'likes as likes_count',
-                        // 'saves as saves_count',
                     ]);
+                },
+                'postable' => function (Relation $relation) {
+                    if ($relation instanceof MorphTo) {
+                        $relation->morphWith([
+                            Event::class => ['organizer.profile.logo'],
+                        ]);
+                    }
                 },
             ])
             ->withCount([
                 'shares as shares_count' => fn ($q) => $q->active(),
                 'comments as comments_count' => fn ($q) => $q->where('status', 'visible'),
-                // 'likes as likes_count',
-                // 'saves as saves_count',
             ]);
     }
 }

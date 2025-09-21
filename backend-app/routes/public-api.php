@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Comment\CommentController;
 use App\Http\Controllers\Api\Comment\CommentLikeController;
+use App\Http\Controllers\Api\Public\Event\PublicEventController;
 use App\Http\Controllers\Api\Public\Post\PostActionController;
 use App\Http\Controllers\Api\Public\Post\PublicPostController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
     Route::get('/comments/{parentId}/children', [CommentController::class, 'children']);
     Route::get('/comments/{commentId}/likes', [CommentLikeController::class, 'index']);
+
+    Route::get('events', [PublicEventController::class, 'index']);
+    Route::get('events/{slug}', [PublicEventController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/posts/{post}/like', [PostActionController::class, 'toggleLike']);

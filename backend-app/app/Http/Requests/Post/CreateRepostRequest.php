@@ -10,14 +10,17 @@ class CreateRepostRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'text' => ['nullable', 'string', 'max:9000'],
-            'visibility' => ['nullable', 'string', 'max:32'],
+            'text' => ['nullable', 'string', 'max:5000'],
+            'visibility' => ['nullable', 'in:public,private,followers'],
+            'shareable_type' => ['nullable', 'string'],
+            'shareable_alias' => ['nullable', 'string', 'max:64'],
+            'shareable_id' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

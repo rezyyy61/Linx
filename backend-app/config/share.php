@@ -21,5 +21,6 @@ return [
     'base_url' => env('APP_URL', 'http://localhost'),
     'aliases' => [
         'post' => App\Models\Post\Post::class,
+        'event' => \App\Models\Event\Event::class,
     ],
 ];
