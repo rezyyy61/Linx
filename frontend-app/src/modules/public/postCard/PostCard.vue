@@ -70,6 +70,8 @@
       />
     </div>
 
+    <AttachmentEventPreview :post="post" />
+
     <LikesPreview :post-id="post.id" />
 
     <PostCardFooter
@@ -136,6 +138,7 @@ import * as postsApi from '@/modules/public/postCard/api/posts'
 import { usePostStore } from '@/stores/post/Post'
 import PublicPostComposer from '@/modules/public/postCard/createPost/PublicPostComposer.vue'
 import { useToast } from '@/modules/toast/useToast'
+import AttachmentEventPreview from "@/modules/public/postCard/attachments/AttachmentEventPreview.vue";
 
 const props = defineProps<{ post: Post }>()
 

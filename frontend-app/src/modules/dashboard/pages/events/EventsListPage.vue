@@ -4,6 +4,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import PageContainer from "@/modules/dashboard/pages/events/layout/PageContainer.vue";
 import { useEventStore } from "@/stores/event";
+import ShareModal from "@/modules/share/components/ShareModal.vue";
 
 const store = useEventStore();
 
@@ -83,6 +84,26 @@ watch([q, onlyPublished, perPage, orderBy, orderDir], () => {
 onMounted(() => {
   if (!items.value.length) apply(store.filters.page || 1);
 });
+
+const shareOpenId = ref<number | null>(null);
+const shareOpenEvent = ref<any | null>(null);
+const shareTitle = ref<string>("");
+const shareText = ref<string>("");
+
+function openShare(ev: any) {
+  const id = Number(ev?.id ?? 0);
+  if (!Number.isFinite(id) || id < 1) return;
+  shareOpenId.value = id;
+  shareOpenEvent.value = ev || null;
+  shareTitle.value = ev.title || "";
+  shareText.value = ev.description || "";
+}
+
+
+function closeShare() {
+  shareOpenId.value = null;
+  shareOpenEvent.value = null;
+}
 </script>
 
 <template>
@@ -301,6 +322,15 @@ onMounted(() => {
                     </td>
                     <td class="px-4 py-3">
                       <div class="flex items-center justify-end gap-2">
+                        <button
+                          class="inline-flex items-center justify-center rounded-lg border px-2.5 py-1.5 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                          @click="openShare(ev)"
+                        >
+                          <Icon
+                            icon="mdi:share-variant"
+                            class="w-4 h-4"
+                          />
+                        </button>
                         <router-link
                           :to="`/dashboard/events/${ev.id}/edit`"
                           class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
@@ -374,6 +404,15 @@ onMounted(() => {
                     {{ ev.location }}
                   </div>
                   <div class="mt-2 flex items-center gap-2">
+                    <button
+                      class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs dark:border-gray-700"
+                      @click="openShare(ev)"
+                    >
+                      <Icon
+                        icon="mdi:share-variant"
+                        class="w-4 h-4"
+                      />
+                    </button>
                     <router-link
                       :to="`/dashboard/pages/events/${ev.id}/edit`"
                       class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs dark:border-gray-700"
@@ -435,5 +474,19 @@ onMounted(() => {
         </template>
       </div>
     </div>
+
+    <ShareModal
+      v-if="shareOpenId && shareOpenId > 0"
+      :key="shareOpenId"
+      :open="true"
+      shareable-type="App\\Models\\Event\\Event"
+      shareable-alias="event"
+      :shareable-id="shareOpenId"
+      :event="shareOpenEvent"
+      :title="shareTitle"
+      :text="shareText"
+      @close="closeShare"
+      @shared="closeShare"
+    />
   </PageContainer>
 </template>

@@ -4,6 +4,8 @@ namespace App\Models\Campaign;
 
 use App\Contracts\Mediable;
 use App\Models\Media;
+use App\Models\Share\Concerns\IsShareable;
+use App\Models\Share\Contracts\Shareable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-class Campaign extends Model implements Mediable
+class Campaign extends Model implements Mediable, Shareable
 {
     use HasFactory;
+    use IsShareable;
 
     protected $table = 'campaigns';
 
@@ -101,4 +104,9 @@ class Campaign extends Model implements Mediable
     }
 
     public function donationIntents() {}
+
+    public function getShareUrl(): string
+    {
+        return url('/campaigns/'.$this->slug);
+    }
 }

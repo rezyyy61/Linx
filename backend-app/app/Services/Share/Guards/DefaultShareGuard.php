@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Share\Guards;
 
 use App\Enums\Share\ShareChannel;
+use App\Models\Event\Event;
 use App\Models\Post\Post;
 use App\Models\User;
 use App\Services\Share\Contracts\ShareGuard;
@@ -25,6 +26,17 @@ class DefaultShareGuard implements ShareGuard
                 return false;
             }
             if ($shareable->getAttribute('visibility') !== 'public') {
+                return false;
+            }
+
+            return true;
+        }
+
+        if ($shareable instanceof Event) {
+            if ($shareable->is_published !== true) {
+                return false;
+            }
+            if ($shareable->publish_at && $shareable->publish_at->isFuture()) {
                 return false;
             }
 

@@ -4,22 +4,20 @@ namespace App\Models\Event;
 
 use App\Contracts\Mediable;
 use App\Models\Media;
+use App\Models\Share\Concerns\IsShareable;
+use App\Models\Share\Contracts\Shareable as ShareableContract;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-/**
- * @property-read \Illuminate\Database\Eloquent\Collection<int,\App\Models\Media> $covers
- * @property-read \Illuminate\Database\Eloquent\Collection<int,\App\Models\Media> $documents
- * @property-read \App\Models\Event\EventSettings|null $settings
- * @property-read string|null $starts_at_local
- * @property-read string|null $ends_at_local
- */
-class Event extends Model implements Mediable
+class Event extends Model implements Mediable, ShareableContract
 {
     use HasFactory;
+    use IsShareable;
 
     protected $table = 'events';
 
@@ -159,5 +157,20 @@ class Event extends Model implements Mediable
     public function settings(): HasOne
     {
         return $this->hasOne(EventSettings::class, 'event_id');
+    }
+
+    public function organizer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'organizer_id');
+    }
+
+    public function participants(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'event_user')->withTimestamps();
+    }
+
+    public function getShareUrl(): string
+    {
+        return url('/events/'.$this->slug);
     }
 }

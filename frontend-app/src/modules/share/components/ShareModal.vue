@@ -1,16 +1,16 @@
 <template>
   <transition
     appear
-    enter-active-class="transition ease-out duration-200"
+    enter-active-class="transition duration-200"
     enter-from-class="opacity-0"
     enter-to-class="opacity-100"
-    leave-active-class="transition ease-in duration-150"
+    leave-active-class="transition duration-150"
     leave-from-class="opacity-100"
     leave-to-class="opacity-0"
   >
     <div
       v-if="open"
-      class="fixed inset-0 z-50"
+      class="fixed inset-0 z-[60]"
     >
       <div
         class="absolute inset-0 bg-black/40 dark:bg-black/60"
@@ -140,39 +140,54 @@
     </div>
   </transition>
 
-  <RepostModal
-    :open="isRepostOpen"
+  <RepostModalPost
+    v-if="isRepostOpen && isPost"
+    :open="true"
     :post-id="shareableId"
     :post="post?.original ?? post"
+    @close="isRepostOpen = false"
+    @done="onRepostDone"
+  />
+
+  <RepostModalEvent
+    v-else-if="isRepostOpen && isEvent"
+    :key="`repost-event-${shareableId}-${isRepostOpen?1:0}`"
+    :open="true"
+    :event-id="shareableId"
+    :initial-event="event"
     @close="isRepostOpen = false"
     @done="onRepostDone"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
-import { Icon } from '@iconify/vue';
-import type { ShareChannel } from '../types';
-import { useShare } from '../composables/useShare';
-import RepostModal from './RepostModal.vue';
+import { ref, computed, watch, onMounted } from 'vue'
+import { Icon } from '@iconify/vue'
+import type { ShareChannel } from '../types'
+import { useShare } from '../composables/useShare'
+import RepostModalPost from './RepostModal.vue'
+import RepostModalEvent from "@/modules/share/components/event/RepostModalEvent.vue";
 
 interface Props {
-  open: boolean;
-  shareableType?: string;
-  shareableAlias?: string;
-  shareableId: number;
-  title?: string;
-  text?: string;
-  post?: any;
+  open: boolean
+  shareableType?: string
+  shareableAlias?: string
+  shareableId: number
+  title?: string
+  text?: string
+  post?: any
+  event?: any
 }
+const props = defineProps<Props>()
+const emit = defineEmits<{ (e: 'close'): void; (e: 'shared'): void; (e: 'done', r: { id: number; url: string }): void }>()
 
-const props = defineProps<Props>();
-const emit = defineEmits<{ (e: 'close'): void; (e: 'shared'): void }>();
+const isPost = computed(() => props.shareableAlias === 'post' || (props.shareableType || '').includes('Post'))
+const isEvent = computed(() => props.shareableAlias === 'event' || (props.shareableType || '').includes('Event'))
 
-const copied = ref(false);
-const qrDataUrl = ref<string>('');
-const shortUrl = ref<string>('');
-const isRepostOpen = ref(false);
+const copied = ref(false)
+const qrDataUrl = ref<string>('')
+const shortUrl = ref<string>('')
+const isRepostOpen = ref(false)
 
 const share = useShare({
   shareableType: props.shareableType,
@@ -180,65 +195,63 @@ const share = useShare({
   shareableId: props.shareableId,
   defaultTitle: props.title,
   defaultText: props.text,
-});
+})
 
-function onFocusSelect(e: FocusEvent) {
-  const el = e.target as HTMLInputElement | null
-  el?.select()
-}
+function onFocusSelect(e: FocusEvent) { (e.target as HTMLInputElement | null)?.select() }
 
 async function ensureShare() {
+  if (!props.open) return
+  if (!props.shareableId || props.shareableId < 1) return
   if (!share.lastShare.value) {
-    const res = await share.shareTo('internal');
-    shortUrl.value = res.short_url;
+    const res = await share.shareTo('internal')
+    shortUrl.value = res.short_url
   } else {
-    shortUrl.value = share.lastShare.value.short_url;
+    shortUrl.value = share.lastShare.value.short_url
   }
 }
 
 async function copyLink() {
-  await ensureShare();
+  await ensureShare()
   try {
-    await navigator.clipboard.writeText(shortUrl.value);
-    copied.value = true;
-    emit('shared');
-    setTimeout(() => (copied.value = false), 1200);
-  } catch {
-    copied.value = false;
-  }
+    await navigator.clipboard.writeText(shortUrl.value)
+    copied.value = true
+    emit('shared')
+    setTimeout(() => (copied.value = false), 1200)
+  } catch { copied.value = false }
 }
 
 async function shareExternal(channel: ShareChannel) {
-  await ensureShare();
-  const url = share.buildExternalUrl(channel, props.title, props.text);
-  window.open(url, '_blank', 'noopener,noreferrer');
-  emit('shared');
+  await ensureShare()
+  const url = share.buildExternalUrl(channel, props.title, props.text)
+  window.open(url, '_blank', 'noopener,noreferrer')
+  emit('shared')
 }
 
 async function buildQr() {
-  await ensureShare();
-  const lib = await import('qrcode');
-  qrDataUrl.value = await lib.toDataURL(shortUrl.value, { margin: 1, width: 480 });
+  await ensureShare()
+  const lib = await import('qrcode')
+  qrDataUrl.value = await lib.toDataURL(shortUrl.value, { margin: 1, width: 480 })
 }
 
-function onRepostDone() {
-  emit('shared');
-  isRepostOpen.value = false;
+function onRepostDone(r: { id: number; url: string }) {
+  emit('shared')
+  isRepostOpen.value = false
+  emit('done', r)
 }
 
 watch(() => props.open, async v => {
   if (v) {
-    copied.value = false;
-    qrDataUrl.value = '';
-    await ensureShare();
-    await buildQr();
+    copied.value = false
+    qrDataUrl.value = ''
+    await ensureShare()
+    await buildQr()
   }
-});
+})
 
 onMounted(async () => {
   if (props.open) {
-    await ensureShare();
-    await buildQr();
+    await ensureShare()
+    await buildQr()
   }
-});
+})
 </script>
