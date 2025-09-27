@@ -1,6 +1,6 @@
 import { api, ensureCsrfCookie } from '@/lib/http';
 
-export type ShareableAlias = 'post' | 'event';
+export type ShareableAlias = 'post' | 'event' | 'announcement';
 
 export interface CreateRepostGenericPayload {
   shareable_alias: ShareableAlias;

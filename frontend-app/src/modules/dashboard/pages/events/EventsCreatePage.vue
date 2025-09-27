@@ -25,7 +25,7 @@ import PageContainer from "@/modules/dashboard/pages/events/layout/PageContainer
         </div>
       </div>
 
-      <EventWizard />
+      <EventWizard mode="create" />
     </div>
   </PageContainer>
 </template>

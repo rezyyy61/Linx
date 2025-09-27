@@ -1,12 +1,17 @@
-<!-- /home/rezyyy/PhpstormProjects/Linx/frontend-app/src/modules/dashboard/pages/events/EventsListPage.vue -->
+<!-- /src/modules/dashboard/pages/events/EventsListPage.vue -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onActivated } from "vue";
 import { Icon } from "@iconify/vue";
 import PageContainer from "@/modules/dashboard/pages/events/layout/PageContainer.vue";
 import { useEventStore } from "@/stores/event";
 import ShareModal from "@/modules/share/components/ShareModal.vue";
+import { useToast } from "@/modules/toast/useToast";
+import { useI18n } from "vue-i18n";
 
 const store = useEventStore();
+const toast = useToast();
+const { t, te } = useI18n();
+const tt = (k: string, fb: string) => (te(k) ? t(k) : fb);
 
 const q = ref<string>(store.filters.q || "");
 const onlyPublished = ref<boolean>(!!store.filters.is_published);
@@ -19,7 +24,6 @@ const items = computed(() => store.items);
 const meta = computed(() => store.meta);
 
 const df = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
-
 function fmt(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -30,6 +34,8 @@ function apply(page = 1) {
   store.setFilters({
     q: q.value?.trim() || undefined,
     is_published: onlyPublished.value ? true : undefined,
+    starts_from: undefined,
+    starts_to: undefined,
     per_page: perPage.value,
     order_by: orderBy.value,
     order_dir: orderDir.value,
@@ -37,6 +43,7 @@ function apply(page = 1) {
   });
   store.fetchList();
 }
+
 
 function reset() {
   q.value = "";
@@ -57,33 +64,58 @@ function goPage(p: number) {
   if (p < 1 || p > meta.value.last_page) return;
   apply(p);
 }
-
 function nextPage() {
   const p = meta.value?.current_page || 1;
   goPage(p + 1);
 }
-
 function prevPage() {
   const p = meta.value?.current_page || 1;
   goPage(p - 1);
 }
 
-async function remove(id: number) {
-  const ok = window.confirm((window as any)?.$t ? ((window as any).$t("event.list.actions.confirmDelete") as string) : "Delete this event?");
-  if (!ok) return;
-  await store.destroy(id);
-  if (!store.items.length && (store.meta?.current_page || 1) > 1) apply((store.meta?.current_page || 2) - 1);
+async function removeConfirmed(id: number) {
+  try {
+    await store.destroy(id);
+    toast.success(tt("toast.event.removedOne", "Event deleted"));
+    if (!store.items.length && (store.meta?.current_page || 1) > 1) {
+      apply((store.meta?.current_page || 2) - 1);
+    } else {
+      apply(store.meta?.current_page || 1);
+    }
+  } catch {
+    toast.error(tt("toast.event.removeFailOne", "Failed to delete event"));
+  }
 }
 
-let t: number | undefined;
+function remove(id: number) {
+  toast.confirm(
+    tt("event.list.actions.confirmDelete", "Delete this event?"),
+    {
+      confirmLabel: tt("toast.action.remove", "Remove"),
+      cancelLabel: tt("toast.action.cancel", "Cancel"),
+      destructive: true,
+      onConfirm: () => removeConfirmed(id),
+    }
+  );
+}
+
+let tmr: number | undefined;
 watch([q, onlyPublished, perPage, orderBy, orderDir], () => {
-  if (t) window.clearTimeout(t);
-  t = window.setTimeout(() => apply(1), 300);
+  if (tmr) window.clearTimeout(tmr);
+  tmr = window.setTimeout(() => apply(1), 300);
 });
 
 onMounted(() => {
-  if (!items.value.length) apply(store.filters.page || 1);
+  q.value = "";
+  onlyPublished.value = false;
+  apply(1);
 });
+onActivated(() => {
+  q.value = "";
+  onlyPublished.value = false;
+  apply(store.filters.page || 1);
+});
+
 
 const shareOpenId = ref<number | null>(null);
 const shareOpenEvent = ref<any | null>(null);
@@ -98,8 +130,6 @@ function openShare(ev: any) {
   shareTitle.value = ev.title || "";
   shareText.value = ev.description || "";
 }
-
-
 function closeShare() {
   shareOpenId.value = null;
   shareOpenEvent.value = null;
@@ -414,7 +444,7 @@ function closeShare() {
                       />
                     </button>
                     <router-link
-                      :to="`/dashboard/pages/events/${ev.id}/edit`"
+                      :to="`/dashboard/events/${ev.id}/edit`"
                       class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs dark:border-gray-700"
                     >
                       <Icon

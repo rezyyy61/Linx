@@ -1,30 +1,113 @@
 {
   "announcement": {
     "loading": "Loading...",
-    "actions": { "save": "Save", "cancel": "Cancel", "edit": "Edit", "delete": "Delete" },
+    "common": {
+      "saving": "Saving...",
+      "prev": "prev",
+      "next": "next"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
     "list": {
       "title": "Announcements",
       "create": "New announcement",
       "searchPlaceholder": "Search by title...",
       "onlyPinned": "Only pinned",
-      "sort": { "publish": "Publish time", "created": "Created", "updated": "Updated", "pinned": "Pinned" },
+      "noResults": "No results found",
+      "sort": {
+        "publish": "Publish time",
+        "created": "Created",
+        "updated": "Updated",
+        "pinned": "Pinned"
+      },
       "pageInfo": "Page {page} of {last} — Total: {total}"
     },
-    "empty": { "noItems": "No announcements yet", "createFirst": "Create your first announcement" },
-    "create": { "title": "Create announcement", "submit": "Create announcement" },
-    "edit": { "title": "Edit announcement" },
-    "table": { "cover": "Cover", "title": "Title", "visibility": "Visibility", "publishAt": "Publish at", "actions": "Actions" },
-    "confirm": { "delete": "Are you sure to delete this announcement?" },
-    "visibility": { "all": "All", "public": "Public", "members": "Members", "supporters": "Supporters", "private": "Private" },
-    "form": {
-      "title": { "label": "Title", "placeholder": "Announcement title" },
-      "slug": { "label": "Slug", "placeholder": "Optional unique identifier" },
-      "body": { "label": "Body", "placeholder": "Write the announcement content" },
-      "visibility": { "label": "Visibility" },
-      "publishAt": { "label": "Publish at" },
-      "pinned": { "label": "Pin this announcement" }
+    "empty": {
+      "noItems": "No announcements yet",
+      "createFirst": "Create your first announcement"
     },
-    "cover": { "title": "Cover", "uploading": "Uploading...", "dropOrClick": "Drop a file here or click to upload", "chooseFile": "PNG, JPG up to 10MB" },
-    "docs": { "title": "Documents", "uploading": "Uploading...", "dropOrClick": "Drop files here or click to upload", "chooseFile": "Any supported files", "uploadHint": "Upload documents by clicking here" }
+    "create": {
+      "title": "Create announcement",
+      "submit": "Create announcement"
+    },
+    "edit": {
+      "title": "Edit announcement"
+    },
+    "table": {
+      "cover": "Cover",
+      "title": "Title",
+      "visibility": "Visibility",
+      "publishAt": "Publish at",
+      "actions": "Actions"
+    },
+    "confirm": {
+      "delete": "Are you sure to delete this announcement?"
+    },
+    "visibility": {
+      "all": "All",
+      "public": "Public",
+      "members": "Members",
+      "supporters": "Supporters",
+      "private": "Private"
+    },
+    "form": {
+      "editTitle": "Edit announcement",
+      "createTitle": "Create announcement",
+      "subtitle": "Share updates with your audience",
+      "title": {
+        "label": "Title",
+        "placeholder": "Announcement title"
+      },
+      "body": {
+        "label": "Body",
+        "placeholder": "Write the announcement content"
+      },
+      "visibility": {
+        "label": "Visibility"
+      },
+      "publishAt": {
+        "label": "Publish at",
+        "help": "Optional. Leave empty to publish immediately. Uses your local time."
+      },
+      "pinned": {
+        "label": "Pin this announcement"
+      }
+    },
+    "cover": {
+      "title": "Cover",
+      "uploading": "Uploading...",
+      "dropOrClick": "Drop a file here or click to upload",
+      "chooseFile": "PNG, JPG up to 10MB"
+    },
+    "docs": {
+      "title": "Documents",
+      "uploading": "Uploading...",
+      "dropOrClick": "Drop files here or click to upload",
+      "chooseFile": "Any supported files",
+      "uploadHint": "Upload documents by clicking here"
+    }
+  },
+  "toast": {
+    "announcement": {
+      "created": "Announcement created successfully.",
+      "updated": "Announcement updated successfully.",
+      "createFailed": "Failed to create the announcement.",
+      "updateFailed": "Failed to update the announcement."
+    }
+  },
+  "common": {
+    "saving": "Saving...",
+    "prev": "prev",
+    "next": "next"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "min": "Must be at least {n} characters.",
+    "max": "Must be at most {n} characters.",
+    "invalid": "The provided value is invalid."
   }
 }

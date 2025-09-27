@@ -235,7 +235,7 @@ async function copyLink(u?: string | null, id?: number) {
             v-if="coverUrl"
             :src="coverUrl"
             alt="cover"
-            class="w-full h-full object-cover"
+            class="w-full h-full object-contain"
           >
           <div
             v-else
@@ -265,12 +265,12 @@ async function copyLink(u?: string | null, id?: number) {
 
         <div
           v-if="docsView.length"
-          class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          class="flex flex-col gap-3"
         >
           <div
             v-for="d in docsView"
             :key="d.id"
-            class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white/60 dark:bg-gray-900/60"
+            class="rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-white/60 dark:bg-gray-900/60 w-full"
           >
             <div class="flex items-start gap-3">
               <div class="h-12 w-12 flex-shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex items-center justify-center">

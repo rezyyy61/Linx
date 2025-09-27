@@ -3,6 +3,8 @@
 namespace App\Models\Event;
 
 use App\Contracts\Mediable;
+use App\Contracts\PostableResourceable;
+use App\Http\Resources\PublicApi\PublicMiniUserResource;
 use App\Models\Media;
 use App\Models\Share\Concerns\IsShareable;
 use App\Models\Share\Contracts\Shareable as ShareableContract;
@@ -14,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-class Event extends Model implements Mediable, ShareableContract
+class Event extends Model implements Mediable, PostableResourceable, ShareableContract
 {
     use HasFactory;
     use IsShareable;
@@ -172,5 +174,35 @@ class Event extends Model implements Mediable, ShareableContract
     public function getShareUrl(): string
     {
         return url('/events/'.$this->slug);
+    }
+
+    public function toPostableResource(): array
+    {
+        return [
+            'id' => (int) $this->getKey(),
+            'slug' => (string) ($this->slug ?? ''),
+            'title' => (string) ($this->title ?? ''),
+            'description' => (string) ($this->description ?? ''),
+            'cover_url' => $this->cover_url ?? null,
+            'starts_at' => optional($this->starts_at)?->toIso8601String(),
+            'ends_at' => optional($this->ends_at)?->toIso8601String(),
+            'timezone' => $this->timezone ?? null,
+            'location' => $this->location ?? null,
+            'organizer' => $this->relationLoaded('organizer') && $this->organizer
+                ? (new PublicMiniUserResource($this->organizer))->toArray(request())
+                : null,
+            'going_count' => property_exists($this, 'going_count') ? $this->going_count : null,
+            'capacity' => $this->capacity ?? null,
+        ];
+    }
+
+    public function getPostableAlias(): string
+    {
+        return 'event';
+    }
+
+    public function getPostableSlug(): ?string
+    {
+        return $this->slug;
     }
 }

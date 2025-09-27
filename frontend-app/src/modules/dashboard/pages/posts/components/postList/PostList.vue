@@ -75,7 +75,6 @@ function goOpen(id: number) { router.push(`/dashboard/posts/${id}`) }
 function goEdit(id: number) { router.push(`/dashboard/posts/${id}/edit`) }
 
 function onApply(p: Record<string, any>) {
-  console.log('apply filters =>', p)
   filters.value = p || {}
   fetchFirst()
 }

@@ -1,5 +1,6 @@
+<!-- /src/modules/dashboard/pages/events/EventsEditPage.vue -->
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
 import PageContainer from "@/modules/dashboard/pages/events/layout/PageContainer.vue";
@@ -15,18 +16,22 @@ const id = Number(route.params.id);
 const loading = ref(true);
 const current = ref<EventItem | null>(null);
 
+const pageTitle = computed(() => {
+  const t = current.value?.title || "";
+  return t ? `${t}` : "";
+});
+
 onMounted(async () => {
   try {
     const res = await store.fetchOne(id);
-    current.value = (res as any).data ?? res;
+    current.value = (res as any)?.data ?? res ?? null;
+    if (!current.value) throw new Error("not_found");
   } catch {
     router.push("/dashboard/events");
   } finally {
     loading.value = false;
   }
 });
-
-
 </script>
 
 <template>
@@ -45,7 +50,7 @@ onMounted(async () => {
             <span>{{ $t("common.back") }}</span>
           </router-link>
           <h1 class="text-xl font-semibold">
-            {{ $t("event.edit.title", { title: current?.title || '' }) }}
+            {{ $t("event.edit.title", { title: pageTitle || '' }) }}
           </h1>
         </div>
       </div>

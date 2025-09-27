@@ -22,5 +22,6 @@ return [
     'aliases' => [
         'post' => App\Models\Post\Post::class,
         'event' => \App\Models\Event\Event::class,
+        'announcement' => \App\Models\Announcement\Announcement::class,
     ],
 ];

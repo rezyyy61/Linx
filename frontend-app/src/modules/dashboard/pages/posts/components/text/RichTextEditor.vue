@@ -107,7 +107,7 @@ onMounted(() => {
       'header',
       'bold', 'italic', 'underline', 'strike',
       'blockquote',
-      'list', 'bullet',
+      'list',
       'direction', 'align',
     ],
   })

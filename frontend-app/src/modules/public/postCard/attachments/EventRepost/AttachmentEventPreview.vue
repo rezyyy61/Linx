@@ -18,8 +18,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
-import EventAttachmentCard from '@/modules/public/postCard/attachments/EventAttachmentCard.vue'
 import { api } from '@/lib/http'
+import EventAttachmentCard from "@/modules/public/postCard/attachments/EventRepost/EventAttachmentCard.vue";
 
 const props = defineProps<{ post: any }>()
 
@@ -97,22 +97,28 @@ async function ensureOrganizer(evt: any) {
   }
 }
 
-const postLooksLikeEvent = (p: any) =>
-  (p?.postable_type && String(p.postable_type).includes('Event')) ||
-  p?.postable_alias === 'event' ||
-  !!p?.postable?.slug ||
-  (p?.postable && p.postable.kind === 'event')
+const postLooksLikeEvent = (p: any) => {
+  if (!p) return false
+  return (
+    p?.postable_alias === 'event' ||
+    (typeof p?.postable_type === 'string' && p.postable_type.includes('Event')) ||
+    p?.postable?.kind === 'event'
+  )
+}
 
 const isEventAttachment = computed(() => {
-  const p: any = props.post || {}
-  return postLooksLikeEvent(p) || postLooksLikeEvent(fullPost.value || {})
+  return postLooksLikeEvent(props.post) || postLooksLikeEvent(fullPost.value)
 })
 
 const eventSlug = computed<string | null>(() => {
   const p: any = props.post || {}
   const fp: any = fullPost.value || {}
+
+  if (!(postLooksLikeEvent(p) || postLooksLikeEvent(fp))) return null
+
   return p?.postable?.slug ?? p?.postable_slug ?? fp?.postable?.slug ?? fp?.postable_slug ?? null
 })
+
 
 async function ensureFullPostOnce() {
   if (fullPost.value || !props.post?.id) return
