@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Resources\Event;
 
 use App\Http\Resources\PublicApi\PublicMiniUserResource;
@@ -11,29 +13,50 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class EventResource extends JsonResource
 {
-    public function toArray($request)
+    public function toArray($request): array
     {
+        /** @var Event $event */
+        $event = $this->resource;
+
         return [
-            'id' => (int) $this->id,
-            'title' => $this->title,
-            'description' => $this->description,
-            'slug' => $this->slug,
-            'timezone' => $this->timezone,
+            'id' => (int) $event->id,
+            'title' => $event->title,
+            'description' => $event->description,
+            'slug' => $event->slug,
+            'timezone' => $event->timezone,
+            'starts_at' => optional($event->starts_at)?->toISOString(),
+            'ends_at' => optional($event->ends_at)?->toISOString(),
+            'starts_at_local' => $event->starts_at_local,
+            'ends_at_local' => $event->ends_at_local,
+            'location' => $event->location,
+            'capacity' => $event->capacity,
+            'is_published' => (bool) $event->is_published,
+            'publish_at' => optional($event->publish_at)?->toISOString(),
+            'cover_url' => $this->whenLoaded('covers', function () use ($event) {
+                $m = $event->covers->sortBy('pivot.order_column')->first();
 
-            'starts_at' => optional($this->starts_at)?->toISOString(),
-            'ends_at' => optional($this->ends_at)?->toISOString(),
+                return $m && method_exists($m, 'publicUrl') ? $m->publicUrl() : null;
+            }),
+            'cover_id' => $this->whenLoaded('covers', function () use ($event) {
+                $id = $event->covers->sortBy('pivot.order_column')->pluck('id')->first();
 
-            'starts_at_local' => $this->starts_at_local,
-            'ends_at_local' => $this->ends_at_local,
+                return $id !== null ? (int) $id : null;
+            }, null),
+            'documents' => $this->whenLoaded('documents', function () use ($event) {
+                return $event->documents->map(static function ($m) {
+                    /** @var \App\Models\Media $m */
+                    return [
+                        'id' => (int) $m->id,
+                        'url' => method_exists($m, 'publicUrl') ? $m->publicUrl() : null,
+                    ];
+                })->values()->all();
+            }),
+            'document_ids' => $this->whenLoaded('documents', function () use ($event) {
+                return $event->documents->pluck('id')->map(fn ($i) => (int) $i)->values()->all();
+            }, []),
+            'settings' => $this->whenLoaded('settings', function () use ($event) {
+                $s = $event->settings;
 
-            'location' => $this->location,
-            'capacity' => $this->capacity,
-            'is_published' => (bool) $this->is_published,
-            'publish_at' => optional($this->publish_at)?->toISOString(),
-            'cover_url' => $this->cover_url,
-
-            'settings' => $this->whenLoaded('settings', function () {
-                $s = $this->settings;
                 return [
                     'type' => data_get($s, 'type'),
                     'visibility' => data_get($s, 'visibility'),
@@ -47,22 +70,11 @@ class EventResource extends JsonResource
                     'og_description' => data_get($s, 'og_description'),
                 ];
             }, null),
-
-            'documents' => $this->whenLoaded('documents', function () {
-                return $this->documents->map(static function ($m) {
-                    return [
-                        'id' => (int) data_get($m, 'id'),
-                        'url' => method_exists($m, 'publicUrl') ? $m->publicUrl() : null,
-                    ];
-                })->values()->all();
+            'organizer' => $this->whenLoaded('organizer', function () use ($event) {
+                return new PublicMiniUserResource($event->organizer);
             }),
-
-            'organizer' => $this->whenLoaded('organizer', function () {
-                return new PublicMiniUserResource($this->organizer);
-            }),
-
-            'created_at' => optional($this->created_at)?->toISOString(),
-            'updated_at' => optional($this->updated_at)?->toISOString(),
+            'created_at' => optional($event->created_at)?->toISOString(),
+            'updated_at' => optional($event->updated_at)?->toISOString(),
         ];
     }
 }

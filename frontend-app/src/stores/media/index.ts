@@ -126,7 +126,7 @@ export const useMediaStore = defineStore("media", {
         await this.uploadToS3(p.upload_url, file, p.contentType);
 
         task.state = "finalizing";
-        const dims = await loadImageDims(file); // فقط برای تصویرها کار می‌کند
+        const dims = await loadImageDims(file);
         const media = await this.finalize(p.id, dims);
 
         task.state = "done";

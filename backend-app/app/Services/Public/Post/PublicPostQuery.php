@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Public\Post;
 
+use App\Models\Announcement\Announcement;
 use App\Models\Event\Event;
 use App\Models\Post\Post as PostModel;
 use Illuminate\Contracts\Pagination\CursorPaginator;
@@ -86,6 +87,7 @@ class PublicPostQuery
                     if ($relation instanceof MorphTo) {
                         $relation->morphWith([
                             Event::class => ['organizer.profile.logo'],
+                            Announcement::class => ['owner.profile.logo'],
                         ]);
                     }
                 },

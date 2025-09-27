@@ -158,6 +158,17 @@
     @close="isRepostOpen = false"
     @done="onRepostDone"
   />
+
+  <RepostModalAnnouncement
+    v-else-if="isRepostOpen && isAnnouncement"
+    :key="`repost-ann-${shareableId}-${isRepostOpen?1:0}`"
+    :open="true"
+    :announcement-id="(props.announcement?.id ?? shareableId)"
+    :announcement-slug="props.announcement?.slug"
+    :initial-announcement="props.announcement"
+    @close="isRepostOpen = false"
+    @done="onRepostDone"
+  />
 </template>
 
 <script setup lang="ts">
@@ -167,6 +178,7 @@ import type { ShareChannel } from '../types'
 import { useShare } from '../composables/useShare'
 import RepostModalPost from './RepostModal.vue'
 import RepostModalEvent from "@/modules/share/components/event/RepostModalEvent.vue";
+import RepostModalAnnouncement from "@/modules/public/tabs/announcements/components/RepostModalAnnouncement.vue";
 
 interface Props {
   open: boolean
@@ -177,12 +189,16 @@ interface Props {
   text?: string
   post?: any
   event?: any
+  announcement?: any
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'shared'): void; (e: 'done', r: { id: number; url: string }): void }>()
 
 const isPost = computed(() => props.shareableAlias === 'post' || (props.shareableType || '').includes('Post'))
 const isEvent = computed(() => props.shareableAlias === 'event' || (props.shareableType || '').includes('Event'))
+const isAnnouncement = computed(() =>
+  props.shareableAlias === 'announcement' || (props.shareableType || '').includes('Announcement')
+)
 
 const copied = ref(false)
 const qrDataUrl = ref<string>('')

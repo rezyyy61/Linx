@@ -3,10 +3,10 @@ import { ref } from "vue";
 import EventCoverUploader from "../EventCoverUploader.vue";
 import EventDocumentsUploader from "../EventDocumentsUploader.vue";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const props = defineProps<{
+ defineProps<{
   eventId?: number | null;
   currentCoverUrl?: string | null;
+  currentCoverId?: number | null;
   initialDocs?: Array<{ id: number; url: string | null }>;
 }>();
 
@@ -15,17 +15,27 @@ const emit = defineEmits<{
   (e:"update:docs", v: Array<{ id: number; url: string | null }>): void;
 }>();
 
-const cover = ref<{ id: number; url: string | null } | null>(null);
-const docs  = ref<Array<{ id: number; url: string | null }>>([]);
+const cover = ref<{ id:number; url:string|null } | null>(null);
+const docs  = ref<Array<{ id:number; url:string|null }>>([]);
 
-function onCoverSelected(v: { id: number; url: string | null } | null) {
+function onCoverSelected(v: { id:number; url:string|null } | null) {
   cover.value = v;
   emit("update:cover", v);
 }
-function onDocsChanged(v: Array<{ id: number; url: string | null }>) {
+
+async function onCoverUpdated() {
+  emit("update:cover", cover.value);
+}
+
+function onDocsChanged(v: Array<{ id:number; url:string|null }>) {
   docs.value = v;
   emit("update:docs", v);
 }
+
+function onDocsUpdated() {
+  emit("update:docs", docs.value);
+}
+
 </script>
 
 <template>
@@ -33,15 +43,16 @@ function onDocsChanged(v: Array<{ id: number; url: string | null }>) {
     <EventCoverUploader
       :event-id="eventId || undefined"
       :current-cover-url="(cover && cover.url) ? cover.url : (currentCoverUrl || null)"
+      :current-cover-id="currentCoverId || null"
       @selected="onCoverSelected"
-      @updated="() => {}"
+      @updated="onCoverUpdated"
       @cleared="() => onCoverSelected(null)"
     />
     <EventDocumentsUploader
       :event-id="eventId || undefined"
       :initial-docs="initialDocs || []"
       @changed="onDocsChanged"
-      @updated="() => {}"
+      @updated="onDocsUpdated"
     />
   </div>
 </template>

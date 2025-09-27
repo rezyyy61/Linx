@@ -6,7 +6,7 @@
     <AnnouncementForm
       :mode="'create'"
       :saving="saving"
-      @submit="onSubmit"
+      @submitted="onSubmitted"
       @cancel="goBack"
     />
   </div>
@@ -16,19 +16,14 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import AnnouncementForm from "../components/AnnouncementForm.vue";
-import { createAnnouncement } from "../api";
 import { useRouter } from "vue-router";
 
 const { t } = useI18n();
 const router = useRouter();
 const saving = ref(false);
 
-async function onSubmit(payload: any){
-  saving.value = true;
-  try {
-    const a = await createAnnouncement(payload);
-    router.push({ name: "announcements.edit", params: { id: a.id } });
-  } finally { saving.value = false; }
+function onSubmitted(_a: any) {
+  router.push("/dashboard/announcements");
 }
 function goBack(){ router.back(); }
 </script>

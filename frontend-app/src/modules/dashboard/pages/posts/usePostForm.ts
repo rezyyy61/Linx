@@ -106,18 +106,32 @@ export function usePostForm(initial?: Post) {
     order.value = next
   }
 
-  function removeItem(key: string) {
+  async function removeItem(key: string) {
     const it = order.value.find(x => x.key === key)
     if (!it) return
+
+    order.value = order.value.filter(x => x.key !== key)
+
     if (it.type === 'existing' && it.id) {
-      existing.value = existing.value.filter(m => m.id !== it.id)
-      order.value = order.value.filter(x => x.key !== key)
-    } else if (it.type === 'task' && it.uid) {
+      try {
+        if (initial?.id) {
+          await mediaStore.detachFromPost(it.id, initial.id, 'post')
+        } else {
+          await mediaStore.deleteMediaOnServer(it.id)
+        }
+      } finally {
+        existing.value = existing.value.filter(m => m.id !== it.id)
+      }
+      return
+    }
+
+    if (it.type === 'task' && it.uid) {
       const t = mediaStore.byUid(it.uid)
       if (t) mediaStore.cancelUpload(t)
-      order.value = order.value.filter(x => x.key !== key)
+      return
     }
   }
+
 
   const mediaPayload = computed<{ id: number; order: number }[]>(() => {
     const out: { id: number; order: number }[] = []

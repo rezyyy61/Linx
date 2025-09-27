@@ -33,7 +33,7 @@ const loaders: Record<TabKey, () => Promise<any>> = {
   profiles: () => import("@/modules/public/tabs/profiles/ProfilePage.vue"),
   events: () => import("@/modules/public/tabs/events/pages/EventPage.vue"),
   announcements: () =>
-    import("@/modules/public/tabs/announcements/AnnouncementsPage.vue"),
+    import("@/modules/public/tabs/announcements/pages/AnnouncementsListPage.vue"),
 };
 
 const CurrentComp = shallowRef<any>(null);

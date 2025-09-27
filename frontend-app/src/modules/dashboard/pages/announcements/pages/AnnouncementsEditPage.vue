@@ -10,7 +10,7 @@
       :initial="item"
       :mode="'edit'"
       :saving="saving"
-      @submit="onSubmit"
+      @submit="onSubmitted"
       @cancel="goBack"
     />
   </div>
@@ -27,7 +27,7 @@ import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import AnnouncementForm from "../components/AnnouncementForm.vue";
-import { getAnnouncement, updateAnnouncement } from "../api";
+import { getAnnouncement } from "../api";
 import type { Announcement } from "../types";
 
 const { t } = useI18n();
@@ -38,7 +38,10 @@ const item = ref<Announcement | null>(null);
 const loaded = ref(false); const saving = ref(false);
 
 async function load(){ item.value = await getAnnouncement(id); loaded.value = true; }
-async function onSubmit(payload:any){ saving.value = true; try { await updateAnnouncement(id, payload); await load(); } finally { saving.value = false; } }
+
+function onSubmitted(_a: any) {
+  router.push("/dashboard/announcements");
+}
 function goBack(){ router.back(); }
 
 onMounted(load);

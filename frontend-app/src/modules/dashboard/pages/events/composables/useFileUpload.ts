@@ -33,7 +33,6 @@ export function useFileUpload() {
 
   async function finalize(mediaId: number, extra: Record<string, unknown> = {}) {
     await ensureCsrfCookie();
-    // بک‌اند خودش size/mime را می‌خواند؛ اگر بخواهی می‌توانی mime را هم بدهی
     await api.post(`/media/${mediaId}/finalize`, extra);
   }
 
@@ -83,7 +82,6 @@ export function useFileUpload() {
     });
   }
 
-  // --- Helpers برای Event -----------------------------------------------------
   async function attachCoverToEvent(mediaId: number, eventId: number) {
     return attachSingle(mediaId, FQN_EVENT, eventId, "event-cover", 0);
   }
@@ -94,13 +92,10 @@ export function useFileUpload() {
     return detachFromModel(mediaId, FQN_EVENT, eventId, collection);
   }
 
-  // --- High-level (با استور realtime و نوار پیشرفت) --------------------------
   async function uploadOne(file: File, kind: "image" | "document"): Promise<UploadedMedia> {
-    // مسیر کامل: presign → PUT → finalize → fetch(public_url)
     const task = mediaStore.createTask(file, kind);
     await mediaStore.presign(task);
     await mediaStore.uploadToS3(task);
-    // finalize با mime صحیح
     await mediaStore.finalize(task, { mime: task.contentType });
 
     const media = await mediaStore.fetchMedia(task.id!);

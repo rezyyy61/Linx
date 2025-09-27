@@ -5,50 +5,106 @@ import { TIMEZONES } from "@/modules/dashboard/constants/timezones";
 import type { CreateEventPayload } from "@/stores/event";
 
 const props = defineProps<{ modelValue: Partial<CreateEventPayload> }>();
-const emit = defineEmits<{ (e:"update:modelValue", v: Partial<CreateEventPayload>): void }>();
+const emit  = defineEmits<{ (e:"update:modelValue", v: Partial<CreateEventPayload>): void }>();
 
 function patch(v: Partial<CreateEventPayload>) {
-  emit("update:modelValue", { ...props.modelValue, ...v, settings: { ...(props.modelValue.settings||{}), ...(v as any).settings } });
+  let touched = false;
+  for (const k in v) {
+    if (k === "settings") continue;
+    if ((props.modelValue as any)[k] !== (v as any)[k]) { touched = true; break; }
+  }
+  if (v.settings && !touched) {
+    const s = v.settings as any;
+    const cur = props.modelValue.settings || {};
+    const keys = Object.keys(s);
+    for (const k of keys) {
+      if ((cur as any)[k] !== s[k]) { touched = true; break; }
+    }
+  }
+  if (touched) emit("update:modelValue", v);
 }
+
 function patchSettings(s: Partial<NonNullable<CreateEventPayload["settings"]>>) {
-  patch({ settings: { ...(props.modelValue.settings||{}), ...s } } as any);
+  let touched = false;
+  const cur = props.modelValue.settings || {};
+  for (const k in s) {
+    if ((cur as any)[k] !== (s as any)[k]) { touched = true; break; }
+  }
+  if (touched) emit("update:modelValue", { settings: s } as any);
 }
 
 const starts_at = computed({
   get: () => props.modelValue.starts_at ?? "",
-  set: (v) => patch({ starts_at: v } as any),
+  set: (v: string | null) => {
+    const nv = v ?? "";
+    if ((props.modelValue.starts_at ?? "") === nv) return;
+    patch({ starts_at: nv });
+  },
 });
 const ends_at = computed({
   get: () => props.modelValue.ends_at ?? null,
-  set: (v) => patch({ ends_at: v } as any),
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if ((props.modelValue.ends_at ?? null) === nv) return;
+    patch({ ends_at: nv });
+  },
 });
 const timezone = computed({
   get: () => props.modelValue.timezone ?? "Europe/Amsterdam",
-  set: (v) => patch({ timezone: v } as any),
+  set: (v: string) => {
+    const nv = v || "Europe/Amsterdam";
+    if ((props.modelValue.timezone ?? "Europe/Amsterdam") === nv) return;
+    patch({ timezone: nv });
+  },
 });
 const location = computed({
   get: () => props.modelValue.location ?? null,
-  set: (v) => patch({ location: v } as any),
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if ((props.modelValue.location ?? null) === nv) return;
+    patch({ location: nv });
+  },
 });
+
 const type = computed({
   get: () => props.modelValue.settings?.type ?? "in_person",
-  set: (v) => patchSettings({ type: v as any }),
+  set: (v: any) => {
+    const nv = v as any;
+    if ((props.modelValue.settings?.type ?? "in_person") === nv) return;
+    patchSettings({ type: nv });
+  },
 });
 const join_url = computed({
   get: () => props.modelValue.settings?.join_url ?? null,
-  set: (v) => patchSettings({ join_url: v as any }),
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if ((props.modelValue.settings?.join_url ?? null) === nv) return;
+    patchSettings({ join_url: nv as any });
+  },
 });
 const join_platform = computed({
   get: () => props.modelValue.settings?.join_platform ?? "",
-  set: (v) => patchSettings({ join_platform: v as any }),
+  set: (v: string | null) => {
+    const nv = v ?? "";
+    if ((props.modelValue.settings?.join_platform ?? "") === nv) return;
+    patchSettings({ join_platform: nv as any });
+  },
 });
 const visibility = computed({
   get: () => props.modelValue.settings?.visibility ?? "public",
-  set: (v) => patchSettings({ visibility: v as any }),
+  set: (v: any) => {
+    const nv = v as any;
+    if ((props.modelValue.settings?.visibility ?? "public") === nv) return;
+    patchSettings({ visibility: nv });
+  },
 });
 const access_code = computed({
   get: () => props.modelValue.settings?.access_code ?? null,
-  set: (v) => patchSettings({ access_code: v as any }),
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if ((props.modelValue.settings?.access_code ?? null) === nv) return;
+    patchSettings({ access_code: nv });
+  },
 });
 
 function hasTimePart(v?: string | null) {
@@ -56,9 +112,9 @@ function hasTimePart(v?: string | null) {
 }
 
 const needsLocation = computed(() => type.value === "in_person" || type.value === "hybrid");
-const needsJoinUrl = computed(() => type.value === "online" || type.value === "hybrid");
+const needsJoinUrl  = computed(() => type.value === "online" || type.value === "hybrid");
 const needsPlatform = needsJoinUrl;
-const isPrivate = computed(() => visibility.value === "private");
+const isPrivate     = computed(() => visibility.value === "private");
 
 const errors = computed(() => {
   const e: Record<string,string> = {};
@@ -75,8 +131,8 @@ const baseInput = "peer w-full px-4 pt-6 pb-2 border rounded-xl bg-white dark:bg
 
 const typeCards = [
   { value: "in_person", title: "In-person", desc: "Attendees join on site" },
-  { value: "online", title: "Online", desc: "Attendees join via link" },
-  { value: "hybrid", title: "Hybrid", desc: "On site + online link" },
+  { value: "online",    title: "Online",    desc: "Attendees join via link" },
+  { value: "hybrid",    title: "Hybrid",    desc: "On site + online link" },
 ];
 
 const tzList = computed(() => {

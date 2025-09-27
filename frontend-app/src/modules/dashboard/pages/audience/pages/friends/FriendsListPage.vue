@@ -94,11 +94,9 @@ const toast = useToast()
 const selectedIds = ref<number[]>([])
 const mutualsForUserId = ref<number|null>(null)
 
-/** ------ عضویت‌ها برای غیرفعال‌کردن Invite ------ */
 const ownerId = ref<number|null>(null)
 const memberships = ref<Membership[]>([])
 
-/** map: userId -> membership status (accepted/pending/...) */
 const statusByUserId = computed<Record<number, MembershipStatus | undefined>>(() => {
   const map: Record<number, MembershipStatus | undefined> = {}
   for (const m of memberships.value) {
@@ -111,12 +109,9 @@ async function refreshMemberships() {
   if (!ownerId.value) return
   try {
     memberships.value = await listMemberships(ownerId.value)
-  } catch {
-    // اختیاری: toast.warning('Failed to load memberships')
-  }
+  } catch { /* empty */ }
 }
 
-/** ------ لیست دوستان + فیلتر/سورت ------ */
 const filteredSorted = computed<ProfileLite[]>(() => {
   const q = state.search.trim().toLowerCase()
   let arr = [...friends.value]
@@ -134,7 +129,6 @@ const filteredSorted = computed<ProfileLite[]>(() => {
   return arr
 })
 
-/** ------ انتخاب‌ها ------ */
 const allChecked = computed(
   () => filteredSorted.value.length > 0 &&
     filteredSorted.value.every(x => selectedIds.value.includes(x.id))
@@ -153,13 +147,11 @@ function toggleCheck(id: number) {
   else selectedIds.value.push(id)
 }
 
-/** ------ حذف‌ها ------ */
 async function removeOne(id: number) {
   try {
     await removeFriend(id)
     selectedIds.value = selectedIds.value.filter(x => x !== id)
     toast.success(t('toast.friend.removedOne'))
-    // اگر حذف دوست روی عضویت تاثیر داشت، می‌تونی اینجا memberships رو هم تازه کنی
     await refreshMemberships()
   } catch {
     toast.error(t('toast.friend.removeFailOne'))

@@ -15,6 +15,12 @@ use Illuminate\Support\Facades\DB;
 
 class EventService
 {
+    public const COVER_COLLECTION = 'event-cover';
+
+    public const DOCS_COLLECTION = 'event-document';
+
+    public const DOCS_MAX = 100;
+
     public function __construct(private MediaService $mediaService) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -42,20 +48,13 @@ class EventService
 
         $allowedOrderBy = ['starts_at', 'created_at', 'updated_at'];
         $orderBy = \in_array($filters['order_by'] ?? '', $allowedOrderBy, true)
-            ? $filters['order_by']
-            : 'starts_at';
+            ? $filters['order_by'] : 'starts_at';
 
         $orderDir = \in_array(($filters['order_dir'] ?? 'desc'), ['asc', 'desc'], true)
-            ? $filters['order_dir']
-            : 'desc';
+            ? $filters['order_dir'] : 'desc';
 
         $perPage = (int) ($filters['per_page'] ?? 15);
-        if ($perPage < 1) {
-            $perPage = 1;
-        }
-        if ($perPage > 100) {
-            $perPage = 100;
-        }
+        $perPage = max(1, min(100, $perPage));
 
         return $q->orderBy($orderBy, $orderDir)->paginate($perPage);
     }
@@ -68,19 +67,18 @@ class EventService
             if (empty($data[$k])) {
                 continue;
             }
+
             $raw = $data[$k];
             if ($raw instanceof \DateTimeInterface) {
-                $c = Carbon::instance($raw)->setTimezone('UTC');
-                $data[$k] = $c;
+                $data[$k] = Carbon::instance($raw)->setTimezone('UTC');
 
                 continue;
             }
             $s = (string) $raw;
             $hasOffset = (bool) preg_match('/(Z|[+\-]\d{2}:\d{2})$/', $s);
-            $c = $hasOffset
+            $data[$k] = $hasOffset
                 ? Carbon::parse($s)->setTimezone('UTC')
                 : Carbon::parse($s, $tz)->setTimezone('UTC');
-            $data[$k] = $c;
         }
 
         return $data;
@@ -116,13 +114,7 @@ class EventService
         }
         if (array_key_exists('join_visible_minutes_before', $s)) {
             $v = (int) $s['join_visible_minutes_before'];
-            if ($v < 0) {
-                $v = 0;
-            }
-            if ($v > 10080) {
-                $v = 10080;
-            }
-            $out['join_visible_minutes_before'] = $v;
+            $out['join_visible_minutes_before'] = max(0, min(10080, $v));
         }
 
         return $out;
@@ -135,9 +127,9 @@ class EventService
                 $data['organizer_id'] = auth()->id();
             }
 
-            $mediaPayload = Arr::only($data, ['covers', 'documents', 'cover_id']);
+            $mediaPayload = Arr::only($data, ['documents', 'cover_id']);
             $settingsPayload = Arr::pull($data, 'settings', []);
-            $eventPayload = Arr::except($data, ['covers', 'documents', 'cover_id']);
+            $eventPayload = Arr::except($data, ['documents', 'cover_id']);
 
             $eventPayload = $this->ensureSlug($eventPayload, null);
             $eventPayload = $this->normalizeDatetimes($eventPayload);
@@ -151,9 +143,8 @@ class EventService
                 );
             }
 
-            if (! empty($mediaPayload)) {
-                $this->syncMedia($event, $mediaPayload);
-            }
+            $this->syncCover($event, $mediaPayload['cover_id'] ?? null);
+            $this->syncDocuments($event, $mediaPayload['documents'] ?? null);
 
             return (int) $event->id;
         });
@@ -162,9 +153,13 @@ class EventService
     public function update(Event $event, array $data): Event
     {
         return DB::transaction(function () use ($event, $data) {
-            $mediaPayload = Arr::only($data, ['covers', 'documents', 'cover_id']);
+            $mediaPayload = Arr::only($data, ['documents', 'cover_id']);
             $settingsPayload = Arr::pull($data, 'settings', []);
-            $eventPayload = Arr::except($data, ['covers', 'documents', 'cover_id']);
+            $eventPayload = Arr::except($data, ['documents', 'cover_id']);
+
+            if (array_key_exists('organizer_id', $eventPayload) && empty($eventPayload['organizer_id'])) {
+                unset($eventPayload['organizer_id']);
+            }
 
             $eventPayload = $this->ensureSlug($eventPayload, $event->id);
             $eventPayload = $this->normalizeDatetimes($eventPayload);
@@ -178,8 +173,12 @@ class EventService
                 );
             }
 
-            if (! empty($mediaPayload)) {
-                $this->syncMedia($event, $mediaPayload);
+            if (array_key_exists('documents', $mediaPayload)) {
+                $this->syncDocuments($event, $mediaPayload['documents']);
+            }
+
+            if (array_key_exists('cover_id', $mediaPayload)) {
+                $this->syncCover($event, $mediaPayload['cover_id']);
             }
 
             return $event->refresh();
@@ -188,33 +187,144 @@ class EventService
 
     public function delete(Event $event): void
     {
-        $event->delete();
+        $detachedIds = [];
+
+        DB::transaction(function () use ($event, &$detachedIds) {
+            $ids = $event->media()->pluck('media.id')->all();
+            $detachedIds = array_map('intval', $ids);
+
+            if ($detachedIds) {
+                $event->media()->detach($detachedIds);
+            }
+
+            $event->delete();
+        });
+
+        if ($detachedIds) {
+            DB::afterCommit(function () use ($detachedIds) {
+                $medias = Media::withTrashed()->whereIn('id', $detachedIds)->get();
+                foreach ($medias as $m) {
+                    app(MediaService::class)->deleteIfOrphan($m);
+                }
+            });
+        }
     }
 
-    protected function syncMedia(Event $event, array $payload): void
+    protected function syncCover(Event $event, $coverId): void
     {
-        if (array_key_exists('covers', $payload)) {
-            $event->media()->wherePivot('collection', 'event-cover')->detach();
-            foreach (array_values($payload['covers'] ?? []) as $i => $row) {
-                $media = Media::findOrFail((int) $row['id']);
-                $order = (int) ($row['order'] ?? $i);
-                $this->mediaService->attachMedia($event, $media, 'event-cover', $order);
+        if ($coverId === null || $coverId === '') {
+            $detached = $event->media()
+                ->wherePivot('collection', self::COVER_COLLECTION)
+                ->pluck('media.id')->all();
+
+            $event->media()->wherePivot('collection', self::COVER_COLLECTION)->detach();
+
+            if ($detached) {
+                DB::afterCommit(function () use ($detached) {
+                    $items = Media::withTrashed()->whereIn('id', $detached)->get();
+                    foreach ($items as $m) {
+                        app(MediaService::class)->deleteIfOrphan($m);
+                    }
+                });
+            }
+
+            return;
+        }
+
+        $media = Media::withTrashed()->find((int) $coverId);
+        if (! $media) {
+            $this->syncCover($event, null);
+
+            return;
+        }
+
+        $this->mediaService->replaceSingle($event, $media, self::COVER_COLLECTION, 0);
+    }
+
+    protected function syncDocuments(Event $event, ?array $items): void
+    {
+        if ($items === null) {
+            return;
+        }
+
+        if ($items === []) {
+            $detachedIds = $event->media()
+                ->wherePivot('collection', self::DOCS_COLLECTION)
+                ->pluck('media.id')->all();
+
+            $event->media()->wherePivot('collection', self::DOCS_COLLECTION)->detach();
+
+            if ($detachedIds) {
+                DB::afterCommit(function () use ($detachedIds) {
+                    $medias = Media::withTrashed()->whereIn('id', $detachedIds)->get();
+                    foreach ($medias as $m) {
+                        app(MediaService::class)->deleteIfOrphan($m);
+                    }
+                });
+            }
+
+            return;
+        }
+
+        $prepared = [];
+        foreach ($items as $idx => $row) {
+            if (! isset($row['id'])) {
+                continue;
+            }
+            $id = (int) $row['id'];
+            $order = isset($row['order']) ? (int) $row['order'] : $idx;
+            $prepared[$id] = ['collection' => self::DOCS_COLLECTION, 'order_column' => $order];
+            if (count($prepared) >= self::DOCS_MAX) {
+                break;
             }
         }
 
-        if (! empty($payload['cover_id'])) {
-            $media = Media::findOrFail((int) $payload['cover_id']);
-            $this->mediaService->replaceSingle($event, $media, 'event-cover', 0);
+        if ($prepared === []) {
+            $this->syncDocuments($event, []);
+
+            return;
         }
 
-        if (array_key_exists('documents', $payload)) {
-            $event->media()->wherePivot('collection', 'event-document')->detach();
-            foreach (array_values($payload['documents'] ?? []) as $i => $row) {
-                $media = Media::findOrFail((int) $row['id']);
-                $order = (int) ($row['order'] ?? $i);
-                $this->mediaService->attachMedia($event, $media, 'event-document', $order);
-            }
+        $existingIds = Media::withTrashed()
+            ->whereIn('id', array_keys($prepared))
+            ->pluck('id')->map(fn ($i) => (int) $i)->all();
+
+        if ($existingIds === []) {
+            $this->syncDocuments($event, []);
+
+            return;
         }
 
+        $currentIds = $event->media()
+            ->wherePivot('collection', self::DOCS_COLLECTION)
+            ->pluck('media.id')->map(fn ($i) => (int) $i)->all();
+
+        $toDetach = array_diff($currentIds, $existingIds);
+        $event->media()->wherePivot('collection', self::DOCS_COLLECTION)->detach($toDetach);
+
+        if ($toDetach) {
+            DB::afterCommit(function () use ($toDetach) {
+                $medias = Media::withTrashed()->whereIn('id', $toDetach)->get();
+                foreach ($medias as $m) {
+                    app(MediaService::class)->deleteIfOrphan($m);
+                }
+            });
+        }
+
+        $syncPayload = [];
+        foreach ($existingIds as $id) {
+            $syncPayload[$id] = $prepared[$id];
+        }
+
+        $event->media()->syncWithoutDetaching($syncPayload);
+
+        foreach ($syncPayload as $id => $p) {
+            DB::table('mediables')
+                ->where('mediable_type', Event::class)
+                ->where('mediable_id', $event->id)
+                ->where('media_id', $id)
+                ->where('collection', self::DOCS_COLLECTION)
+                ->update(['order_column' => $p['order_column'], 'updated_at' => now()]);
+        }
     }
 }

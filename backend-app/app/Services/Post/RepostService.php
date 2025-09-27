@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Post;
 
 use App\Enums\Share\ShareChannel;
+use App\Models\Announcement\Announcement;
 use App\Models\Event\Event;
 use App\Models\Post\Post;
 use App\Models\Share\Contracts\Shareable as ShareableContract;
@@ -87,7 +88,34 @@ class RepostService
                 return $post;
             }
 
-            abort(422);
+            if ($target instanceof Announcement) {
+                $post = new Post;
+                $post->user_id = $actor->getKey();
+                $post->content = $text ?? '';
+                $post->visibility = $visibility ?? 'public';
+                $post->status = Post::STATUS_PUBLISHED;
+                $post->published_at = now();
+                $post->save();
+
+                $post->postable()->associate($target);
+                $post->save();
+
+                $this->shareService->create(
+                    $target,
+                    ShareChannel::REPOST,
+                    $actor->getKey(),
+                    [
+                        'utm_source' => 'repost',
+                        'utm_campaign' => 'announcement_'.$target->getKey(),
+                    ],
+                    null,
+                    true
+                );
+
+                return $post;
+            }
+
+            abort(422, 'Unsupported shareable type for repost');
         });
     }
 }

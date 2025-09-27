@@ -1,17 +1,15 @@
-import type { RouteRecordRaw } from "vue-router";
-import eventsRoutes from "@/modules/public/tabs/events";
+import type { RouteRecordRaw } from "vue-router"
+import eventsRoutes from "@/modules/public/tabs/events"
+import announcementsRoutes from "@/modules/public/tabs/announcements"
 
-const PublicLayout = () => import("@/layouts/PublicLayout.vue");
-const HomePage = () => import("@/modules/public/pages/HomePage.vue");
-const LoginPage = () => import("@/modules/auth/pages/LoginPage.vue");
-const RegisterPage = () => import("@/modules/auth/pages/RegisterPage.vue");
-const ForgotPasswordPage = () =>
-  import("@/modules/auth/pages/ForgotPassword.vue");
-const ResetPasswordPage = () =>
-  import("@/modules/auth/pages/ResetPassword.vue");
+const PublicLayout = () => import("@/layouts/PublicLayout.vue")
+const HomePage = () => import("@/modules/public/pages/HomePage.vue")
+const LoginPage = () => import("@/modules/auth/pages/LoginPage.vue")
+const RegisterPage = () => import("@/modules/auth/pages/RegisterPage.vue")
+const ForgotPasswordPage = () => import("@/modules/auth/pages/ForgotPassword.vue")
+const ResetPasswordPage = () => import("@/modules/auth/pages/ResetPassword.vue")
 
-// صفحه نمایش یک پست
-const PostPage = () => import("@/modules/public/postCard/PostPage.vue");
+const PostPage = () => import("@/modules/public/postCard/PostPage.vue")
 
 export default {
   path: "/",
@@ -19,6 +17,7 @@ export default {
   meta: { layout: "public" },
   children: [
     { path: "", name: "home", component: HomePage },
+
     {
       path: "auth/login",
       name: "login",
@@ -48,12 +47,16 @@ export default {
       path: "p/:id",
       name: "post.show",
       component: PostPage,
-      props: route => ({
+      props: (route) => ({
         id: Number(route.params.id),
         comment: route.query.comment ? Number(route.query.comment) : null,
       }),
     },
 
+    // tabs/events
     ...eventsRoutes,
+
+    // tabs/announcements
+    ...announcementsRoutes,
   ],
-} as RouteRecordRaw;
+} as RouteRecordRaw

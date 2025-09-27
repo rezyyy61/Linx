@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\DB;
 
 class AnnouncementService
 {
+    public const COVER_COLLECTION = 'announcement-cover';
+
+    public const DOCS_COLLECTION = 'announcement-document';
+
+    public const DOCS_MAX = 100;
+
     public function __construct(private MediaService $mediaService) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -93,17 +99,16 @@ class AnnouncementService
                 $data['owner_id'] = auth()->id();
             }
 
-            $mediaPayload = Arr::only($data, ['covers', 'documents', 'cover_id']);
-            $payload = Arr::except($data, ['covers', 'documents', 'cover_id']);
+            $mediaPayload = Arr::only($data, ['documents', 'cover_id']);
+            $payload = Arr::except($data, ['documents', 'cover_id']);
 
             $payload = $this->ensureSlug($payload, null);
             $payload = $this->normalize($payload);
 
             $announcement = Announcement::create($payload);
 
-            if (! empty($mediaPayload)) {
-                $this->syncMedia($announcement, $mediaPayload);
-            }
+            $this->syncCover($announcement, $mediaPayload['cover_id'] ?? null);
+            $this->syncDocuments($announcement, $mediaPayload['documents'] ?? null);
 
             return (int) $announcement->id;
         });
@@ -112,17 +117,16 @@ class AnnouncementService
     public function update(Announcement $announcement, array $data): Announcement
     {
         return DB::transaction(function () use ($announcement, $data) {
-            $mediaPayload = Arr::only($data, ['covers', 'documents', 'cover_id']);
-            $payload = Arr::except($data, ['covers', 'documents', 'cover_id']);
+            $mediaPayload = Arr::only($data, ['documents', 'cover_id']);
+            $payload = Arr::except($data, ['documents', 'cover_id']);
 
             $payload = $this->ensureSlug($payload, $announcement->id);
             $payload = $this->normalize($payload);
 
             $announcement->fill($payload)->save();
 
-            if (! empty($mediaPayload)) {
-                $this->syncMedia($announcement, $mediaPayload);
-            }
+            $this->syncCover($announcement, $mediaPayload['cover_id'] ?? null);
+            $this->syncDocuments($announcement, $mediaPayload['documents'] ?? null);
 
             return $announcement->refresh();
         });
@@ -130,32 +134,144 @@ class AnnouncementService
 
     public function delete(Announcement $announcement): void
     {
-        $announcement->delete();
+        $detachedIds = [];
+
+        DB::transaction(function () use ($announcement, &$detachedIds) {
+            $ids = $announcement->media()->pluck('media.id')->all();
+            $detachedIds = array_map('intval', $ids);
+
+            if ($detachedIds) {
+                $announcement->media()->detach($detachedIds);
+            }
+
+            $announcement->delete();
+        });
+
+        if ($detachedIds) {
+            DB::afterCommit(function () use ($detachedIds) {
+                $medias = Media::withTrashed()->whereIn('id', $detachedIds)->get();
+                foreach ($medias as $m) {
+                    app(MediaService::class)->deleteIfOrphan($m);
+                }
+            });
+        }
     }
 
-    protected function syncMedia(Announcement $a, array $payload): void
+    protected function syncCover(Announcement $a, $coverId): void
     {
-        if (array_key_exists('covers', $payload)) {
-            $a->media()->wherePivot('collection', 'announcement-cover')->detach();
-            foreach (array_values($payload['covers'] ?? []) as $i => $row) {
-                $media = Media::findOrFail((int) $row['id']);
-                $order = (int) ($row['order'] ?? $i);
-                $this->mediaService->attachMedia($a, $media, 'announcement-cover', $order);
+        if ($coverId === null || $coverId === '') {
+            $detached = $a->media()
+                ->wherePivot('collection', self::COVER_COLLECTION)
+                ->pluck('media.id')->all();
+
+            $a->media()->wherePivot('collection', self::COVER_COLLECTION)->detach();
+
+            if ($detached) {
+                DB::afterCommit(function () use ($detached) {
+                    $items = Media::withTrashed()->whereIn('id', $detached)->get();
+                    foreach ($items as $m) {
+                        app(MediaService::class)->deleteIfOrphan($m);
+                    }
+                });
+            }
+
+            return;
+        }
+
+        $media = Media::withTrashed()->find((int) $coverId);
+        if (! $media) {
+            $this->syncCover($a, null);
+
+            return;
+        }
+
+        $this->mediaService->replaceSingle($a, $media, self::COVER_COLLECTION, 0);
+    }
+
+    protected function syncDocuments(Announcement $a, ?array $items): void
+    {
+        if ($items === null) {
+            return;
+        }
+
+        if ($items === []) {
+            $detachedIds = $a->media()
+                ->wherePivot('collection', self::DOCS_COLLECTION)
+                ->pluck('media.id')->all();
+
+            $a->media()->wherePivot('collection', self::DOCS_COLLECTION)->detach();
+
+            if ($detachedIds) {
+                DB::afterCommit(function () use ($detachedIds) {
+                    $medias = Media::withTrashed()->whereIn('id', $detachedIds)->get();
+                    foreach ($medias as $m) {
+                        app(MediaService::class)->deleteIfOrphan($m);
+                    }
+                });
+            }
+
+            return;
+        }
+
+        $prepared = [];
+        foreach ($items as $idx => $row) {
+            if (! isset($row['id'])) {
+                continue;
+            }
+            $id = (int) $row['id'];
+            $order = isset($row['order']) ? (int) $row['order'] : $idx;
+            $prepared[$id] = ['collection' => self::DOCS_COLLECTION, 'order_column' => $order];
+            if (count($prepared) >= self::DOCS_MAX) {
+                break;
             }
         }
 
-        if (! empty($payload['cover_id'])) {
-            $media = Media::findOrFail((int) $payload['cover_id']);
-            $this->mediaService->replaceSingle($a, $media, 'announcement-cover', 0);
+        if ($prepared === []) {
+            $this->syncDocuments($a, []);
+
+            return;
         }
 
-        if (array_key_exists('documents', $payload)) {
-            $a->media()->wherePivot('collection', 'announcement-document')->detach();
-            foreach (array_values($payload['documents'] ?? []) as $i => $row) {
-                $media = Media::findOrFail((int) $row['id']);
-                $order = (int) ($row['order'] ?? $i);
-                $this->mediaService->attachMedia($a, $media, 'announcement-document', $order);
-            }
+        $existingIds = Media::withTrashed()
+            ->whereIn('id', array_keys($prepared))
+            ->pluck('id')->map(fn ($i) => (int) $i)->all();
+
+        if ($existingIds === []) {
+            $this->syncDocuments($a, []);
+
+            return;
+        }
+
+        $currentIds = $a->media()
+            ->wherePivot('collection', self::DOCS_COLLECTION)
+            ->pluck('media.id')->map(fn ($i) => (int) $i)->all();
+
+        $toDetach = array_diff($currentIds, $existingIds);
+        $a->media()->wherePivot('collection', self::DOCS_COLLECTION)->detach($toDetach);
+
+        if ($toDetach) {
+            DB::afterCommit(function () use ($toDetach) {
+                $medias = Media::withTrashed()->whereIn('id', $toDetach)->get();
+                foreach ($medias as $m) {
+                    app(MediaService::class)->deleteIfOrphan($m);
+                }
+            });
+        }
+
+        $syncPayload = [];
+        foreach ($existingIds as $id) {
+            $syncPayload[$id] = $prepared[$id];
+        }
+
+        $a->media()->syncWithoutDetaching($syncPayload);
+
+        foreach ($syncPayload as $id => $p) {
+            DB::table('mediables')
+                ->where('mediable_type', Announcement::class)
+                ->where('mediable_id', $a->id)
+                ->where('media_id', $id)
+                ->where('collection', self::DOCS_COLLECTION)
+                ->update(['order_column' => $p['order_column'], 'updated_at' => now()]);
         }
     }
 }

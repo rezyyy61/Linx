@@ -3,6 +3,8 @@
 namespace App\Models\Announcement;
 
 use App\Contracts\Mediable;
+use App\Contracts\PostableResourceable;
+use App\Http\Resources\PublicApi\PublicMiniUserResource;
 use App\Models\Media;
 use App\Models\Share\Concerns\IsShareable;
 use App\Models\Share\Contracts\Shareable;
@@ -13,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Str;
 
-class Announcement extends Model implements Mediable, Shareable
+class Announcement extends Model implements Mediable, PostableResourceable, Shareable
 {
     use HasFactory;
     use IsShareable;
@@ -102,7 +104,6 @@ class Announcement extends Model implements Mediable, Shareable
 
             return $m instanceof Media ? $m->publicUrl() : null;
         }
-
         $m = $this->covers()->first();
 
         return $m instanceof Media ? $m->publicUrl() : null;
@@ -111,5 +112,32 @@ class Announcement extends Model implements Mediable, Shareable
     public function getShareUrl(): string
     {
         return url('/announcements/'.$this->slug);
+    }
+
+    public function toPostableResource(): array
+    {
+        return [
+            'id' => (int) $this->getKey(),
+            'slug' => (string) ($this->slug ?? ''),
+            'title' => (string) ($this->title ?? ''),
+            'excerpt' => (string) ($this->excerpt ?? ''),
+            'body' => (string) ($this->body ?? ''),
+            'cover_url' => $this->cover_url ?? null,
+            'visibility' => $this->visibility ?? 'public',
+            'publish_at' => optional($this->publish_at)?->toIso8601String(),
+            'owner' => $this->relationLoaded('owner') && $this->owner
+                ? (new PublicMiniUserResource($this->owner))->toArray(request())
+                : null,
+        ];
+    }
+
+    public function getPostableAlias(): string
+    {
+        return 'announcement';
+    }
+
+    public function getPostableSlug(): ?string
+    {
+        return $this->slug;
     }
 }

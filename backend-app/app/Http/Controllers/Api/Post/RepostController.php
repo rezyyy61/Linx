@@ -7,9 +7,7 @@ namespace App\Http\Controllers\Api\Post;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Post\CreateRepostRequest;
 use App\Models\Post\Post;
-use App\Models\Share\Contracts\Shareable as ShareableContract;
 use App\Services\Post\RepostService;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 
 class RepostController extends Controller
@@ -43,11 +41,11 @@ class RepostController extends Controller
             }
         }
 
-        if ($type === '' || !class_exists($type)) {
+        if ($type === '' || ! class_exists($type)) {
             abort(422, 'Invalid shareable_type');
         }
 
-        if (!is_subclass_of($type, \Illuminate\Database\Eloquent\Model::class) || !is_subclass_of($type, \App\Models\Share\Contracts\Shareable::class)) {
+        if (! is_subclass_of($type, \Illuminate\Database\Eloquent\Model::class) || ! is_subclass_of($type, \App\Models\Share\Contracts\Shareable::class)) {
             abort(422, 'Type must be an Eloquent Model and Shareable');
         }
 
@@ -58,7 +56,7 @@ class RepostController extends Controller
 
         /** @var (\App\Models\Share\Contracts\Shareable&\Illuminate\Database\Eloquent\Model)|null $model */
         $model = $type::query()->find($id);
-        if (!$model) {
+        if (! $model) {
             throw new \Illuminate\Database\Eloquent\ModelNotFoundException;
         }
 
@@ -75,5 +73,4 @@ class RepostController extends Controller
             'url' => url('/posts/'.$created->getKey()),
         ], 201);
     }
-
 }

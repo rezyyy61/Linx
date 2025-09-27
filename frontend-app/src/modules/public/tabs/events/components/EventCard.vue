@@ -35,7 +35,7 @@ const shareOpen = ref(false)
 <template>
   <article class="rounded-2xl bg-white dark:bg-neutral-900 ring-1 ring-neutral-200/60 dark:ring-neutral-800 hover:shadow-md transition overflow-hidden flex flex-col">
     <div class="relative">
-      <div class="w-full h-44 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+      <div class="w-full h-52 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
         <img
           v-if="event.cover_url"
           :src="event.cover_url"

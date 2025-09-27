@@ -1,49 +1,74 @@
 <script setup lang="ts">
-import { reactive, computed, watch } from "vue";
+import { computed } from "vue";
 import type { CreateEventPayload } from "@/stores/event";
 
 const props = defineProps<{ modelValue: Partial<CreateEventPayload>; currentType: string }>();
-const emit = defineEmits<{ (e:"update:modelValue", v: Partial<CreateEventPayload>): void }>();
-
-const m = reactive<Partial<CreateEventPayload>>({
-  title: props.modelValue.title ?? "",
-  description: props.modelValue.description ?? null,
-  is_published: props.modelValue.is_published ?? false,
-  publish_at: props.modelValue.publish_at ?? null,
-  settings: { visibility: props.modelValue.settings?.visibility ?? "public", access_code: props.modelValue.settings?.access_code ?? null, ...(props.modelValue.settings||{}) },
-});
-
-watch(
-  () => props.modelValue,
-  (v) => {
-    m.title        = v.title ?? "";
-    m.description  = v.description ?? null;
-    m.is_published = v.is_published ?? false;
-    m.publish_at   = v.publish_at ?? null;
-    m.settings = {
-      ...(m.settings || {}),
-      ...(v.settings || {}),
-      visibility: v.settings?.visibility ?? "public",
-      access_code: v.settings?.access_code ?? null,
-    };
-  },
-  { deep: true, immediate: true }
-);
-
-
-watch(m, () => emit("update:modelValue", { ...props.modelValue, ...m, settings: { ...(props.modelValue.settings||{}), ...(m.settings||{}) } }), { deep: true });
+const emit  = defineEmits<{ (e:"update:modelValue", v: Partial<CreateEventPayload>): void }>();
 
 const baseInput = "peer w-full px-4 pt-6 pb-2 border rounded-xl bg-white dark:bg-gray-800/80 dark:border-gray-600 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30";
 
+const title = computed({
+  get: () => props.modelValue.title ?? "",
+  set: (v: string) => {
+    const nv = v ?? "";
+    if (props.modelValue.title === nv) return;
+    emit("update:modelValue", { title: nv });
+  },
+});
+
+const description = computed({
+  get: () => props.modelValue.description ?? null,
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if (props.modelValue.description === nv) return;
+    emit("update:modelValue", { description: nv });
+  },
+});
+
+const is_published = computed({
+  get: () => !!props.modelValue.is_published,
+  set: (v: boolean) => {
+    const nv = !!v;
+    if (!!props.modelValue.is_published === nv) return;
+    emit("update:modelValue", { is_published: nv });
+  },
+});
+
+const publish_at = computed({
+  get: () => (props.modelValue as any).publish_at ?? null,
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if ((props.modelValue as any).publish_at === nv) return;
+    emit("update:modelValue", { publish_at: nv } as any);
+  },
+});
+
+const visibility = computed({
+  get: () => props.modelValue.settings?.visibility ?? "public",
+  set: (v: any) => {
+    if (props.modelValue.settings?.visibility === v) return;
+    emit("update:modelValue", { settings: { visibility: v } });
+  },
+});
+
+const access_code = computed({
+  get: () => props.modelValue.settings?.access_code ?? null,
+  set: (v: string | null) => {
+    const nv = v ?? null;
+    if (props.modelValue.settings?.access_code === nv) return;
+    emit("update:modelValue", { settings: { access_code: nv } });
+  },
+});
+
 const errors = computed(() => {
   const e: Record<string,string> = {};
-  if (!m.title || !String(m.title).trim()) e.title = "event.form.errors.titleRequired";
-  if (!m.settings?.visibility) e.visibility = "Visibility is required";
-  if (m.settings?.visibility === "private" && props.currentType !== "online" && !m.settings?.access_code) e.access_code = "Access code is required";
+  if (!String(title.value || "").trim()) e.title = "event.form.errors.titleRequired";
+  if (!visibility.value) e.visibility = "Visibility is required";
+  if (visibility.value === "private" && props.currentType !== "online" && !String(access_code.value || "").trim()) e.access_code = "Access code is required";
   return e;
 });
 
-const visibilityOptions = [
+const options = [
   { value: "public", label: "Public" },
   { value: "unlisted", label: "Unlisted" },
   { value: "private", label: "Private" },
@@ -64,9 +89,10 @@ function segClass(active: boolean) {
     <div>
       <label class="block text-sm font-medium mb-1">{{ $t("event.form.fields.title") }}</label>
       <input
-        v-model="m.title"
+        v-model="title"
         :class="[baseInput, errors.title ? 'border-red-300 focus:ring-red-400/40' : 'border-gray-300 dark:border-gray-600']"
         type="text"
+        dir="auto"
       >
       <p
         v-if="errors.title"
@@ -79,7 +105,8 @@ function segClass(active: boolean) {
     <div>
       <label class="block text-sm font-medium mb-1">{{ $t("event.form.fields.description") }}</label>
       <textarea
-        v-model="m.description"
+        v-model="description"
+        dir="auto"
         :class="[baseInput, 'min-h-[100px]', 'border-gray-300 dark:border-gray-600']"
       />
     </div>
@@ -88,11 +115,11 @@ function segClass(active: boolean) {
       <label class="block text-sm font-medium mb-2">Visibility</label>
       <div class="inline-flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600">
         <button
-          v-for="o in visibilityOptions"
+          v-for="o in options"
           :key="o.value"
           type="button"
-          :class="segClass(m.settings?.visibility === o.value)"
-          @click="m.settings = { ...(m.settings||{}), visibility: o.value as any }"
+          :class="segClass(visibility===o.value)"
+          @click="visibility = o.value as any"
         >
           {{ o.label }}
         </button>
@@ -105,10 +132,10 @@ function segClass(active: boolean) {
       </p>
     </div>
 
-    <div v-if="m.settings?.visibility==='private' && currentType!=='online'">
+    <div v-if="visibility==='private' && currentType!=='online'">
       <label class="block text-sm font-medium mb-1">Access code</label>
       <input
-        v-model="m.settings.access_code"
+        v-model="access_code"
         type="text"
         :class="[baseInput, errors.access_code ? 'border-red-300 focus:ring-red-400/40' : 'border-gray-300 dark:border-gray-600']"
         placeholder="Required for private (non-online) events"
@@ -125,7 +152,7 @@ function segClass(active: boolean) {
       <div class="flex items-center gap-2">
         <input
           id="is_published"
-          v-model="m.is_published"
+          v-model="is_published"
           class="h-4 w-4"
           type="checkbox"
         >
@@ -137,7 +164,7 @@ function segClass(active: boolean) {
       <div>
         <label class="block text-sm font-medium mb-1">Publish at</label>
         <input
-          v-model="m.publish_at"
+          v-model="publish_at"
           type="datetime-local"
           :class="[baseInput, 'border-gray-300 dark:border-gray-600']"
         >

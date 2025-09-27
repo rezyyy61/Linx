@@ -1,17 +1,9 @@
 import { defineStore } from "pinia";
-import { api, ensureCsrfCookie } from "@/lib/http";
-
-export type EventType = "in_person" | "online" | "hybrid";
-export type VisibilityMode = "public" | "unlisted" | "private";
-
-export type EventDocument = {
-  id: number;
-  url: string | null;
-};
+import { api } from "@/lib/http";
 
 export type EventSettings = {
-  type: EventType;
-  visibility: VisibilityMode;
+  type?: "in_person" | "online" | "hybrid" | null;
+  visibility?: "public" | "unlisted" | "private" | null;
   join_url?: string | null;
   join_platform?: string | null;
   join_passcode?: string | null;
@@ -22,32 +14,34 @@ export type EventSettings = {
   og_description?: string | null;
 };
 
-export type MediaRef = { id: number; order?: number };
+export type EventDoc = { id: number; url: string | null };
 
 export type EventItem = {
   id: number;
   title: string;
-  description?: string | null;
-  starts_at: string;
-  ends_at?: string | null;
-  starts_at_local?: string | null;
-  ends_at_local?: string | null;
-  timezone: string;
-  publish_at?: string | null;
-  slug?: string | null;
-  location?: string | null;
-  capacity?: number | null;
+  description: string | null;
+  slug: string;
+  timezone: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  starts_at_local: string | null;
+  ends_at_local: string | null;
+  location: string | null;
+  capacity: number | null;
   is_published: boolean;
-  organizer_id?: number | null;
-  created_at?: string;
-  updated_at?: string;
-  cover_url?: string | null;
-  og_image_url?: string | null;
-  documents?: EventDocument[];
+  publish_at: string | null;
+  cover_url: string | null;
+  cover_id?: number | null;
+  documents?: EventDoc[];
+  document_ids?: number[];
   settings?: EventSettings | null;
+  organizer_id?: number | null;
+  organizer?: { id: number; name: string | null } | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
-export type EventListFilters = {
+export type EventFilters = {
   q?: string;
   is_published?: boolean;
   starts_from?: string;
@@ -56,184 +50,122 @@ export type EventListFilters = {
   order_dir?: "asc" | "desc";
   per_page?: number;
   page?: number;
-  type?: EventType;
-  visibility?: VisibilityMode;
 };
 
-export type PaginationMeta = {
+export type CreateEventPayload = {
+  title: string;
+  description: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  timezone: string;
+  location: string | null;
+  capacity: number | null;
+  is_published: boolean;
+  organizer_id: number | null;
+  publish_at?: string | null;
+  settings?: EventSettings | null;
+  cover_id?: number;
+  documents?: Array<{ id: number; order?: number }>;
+};
+
+export type UpdateEventPayload = Partial<CreateEventPayload>;
+
+type PaginatedMeta = {
   current_page: number;
   per_page: number;
   total: number;
   last_page: number;
 };
 
-export type PaginatedResponse<T> = {
-  data: T[];
-  meta: PaginationMeta;
-};
+type ListResponse = { data: EventItem[]; meta: PaginatedMeta };
+type ShowResponse = EventItem;
 
-export type CreateEventPayload = {
-  title: string;
-  starts_at: string;
-  timezone: string;
-  description?: string | null;
-  ends_at?: string | null;
-  location?: string | null;
-  capacity?: number | null;
-  is_published?: boolean;
-  publish_at?: string | null;
-  organizer_id?: number | null;
-  slug?: string | null;
-  settings?: Partial<EventSettings>;
-  cover_id?: number | null;
-  covers?: MediaRef[];
-  documents?: MediaRef[];
-};
-
-export type UpdateEventPayload = Partial<CreateEventPayload>;
-
-function cleanDeep<T>(obj: T): any {
-  if (Array.isArray(obj)) {
-    return obj.map(cleanDeep).filter((v) => !(v === undefined || v === null || v === ""));
-  }
-  if (obj && typeof obj === "object") {
-    const out: Record<string, any> = {};
-    Object.entries(obj as Record<string, any>).forEach(([k, v]) => {
-      const cv = cleanDeep(v);
-      if (!(cv === undefined || cv === null || cv === "" || (Array.isArray(cv) && cv.length === 0))) {
-        out[k] = cv;
-      }
-    });
-    return out;
-  }
-  return obj;
+async function apiList(filters: EventFilters): Promise<ListResponse> {
+  const res = await api.get("/events", { params: filters });
+  return res.data;
 }
-
-function cleanParams<T extends Record<string, any>>(obj: T): Record<string, any> {
-  return cleanDeep(obj);
+async function apiShow(id: number): Promise<ShowResponse> {
+  const res = await api.get(`/events/${id}`);
+  return res.data;
+}
+async function apiCreate(payload: CreateEventPayload): Promise<ShowResponse> {
+  const res = await api.post("/events", payload);
+  return res.data;
+}
+async function apiUpdate(id: number, payload: UpdateEventPayload): Promise<ShowResponse> {
+  const res = await api.put(`/events/${id}`, payload);
+  return res.data;
+}
+async function apiDelete(id: number): Promise<void> {
+  await api.delete(`/events/${id}`);
 }
 
 export const useEventStore = defineStore("event", {
   state: () => ({
     items: [] as EventItem[],
-    meta: null as PaginationMeta | null,
+    meta: null as PaginatedMeta | null,
     current: null as EventItem | null,
+    loadingList: false,
+    loadingItem: false,
+    saving: false,
     filters: {
       per_page: 15,
       order_by: "starts_at",
       order_dir: "desc",
       page: 1,
-    } as EventListFilters,
-    loadingList: false,
-    loadingOne: false,
-    creating: false,
-    updating: false,
-    deleting: false,
-    lastError: null as unknown,
+    } as EventFilters,
   }),
-
   actions: {
-    setFilters(partial: Partial<EventListFilters>) {
-      this.filters = { ...this.filters, ...partial };
+    setFilters(next: EventFilters) {
+      this.filters = { ...this.filters, ...next };
     },
-
-    resetFilters() {
-      this.filters = {
-        per_page: 15,
-        order_by: "starts_at",
-        order_dir: "desc",
-        page: 1,
-      };
-    },
-
-    async fetchList(overrides?: Partial<EventListFilters>) {
+    async fetchList() {
       this.loadingList = true;
-      this.lastError = null;
       try {
-        const params = cleanParams({ ...this.filters, ...overrides });
-        const res = await api.get<PaginatedResponse<EventItem>>("/events", { params });
-        this.items = res.data.data;
-        this.meta = res.data.meta;
-        if (this.meta) this.filters.page = this.meta.current_page;
-        return res.data;
-      } catch (e) {
-        this.lastError = e;
-        throw e;
+        const res = await apiList(this.filters);
+        this.items = res.data;
+        this.meta = res.meta;
       } finally {
         this.loadingList = false;
       }
     },
-
     async fetchOne(id: number) {
-      this.loadingOne = true;
-      this.lastError = null;
+      this.loadingItem = true;
       try {
-        const res = await api.get<EventItem>(`/events/${id}`);
-        this.current = res.data;
-        return res.data;
-      } catch (e) {
-        this.lastError = e;
-        throw e;
+        const res = await apiShow(id);
+        this.current = res;
+        return res;
       } finally {
-        this.loadingOne = false;
+        this.loadingItem = false;
       }
     },
-
     async create(payload: CreateEventPayload) {
-      this.creating = true;
-      this.lastError = null;
+      this.saving = true;
       try {
-        await ensureCsrfCookie();
-        const body = cleanParams(payload);
-        const res = await api.post<EventItem>("/events", body);
-        this.current = res.data;
-        await this.fetchList({ page: 1 });
-        return res.data;
-      } catch (e) {
-        this.lastError = e;
-        throw e;
+        const res = await apiCreate(payload);
+        this.current = res;
+        return res;
       } finally {
-        this.creating = false;
+        this.saving = false;
       }
     },
-
     async update(id: number, payload: UpdateEventPayload) {
-      this.updating = true;
-      this.lastError = null;
+      this.saving = true;
       try {
-        await ensureCsrfCookie();
-        const body = cleanParams(payload);
-        const res = await api.patch<EventItem>(`/events/${id}`, body);
-        this.current = res.data;
-        const idx = this.items.findIndex((x) => x.id === id);
-        if (idx >= 0) this.items[idx] = res.data;
-        return res.data;
-      } catch (e) {
-        this.lastError = e;
-        throw e;
+        const res = await apiUpdate(id, payload);
+        this.current = res;
+        return res;
       } finally {
-        this.updating = false;
+        this.saving = false;
       }
     },
-
     async destroy(id: number) {
-      this.deleting = true;
-      this.lastError = null;
-      try {
-        await ensureCsrfCookie();
-        await api.delete(`/events/${id}`);
-        this.items = this.items.filter((x) => x.id !== id);
-        if (this.current?.id === id) this.current = null;
-        if (this.items.length === 0 && (this.meta?.current_page || 1) > 1) {
-          const prev = (this.meta?.current_page || 2) - 1;
-          await this.fetchList({ page: prev });
-        }
-      } catch (e) {
-        this.lastError = e;
-        throw e;
-      } finally {
-        this.deleting = false;
-      }
+      await apiDelete(id);
+      if (this.current?.id === id) this.current = null;
+      this.items = this.items.filter(i => i.id !== id);
+    },
+    clearCurrent() {
+      this.current = null;
     },
   },
 });

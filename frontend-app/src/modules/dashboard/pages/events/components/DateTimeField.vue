@@ -21,11 +21,7 @@ function toIsoLocal(d: string, t: string): string | null {
   return `${d}T${t}`;
 }
 function fromModel(v?: string | null) {
-  if (!v) {
-    date.value = "";
-    time.value = "";
-    return;
-  }
+  if (!v) { date.value = ""; time.value = ""; return; }
   const m = v.split("T");
   date.value = m[0] || "";
   time.value = (m[1] || "").slice(0, 5);
@@ -45,7 +41,48 @@ onMounted(() => fromModel(props.modelValue));
 watch(() => props.modelValue, (v) => fromModel(v));
 
 const hasError = computed(() => !!props.errorKey);
-const stepAttr = computed(() => Math.max(1, (props.minuteStep ?? 5)) * 60);
+const stepMinutes = computed(() => Math.max(1, (props.minuteStep ?? 5)));
+const stepAttr = computed(() => stepMinutes.value * 60);
+
+const isFirefox = computed(() => typeof navigator !== "undefined" && /firefox/i.test(navigator.userAgent));
+
+const timeOptions = computed(() => {
+  const step = stepMinutes.value;
+  const out: string[] = [];
+  for (let m = 0; m < 24 * 60; m += step) {
+    const hh = String(Math.floor(m / 60)).padStart(2, "0");
+    const mm = String(m % 60).padStart(2, "0");
+    out.push(`${hh}:${mm}`);
+  }
+  return out;
+});
+
+const showList = ref(false);
+const activeIdx = ref(-1);
+const filtered = computed(() => {
+  const q = (time.value || "").trim();
+  if (!q) return timeOptions.value;
+  return timeOptions.value.filter(o => o.startsWith(q));
+});
+function openList() { if (isFirefox.value) { showList.value = true; activeIdx.value = -1; } }
+function closeList() { showList.value = false; activeIdx.value = -1; }
+function pickTime(v: string) { time.value = v; closeList(); }
+function onKey(e: KeyboardEvent) {
+  if (!isFirefox.value) return;
+  if (!showList.value && (e.key === "ArrowDown" || e.key === "Enter")) { showList.value = true; e.preventDefault(); return; }
+  if (!showList.value) return;
+  if (e.key === "Escape") { closeList(); return; }
+  if (e.key === "ArrowDown") { activeIdx.value = Math.min(filtered.value.length - 1, activeIdx.value + 1); e.preventDefault(); return; }
+  if (e.key === "ArrowUp") { activeIdx.value = Math.max(0, activeIdx.value - 1); e.preventDefault(); return; }
+  if (e.key === "Enter") {
+    const v = filtered.value[activeIdx.value] || filtered.value[0];
+    if (v) pickTime(v);
+    e.preventDefault();
+  }
+}
+let blurTimer: number | undefined;
+function onBlur() { blurTimer = window.setTimeout(closeList, 100); }
+function onListMouseDown(e: MouseEvent) { e.preventDefault(); if (blurTimer) { clearTimeout(blurTimer); blurTimer = undefined as any; } }
 </script>
 
 <template>
@@ -83,8 +120,8 @@ const stepAttr = computed(() => Math.max(1, (props.minuteStep ?? 5)) * 60);
           <input
             v-model="date"
             type="date"
-            class="w-full rounded-lg border pl-12 p-2.5 focus:outline-none focus:ring-2"
-            :class="hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:placeholder-gray-400'"
+            class="w-full rounded-lg border pl-12 p-2.5 focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:[color-scheme:dark]"
+            :class="hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 dark:border-gray-700'"
             :placeholder="datePlaceholderKey ? ($t(datePlaceholderKey) as string) : ''"
             :aria-invalid="hasError"
           >
@@ -99,15 +136,42 @@ const stepAttr = computed(() => Math.max(1, (props.minuteStep ?? 5)) * 60);
               />
             </span>
           </span>
+
           <input
             v-model="time"
-            type="time"
-            :step="stepAttr"
-            class="w-full rounded-lg border pl-12 p-2.5 focus:outline-none focus:ring-2"
-            :class="hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:placeholder-gray-400'"
-            :placeholder="timePlaceholderKey ? ($t(timePlaceholderKey) as string) : ''"
+            :type="isFirefox ? 'text' : 'time'"
+            :step="!isFirefox ? stepAttr : undefined"
+            inputmode="numeric"
+            pattern="^([01]\\d|2[0-3]):([0-5]\\d)$"
+            :placeholder="timePlaceholderKey ? ($t(timePlaceholderKey) as string) : 'HH:MM'"
+            class="w-full rounded-lg border pl-12 p-2.5 focus:outline-none focus:ring-2 bg-white dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 dark:[color-scheme:dark]"
+            :class="hasError ? 'border-red-300 focus:ring-red-400' : 'border-gray-300 focus:ring-blue-500 dark:border-gray-700'"
             :aria-invalid="hasError"
+            @focus="openList"
+            @blur="onBlur"
+            @keydown="onKey"
           >
+
+          <transition name="fade">
+            <div
+              v-if="isFirefox && showList && filtered.length"
+              class="absolute z-20 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800"
+              @mousedown="onListMouseDown"
+            >
+              <ul class="max-h-56 overflow-auto py-1 text-sm">
+                <li
+                  v-for="(opt, i) in filtered"
+                  :key="opt"
+                  class="px-3 py-2 cursor-pointer"
+                  :class="i === activeIdx ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200' : 'hover:bg-gray-50 dark:hover:bg-gray-700/60'"
+                  @mouseenter="activeIdx = i"
+                  @click="pickTime(opt)"
+                >
+                  {{ opt }}
+                </li>
+              </ul>
+            </div>
+          </transition>
         </div>
       </div>
     </div>
@@ -120,3 +184,8 @@ const stepAttr = computed(() => Math.max(1, (props.minuteStep ?? 5)) * 60);
     </p>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,.fade-leave-active{transition:opacity .12s ease}
+.fade-enter-from,.fade-leave-to{opacity:0}
+</style>

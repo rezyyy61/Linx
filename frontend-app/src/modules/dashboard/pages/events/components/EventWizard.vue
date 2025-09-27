@@ -26,10 +26,10 @@ const router = useRouter();
 const store = useEventStore();
 
 const steps = computed(() => ([
-  { key: "details",        label: "Basics" },
-  { key: "type_schedule",  label: "Type & Schedule" },
-  { key: "media",          label: "Media" },
-  { key: "review",         label: isEdit.value ? "Review & Update" : "Review & Create" },
+  { key: "details", label: "Basics" },
+  { key: "type_schedule", label: "Type & Schedule" },
+  { key: "media", label: "Media" },
+  { key: "review", label: isEdit.value ? "Review & Update" : "Review & Create" },
 ]));
 
 const active = ref(0);
@@ -43,9 +43,8 @@ const form = reactive<CreateEventPayload>({
   location: null,
   capacity: null,
   is_published: false,
-  publish_at: null,
   organizer_id: null,
-  slug: null,
+  publish_at: null,
   settings: {
     type: "in_person",
     visibility: "public",
@@ -56,6 +55,7 @@ const form = reactive<CreateEventPayload>({
 });
 
 const coverMedia = ref<{ id:number; url:string|null } | null>(null);
+const coverCleared = ref(false);
 const docsMedia  = ref<Array<{ id:number; url:string|null }>>([]);
 const initialCoverUrl = ref<string | null>(null);
 
@@ -72,27 +72,24 @@ function hydrateFromInitial(src?: Partial<EventItem>) {
   if (!src) return;
   form.title        = src.title ?? "";
   form.description  = src.description ?? null;
-  form.timezone     = (src as any).timezone ?? "Europe/Amsterdam";
+  form.timezone     = (src as any).timezone ?? "UTC";
   form.starts_at    = (src as any).starts_at_local ?? src.starts_at ?? "";
   form.ends_at      = (src as any).ends_at_local ?? src.ends_at ?? null;
   form.location     = src.location ?? null;
   form.capacity     = src.capacity ?? null;
   form.is_published = !!src.is_published;
-  (form as any).publish_at   = (src as any).publish_at ?? null;
-  (form as any).organizer_id = (src as any).organizer_id ?? null;
-  (form as any).slug         = (src as any).slug ?? null;
+  (form as any).publish_at = (src as any).publish_at ?? null;
+  (form as any).organizer_id =
+    (src as any).organizer_id ??
+    (src as any)?.organizer?.id ??
+    form.organizer_id ??
+    null;
   if ((src as any).settings) form.settings = { ...form.settings, ...(src as any).settings };
-
   initialCoverUrl.value = (src as any).cover_url ?? null;
-  if (initialCoverUrl.value && !coverMedia.value) {
-    coverMedia.value = { id: 0, url: initialCoverUrl.value };
-  }
-
-  if (Array.isArray((src as any).documents)) {
-    docsMedia.value = (src as any).documents.map((d:any) => ({ id: d.id, url: d.url ?? null }));
-  }
+  docsMedia.value = Array.isArray((src as any).documents)
+    ? (src as any).documents.map((d:any) => ({ id: d.id, url: d.url ?? null }))
+    : [];
 }
-
 
 function maybeHydrate(src?: Partial<EventItem> | null) {
   if (hydratedOnce.value || !src) return;
@@ -105,16 +102,14 @@ if (isEdit.value && normalizedInitial.value) {
 }
 
 onMounted(() => {
-  if (isEdit.value && normalizedInitial.value) {
-    maybeHydrate(normalizedInitial.value as any);
-  }
+  if (isEdit.value && normalizedInitial.value) maybeHydrate(normalizedInitial.value as any);
 });
 
 watch(normalizedInitial, (v) => {
   if (isEdit.value && v) maybeHydrate(v as any);
 });
 
-function hasTimePart(v?: string | null) {
+function hasTimePart(v?: string | null): v is string {
   return !!(v && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v));
 }
 
@@ -131,12 +126,17 @@ const detailsValid = computed(() => {
 const typeScheduleValid = computed(() => {
   if (!hasTimePart(form.starts_at)) return false;
   if (!form.timezone) return false;
-  if (form.ends_at && hasTimePart(form.ends_at) && new Date(form.ends_at) < new Date(form.starts_at)) return false;
+
+  if (hasTimePart(form.ends_at) && new Date(form.ends_at) < new Date(form.starts_at)) {
+    return false;
+  }
+
   const type = (form.settings?.type as string) || "in_person";
   if ((type === "in_person" || type === "hybrid") && !form.location) return false;
   if ((type === "online" || type === "hybrid") && !form.settings?.join_url) return false;
   return true;
 });
+
 
 function canNext() {
   if (active.value === 0) return detailsValid.value;
@@ -152,11 +152,11 @@ function go(i:number) { if (i > active.value && !canNext()) return; active.value
 function patchForm(v: Partial<CreateEventPayload> | any) {
   if (!v) return;
   if (v.settings) {
-    const s = v.settings as any;
+    const s = v.settings as Partial<EventSettings>;
     if (!form.settings) (form as any).settings = {};
     for (const k in s) {
-      if ((form.settings as any)[k] !== s[k]) {
-        (form.settings as any)[k] = s[k];
+      if ((form.settings as any)[k] !== (s as any)[k]) {
+        (form.settings as any)[k] = (s as any)[k];
       }
     }
   }
@@ -169,25 +169,48 @@ function patchForm(v: Partial<CreateEventPayload> | any) {
   }
 }
 
-const submitting = computed(() => isEdit.value ? store.updating : store.creating);
+const submitting = computed(() => store.saving);
 const submitError = ref<string | null>(null);
 const serverErrors = ref<Record<string, string[]>>({});
+
+function buildPayload(): CreateEventPayload & {
+  documents?: Array<{id:number; order?:number}>;
+  cover_id?: number;
+} {
+  const p: any = {
+    title: form.title,
+    description: form.description,
+    starts_at: form.starts_at,
+    ends_at: form.ends_at,
+    timezone: form.timezone,
+    location: form.location,
+    capacity: form.capacity,
+    is_published: form.is_published,
+    organizer_id: form.organizer_id ?? undefined,
+    publish_at: form.publish_at ?? null,
+    settings: form.settings || null,
+  };
+
+  if (!isEdit.value) {
+    if (coverMedia.value?.id) p.cover_id = coverMedia.value.id;
+    p.documents = docsMedia.value.map((d, i) => ({ id: d.id, order: i }));
+  }
+
+  if (p.organizer_id === undefined) delete p.organizer_id;
+  return p as CreateEventPayload;
+}
 
 async function submit() {
   submitError.value = null;
   serverErrors.value = {};
   try {
-    const payload: any = {
-      ...form,
-      cover_id: coverMedia.value?.id ?? null,
-      documents: docsMedia.value.map((d, i) => ({ id: d.id, order: i })),
-    };
+    const payload = buildPayload();
     if (isEdit.value && props.eventId) {
       await store.update(props.eventId, payload);
       router.push("/dashboard/events");
     } else {
-      const created = await store.create(payload);
-      router.push(`/dashboard/pages/events/${created.id}/edit`);
+      await store.create(payload);
+      router.push("/dashboard/events");
     }
   } catch (e: any) {
     const data = e?.response?.data;
@@ -197,8 +220,23 @@ async function submit() {
   }
 }
 
-function onCoverUpdate(v: { id:number; url:string|null } | null) { coverMedia.value = v ?? null; }
-function onDocsUpdate(v: Array<{ id:number; url:string|null }>)   { docsMedia.value  = Array.isArray(v) ? v : []; }
+function onCoverUpdate(v: { id:number; url:string|null } | null) {
+  coverMedia.value = v ?? null;
+  coverCleared.value = isEdit.value && !v;
+  if (!v) {
+    initialCoverUrl.value = null;
+  }
+}
+function onDocsUpdate(v: Array<{ id:number; url:string|null }>) {
+  docsMedia.value  = Array.isArray(v) ? v : [];
+}
+
+const initialCoverId = computed(() => (normalizedInitial.value as any)?.cover_id ?? null);
+const previewCover = computed(() => {
+  if (coverMedia.value && coverMedia.value.url) return coverMedia.value;
+  if (initialCoverUrl.value) return { id: initialCoverId.value || 0, url: initialCoverUrl.value };
+  return null;
+});
 </script>
 
 <template>
@@ -229,8 +267,11 @@ function onDocsUpdate(v: Array<{ id:number; url:string|null }>)   { docsMedia.va
       </ul>
     </div>
 
-    <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
-      <div v-show="active===0">
+    <div
+      :key="active"
+      class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5"
+    >
+      <div v-if="active===0">
         <StepDetails
           :model-value="form"
           :current-type="form.settings?.type || 'in_person'"
@@ -238,28 +279,29 @@ function onDocsUpdate(v: Array<{ id:number; url:string|null }>)   { docsMedia.va
         />
       </div>
 
-      <div v-show="active===1">
+      <div v-else-if="active===1">
         <StepTypeSchedule
           :model-value="form"
           @update:model-value="patchForm"
         />
       </div>
 
-      <div v-show="active===2">
+      <div v-else-if="active===2">
         <StepMedia
           :event-id="isEdit ? (props.eventId ?? null) : null"
           :current-cover-url="initialCoverUrl"
+          :current-cover-id="initialCoverId"
           :initial-docs="(props.initial?.documents || [])"
           @update:cover="onCoverUpdate"
           @update:docs="onDocsUpdate"
         />
       </div>
 
-      <div v-show="active===3">
+      <div v-else>
         <StepReview
           :mode="isEdit ? 'edit' : 'create'"
           :payload="form"
-          :cover="coverMedia"
+          :cover="previewCover"
           :docs="docsMedia"
           :submitting="submitting"
           @submit="submit"

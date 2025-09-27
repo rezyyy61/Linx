@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\PublicApi;
 
+use App\Contracts\PostableResourceable;
 use App\Http\Resources\MediaResource;
 use App\Models\Comment\Comment;
-use App\Models\Event\Event;
 use App\Models\Media;
 use App\Models\Post\Post as PostModel;
 use App\Models\Post\PostLike;
@@ -77,30 +77,10 @@ class PublicPostResource extends JsonResource
         $postableSlug = null;
         $postablePayload = null;
 
-        if ($post->postable instanceof Event) {
-            $ev = $post->postable;
-            $postableAlias = 'event';
-            $postableSlug = $ev->slug;
-
-            $postablePayload = [
-                'id' => (int) $ev->getKey(),
-                'slug' => (string) $ev->slug,
-                'title' => (string) ($ev->title ?? ''),
-                'description' => (string) ($ev->description ?? ''),
-                'cover_url' => $ev->cover_url ?? null,
-                'starts_at' => optional($ev->starts_at)?->toIso8601String(),
-                'ends_at' => optional($ev->ends_at)?->toIso8601String(),
-                'timezone' => $ev->timezone ?? null,
-                'location' => $ev->location ?? null,
-                'organizer' => $ev->relationLoaded('organizer') ? [
-                    'id' => optional($ev->organizer)?->getKey(),
-                    'name' => data_get($ev->organizer, 'name'),
-                    'slug' => data_get($ev->organizer, 'slug'),
-                    'avatar' => method_exists($ev->organizer, 'avatarUrl') ? $ev->organizer->avatarUrl() : null,
-                ] : null,
-                'going_count' => property_exists($ev, 'going_count') ? $ev->going_count : null,
-                'capacity' => $ev->capacity ?? null,
-            ];
+        if ($post->postable instanceof PostableResourceable) {
+            $postableAlias = $post->postable->getPostableAlias();
+            $postableSlug = $post->postable->getPostableSlug();
+            $postablePayload = $post->postable->toPostableResource();
         }
 
         return [
@@ -129,7 +109,6 @@ class PublicPostResource extends JsonResource
                 'views' => 0,
             ],
             'media' => MediaResource::collection($this->whenLoaded('media')),
-
             'postable_type' => $post->postable_type,
             'postable_id' => $post->postable_id,
             'postable_alias' => $postableAlias,

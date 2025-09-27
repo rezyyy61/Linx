@@ -39,8 +39,13 @@ class MediaController extends Controller
         return new MediaResource($media);
     }
 
-    public function destroy(Media $media, MediaService $svc)
+    public function destroy(int $mediaId, MediaService $svc)
     {
+        $media = \App\Models\Media::withTrashed()->find($mediaId);
+        if (! $media) {
+            return response()->noContent();
+        }
+
         $svc->deleteIfOrphan($media);
 
         return response()->noContent();
