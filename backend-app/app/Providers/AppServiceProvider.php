@@ -3,10 +3,6 @@
 namespace App\Providers;
 
 use App\Notifications\JobFailedAlert;
-use App\Services\Campaign\CampaignService;
-use App\Services\Campaign\CampaignServiceInterface;
-use App\Services\Campaign\DonationIntentService;
-use App\Services\Campaign\DonationIntentServiceInterface;
 use App\Services\Share\Contracts\LinkShortener;
 use App\Services\Share\Contracts\ShareGuard;
 use App\Services\Share\Contracts\ShareService as ShareServiceContract;
@@ -28,8 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(CampaignServiceInterface::class, CampaignService::class);
-        $this->app->bind(DonationIntentServiceInterface::class, DonationIntentService::class);
         $this->app->bind(
             \App\Services\Comment\Contracts\CommentService::class,
             \App\Services\Comment\CommentService::class

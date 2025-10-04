@@ -72,6 +72,8 @@
 
     <AttachmentEventPreview :post="post" />
     <AttachmentAnnouncementPreview :post="post" />
+    <AttachmentCampaignPreview :post="post" />
+
 
 
     <LikesPreview :post-id="post.id" />
@@ -142,6 +144,8 @@ import PublicPostComposer from '@/modules/public/postCard/createPost/PublicPostC
 import { useToast } from '@/modules/toast/useToast'
 import AttachmentEventPreview from "@/modules/public/postCard/attachments/EventRepost/AttachmentEventPreview.vue";
 import AttachmentAnnouncementPreview from "@/modules/public/postCard/attachments/AnnouncementRepost/AttachmentAnnouncementPreview.vue";
+import AttachmentCampaignPreview
+  from "@/modules/public/postCard/attachments/CampaignRepost/AttachmentCampaignPreview.vue";
 
 const props = defineProps<{ post: Post }>()
 

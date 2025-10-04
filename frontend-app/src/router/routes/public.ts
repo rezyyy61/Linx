@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from "vue-router"
 import eventsRoutes from "@/modules/public/tabs/events"
 import announcementsRoutes from "@/modules/public/tabs/announcements"
+import campaignsRoutes from "@/modules/public/tabs/campaigns"
 
 const PublicLayout = () => import("@/layouts/PublicLayout.vue")
 const HomePage = () => import("@/modules/public/pages/HomePage.vue")
@@ -8,7 +9,6 @@ const LoginPage = () => import("@/modules/auth/pages/LoginPage.vue")
 const RegisterPage = () => import("@/modules/auth/pages/RegisterPage.vue")
 const ForgotPasswordPage = () => import("@/modules/auth/pages/ForgotPassword.vue")
 const ResetPasswordPage = () => import("@/modules/auth/pages/ResetPassword.vue")
-
 const PostPage = () => import("@/modules/public/postCard/PostPage.vue")
 
 export default {
@@ -53,10 +53,8 @@ export default {
       }),
     },
 
-    // tabs/events
     ...eventsRoutes,
-
-    // tabs/announcements
     ...announcementsRoutes,
+    ...campaignsRoutes,
   ],
 } as RouteRecordRaw

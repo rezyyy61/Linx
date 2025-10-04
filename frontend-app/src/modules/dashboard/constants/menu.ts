@@ -6,11 +6,44 @@ export type MenuItem = {
 };
 
 export const dashboardMenu: MenuItem[] = [
-  { label: "Home", icon: "solar:home-2-linear", toName: "dashboard.home" },
-  { label: "Posts", icon: "solar:document-linear", toName: "posts.list", permission: "posts.view" },
-  { label: "Events", icon: "solar:calendar-linear", toName: "events.list", permission: "events.view" },
-  { label: "Campaigns", icon: "solar:leaf-linear", toName: "campaigns.list", permission: "campaigns.view" },
-  { label: "Announcements", icon: "mdi:bullhorn-outline", toName: "announcements.list", permission: "announcements.view" },
-  { label: "Profile", icon: "solar:user-linear", toName: "profile.edit" },
-  { label: 'Audience', toName: 'audience.followers', icon: 'mdi:account-group' }
+  {
+    label: "Home",
+    icon: "solar:home-2-linear",
+    toName: "dashboard.home",
+  },
+  {
+    label: "Posts",
+    icon: "solar:document-linear",
+    toName: "dashboard.posts.list",
+    permission: "posts.view",
+  },
+  {
+    label: "Events",
+    icon: "solar:calendar-linear",
+    toName: "dashboard.events.list",
+    permission: "events.view",
+  },
+  {
+    label: "Campaigns",
+    icon: "solar:leaf-linear",
+    toName: "dashboard.campaigns.list",
+    permission: "campaigns.view",
+  },
+  {
+    label: "Announcements",
+    icon: "mdi:bullhorn-outline",
+    toName: "dashboard.announcements.list",
+    permission: "announcements.view",
+  },
+  {
+    label: "Profile",
+    icon: "solar:user-linear",
+    toName: "dashboard.profile.edit",
+  },
+  {
+    label: "Audience",
+    icon: "mdi:account-group",
+    toName: "dashboard.audience.followers",
+    permission: "audience.view",
+  },
 ];

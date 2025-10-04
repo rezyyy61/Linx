@@ -1,68 +1,76 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Http\Controllers\Api\Campaign;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Campaign\ListCampaignRequest;
-use App\Http\Requests\Campaign\StoreCampaignRequest;
-use App\Http\Requests\Campaign\UpdateCampaignRequest;
+use App\Http\Requests\Campaign\CampaignIndexRequest;
+use App\Http\Requests\Campaign\CampaignStoreRequest;
+use App\Http\Requests\Campaign\CampaignUpdateRequest;
 use App\Http\Resources\Campaign\CampaignResource;
 use App\Models\Campaign\Campaign;
 use App\Services\Campaign\CampaignService;
+use App\Services\Campaign\DTOs\CreateCampaignData;
+use App\Services\Campaign\DTOs\UpdateCampaignData;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CampaignController extends Controller
 {
-    public function __construct(private CampaignService $service)
+    public function __construct(private CampaignService $service) {}
+
+    public function index(CampaignIndexRequest $request): AnonymousResourceCollection
     {
-        $this->authorizeResource(Campaign::class, 'campaign');
+        $filters = $request->validated();
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        $orderBy = $filters['order_by'] ?? 'publish_at';
+        $orderDir = $filters['order_dir'] ?? 'desc';
+
+        $user = $request->user();
+        if (! ($user && $user->can('campaign.viewAny'))) {
+            $filters['owner_id'] = $user?->id;
+        }
+
+        $paginator = $this->service->list($filters, $perPage, $orderBy, $orderDir);
+
+        return CampaignResource::collection($paginator);
     }
 
-    public function index(ListCampaignRequest $request)
+    public function store(CampaignStoreRequest $request): CampaignResource
     {
-        $paginated = $this->service->list($request->validated());
-
-        return response()->json([
-            'data' => CampaignResource::collection($paginated->getCollection()),
-            'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-                'last_page' => $paginated->lastPage(),
-            ],
-        ]);
-    }
-
-    public function store(StoreCampaignRequest $request)
-    {
-        $id = $this->service->create($request->validated());
-        $campaign = Campaign::with(['covers', 'documents'])->findOrFail($id);
-
-        return (new CampaignResource($campaign))
-            ->response()
-            ->setStatusCode(201);
-    }
-
-    public function show(Campaign $campaign)
-    {
-        $campaign->loadMissing(['covers', 'documents']);
+        $v = $request->validated();
+        $dto = new CreateCampaignData(...$v);
+        $campaign = $this->service->create($dto);
 
         return new CampaignResource($campaign);
     }
 
-    public function update(UpdateCampaignRequest $request, Campaign $campaign)
+    public function show(Campaign $campaign): CampaignResource
     {
-        $campaign = $this->service->update($campaign, $request->validated());
-        $campaign->loadMissing(['covers', 'documents']);
+        $campaign->load(['owner', 'covers', 'documents']);
 
         return new CampaignResource($campaign);
     }
 
-    public function destroy(Campaign $campaign)
+    public function update(CampaignUpdateRequest $request, Campaign $campaign): CampaignResource
+    {
+        $v = $request->validated();
+        $dto = new UpdateCampaignData(...$v);
+        $updated = $this->service->update($campaign, $dto);
+
+        return new CampaignResource($updated);
+    }
+
+    public function destroy(Campaign $campaign): JsonResponse
     {
         $this->service->delete($campaign);
 
-        return response()->json([], 204);
+        return response()->json(['success' => true]);
+    }
+
+    public function publish(Campaign $campaign): CampaignResource
+    {
+        $published = $this->service->publish($campaign);
+
+        return new CampaignResource($published);
     }
 }

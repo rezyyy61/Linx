@@ -55,6 +55,23 @@ class DefaultShareGuard implements ShareGuard
             return true;
         }
 
+        if ($shareable instanceof \App\Models\Campaign\Campaign) {
+            $visibility = strtolower((string) $shareable->visibility);
+            $status = strtolower((string) $shareable->status);
+
+            if ($visibility !== 'public') {
+                return false;
+            }
+            if ($shareable->publish_at && $shareable->publish_at->isFuture()) {
+                return false;
+            }
+            if ($status && ! in_array($status, ['published', 'active'], true)) {
+                return false;
+            }
+
+            return true;
+        }
+
         return false;
     }
 }

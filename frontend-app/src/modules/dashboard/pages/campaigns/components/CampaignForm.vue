@@ -1,216 +1,371 @@
+<script setup lang="ts">
+import { reactive, computed, ref, onMounted, watch, nextTick } from "vue"
+import type { CampaignRow, CreateCampaignPayload } from "../api/types"
+import CampaignCoverUploader from "@/modules/dashboard/pages/campaigns/components/CampaignCoverUploader.vue"
+import CampaignDocsUploader from "@/modules/dashboard/pages/campaigns/components/CampaignDocsUploader.vue"
+
+const props = defineProps<{ initial?: Partial<CampaignRow> | null }>()
+const emit = defineEmits<{
+  (e: "submit", v: CreateCampaignPayload & { cover_id?: number | null; documents?: Array<{ id:number; url:string|null }> }): void
+  (e: "cancel"): void
+}>()
+
+function toLocalInput(val?: string | null) {
+  if (!val) return null
+  return String(val).slice(0, 16) // "YYYY-MM-DDTHH:mm"
+}
+
+const form = reactive<CreateCampaignPayload>({
+  title: "",
+  excerpt: "",
+  description: "",
+  kind: "fundraising",
+  status: "draft",
+  visibility: "public",
+  starts_at: null,
+  ends_at: null,
+  publish_at: null,
+  meta: {
+    goal_amount: null,
+    goal_currency: null,
+    raised_amount: null,
+    signature_goal: null,
+    signatures_count: null,
+    needed_slots: null,
+    filled_slots: null,
+    target_reach: null,
+    current_reach: null,
+  }
+})
+
+const coverId = ref<number | null>(null)
+const coverUrl = ref<string | null>(null)
+const documents = ref<Array<{ id:number; url:string|null }>>([])
+
+function applyInitial(v?: Partial<CampaignRow> | null) {
+  const i = v || {}
+
+  form.title       = i.title || ""
+  form.excerpt     = i.excerpt ?? ""
+  form.description = i.description ?? ""
+  form.kind        = (i.kind as any) || "fundraising"
+  form.status      = (i.status as any) || "draft"
+  form.visibility  = (i.visibility as any) || "public"
+
+  form.starts_at   = toLocalInput(i.starts_at)
+  form.ends_at     = toLocalInput(i.ends_at)
+  form.publish_at  = toLocalInput(i.publish_at)
+
+  const m = i.meta || {}
+  form.meta = {
+    goal_amount:      m.goal_amount      ?? (i as any).goal_amount      ?? null,
+    goal_currency:    m.goal_currency    ?? (i as any).goal_currency    ?? null,
+    raised_amount:    m.raised_amount    ?? (i as any).raised_amount    ?? null,
+    signature_goal:   m.signature_goal   ?? (i as any).signature_goal   ?? null,
+    signatures_count: m.signatures_count ?? (i as any).signatures_count ?? null,
+    needed_slots:     m.needed_slots     ?? (i as any).needed_slots     ?? null,
+    filled_slots:     m.filled_slots     ?? (i as any).filled_slots     ?? null,
+    target_reach:     m.target_reach     ?? (i as any).target_reach     ?? null,
+    current_reach:    m.current_reach    ?? (i as any).current_reach    ?? null,
+  }
+
+  coverId.value = (i as any).cover_id ?? null
+  coverUrl.value = i.cover_url ?? null
+  documents.value = Array.isArray(i.documents) ? [...i.documents] : []
+}
+
+onMounted(() => {
+  if (props.initial) applyInitial(props.initial)
+})
+
+// مهم: اگر parent بعداً initial را آپدیت کرد، فوراً hydrate کن
+watch(
+  () => props.initial,
+  async (v) => {
+    if (v) {
+      applyInitial(v)
+      await nextTick() // برای sync با DOM (اگر label شناور داری)
+    }
+  },
+  { immediate: true } // اولین بار هم اجرا شود
+)
+
+const disabled = computed(() => !form.title.trim())
+
+function submit() {
+  emit("submit", {
+    ...form,
+    cover_id: coverId.value,
+    documents: documents.value
+  })
+}
+
+function onCoverSelected(v: { id: number; url: string | null } | null) { coverId.value = v?.id ?? null; coverUrl.value = v?.url ?? null }
+function onCoverUpdated() {}
+function onCoverCleared() { coverId.value = null; coverUrl.value = null }
+function onDocsChanged(v: Array<{ id:number; url:string|null }>) { documents.value = v }
+function onDocsUpdated() {}
+
+function fieldClass() { return "peer w-full px-4 pt-6 pb-2 border rounded-xl bg-white dark:bg-gray-800/80 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30" }
+function labelClass() { return "absolute left-3 top-2.5 px-1 text-sm text-slate-500 dark:text-slate-400 transition-all pointer-events-none bg-white dark:bg-gray-800/80 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-slate-500/70 peer-placeholder-shown:text-base peer-focus:top-2.5 peer-focus:text-sm" }
+</script>
+
 <template>
   <form
-    class="space-y-4"
+    class="space-y-8"
     @submit.prevent="submit"
   >
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.title.label') }}</label>
+    <!-- Basic Info -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="relative">
         <input
-          v-model="form.title"
-          type="text"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-          :placeholder="t('campaign.form.title.placeholder')"
+          v-model.trim="form.title"
+          :class="fieldClass()"
+          placeholder=" "
+          maxlength="120"
         >
+        <label :class="labelClass()">Title</label>
       </div>
-      <div>
-        <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.goal.label') }}</label>
-        <input
-          v-model="form.goal"
-          type="text"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-          :placeholder="t('campaign.form.goal.placeholder')"
-        >
-      </div>
-    </div>
-
-    <div>
-      <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.description.label') }}</label>
-      <textarea
-        v-model="form.description"
-        rows="4"
-        class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        :placeholder="t('campaign.form.description.placeholder')"
-      />
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.startsAt.label') }}</label>
-        <input
-          v-model="form.starts_at_local"
-          type="datetime-local"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        >
-      </div>
-      <div>
-        <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.endsAt.label') }}</label>
-        <input
-          v-model="form.ends_at_local"
-          type="datetime-local"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        >
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm mb-1 text-slate-700 dark:text-slate-200">{{ t('campaign.form.status.label') }}</label>
+      <div class="relative">
         <select
-          v-model="form.status"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
+          v-model="form.kind"
+          :class="fieldClass()"
         >
-          <option value="draft">
-            {{ t('campaign.status.draft') }}
+          <option value="fundraising">
+            Fundraising
           </option>
-          <option value="running">
-            {{ t('campaign.status.running') }}
+          <option value="petition">
+            Petition
           </option>
-          <option value="paused">
-            {{ t('campaign.status.paused') }}
+          <option value="volunteer">
+            Volunteer
           </option>
-          <option value="ended">
-            {{ t('campaign.status.ended') }}
+          <option value="awareness">
+            Awareness
           </option>
         </select>
+        <label :class="labelClass()">Kind</label>
       </div>
-      <div class="flex items-center gap-3 mt-6 md:mt-0">
-        <input
-          id="donation_enabled"
-          v-model="form.donation_enabled"
-          type="checkbox"
-          class="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
+      <div class="relative">
+        <select
+          v-model="form.visibility"
+          :class="fieldClass()"
         >
-        <label
-          for="donation_enabled"
-          class="text-sm text-slate-700 dark:text-slate-200"
-        >{{ t('campaign.form.donationEnabled.label') }}</label>
+          <option value="public">
+            Public
+          </option>
+          <option value="members">
+            Members
+          </option>
+          <option value="private">
+            Private
+          </option>
+        </select>
+        <label :class="labelClass()">Visibility</label>
       </div>
-    </div>
+      <div class="relative">
+        <select
+          v-model="form.status"
+          :class="fieldClass()"
+        >
+          <option value="draft">
+            Draft
+          </option>
+          <option value="published">
+            Published
+          </option>
+          <option value="paused">
+            Paused
+          </option>
+          <option value="completed">
+            Completed
+          </option>
+          <option value="failed">
+            Failed
+          </option>
+          <option value="archived">
+            Archived
+          </option>
+        </select>
+        <label :class="labelClass()">Status</label>
+      </div>
+    </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Schedule -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="relative">
+        <input
+          v-model="form.starts_at"
+          type="datetime-local"
+          :class="fieldClass()"
+          placeholder=" "
+        >
+        <label :class="labelClass()">Starts at</label>
+      </div>
+      <div class="relative">
+        <input
+          v-model="form.ends_at"
+          type="datetime-local"
+          :class="fieldClass()"
+          placeholder=" "
+        >
+        <label :class="labelClass()">Ends at</label>
+      </div>
+      <div class="relative">
+        <input
+          v-model="form.publish_at"
+          type="datetime-local"
+          :class="fieldClass()"
+          placeholder=" "
+        >
+        <label :class="labelClass()">Publish at</label>
+      </div>
+    </section>
+
+    <!-- Goals (meta) -->
+    <section>
+      <div
+        v-if="form.kind==='fundraising'"
+        class="grid grid-cols-1 md:grid-cols-3 gap-6"
+      >
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.goal_amount"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Goal Amount</label>
+        </div>
+        <div class="relative">
+          <input
+            v-model="form.meta!.goal_currency"
+            type="text"
+            maxlength="3"
+            class="uppercase"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Currency</label>
+        </div>
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.raised_amount"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Raised</label>
+        </div>
+      </div>
+
+      <div
+        v-else-if="form.kind==='petition'"
+        class="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.signature_goal"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Signature goal</label>
+        </div>
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.signatures_count"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Signatures</label>
+        </div>
+      </div>
+
+      <div
+        v-else-if="form.kind==='volunteer'"
+        class="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.needed_slots"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Needed slots</label>
+        </div>
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.filled_slots"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Filled slots</label>
+        </div>
+      </div>
+
+      <div
+        v-else
+        class="grid grid-cols-1 md:grid-cols-2 gap-6"
+      >
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.target_reach"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Target reach</label>
+        </div>
+        <div class="relative">
+          <input
+            v-model.number="form.meta!.current_reach"
+            type="number"
+            :class="fieldClass()"
+            placeholder=" "
+          >
+          <label :class="labelClass()">Current reach</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cover & Documents -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <CampaignCoverUploader
-        :campaign-id="isEdit ? props.initial?.id : undefined"
-        :current-cover-url="initialCoverUrl"
+        :campaign-id="props.initial?.id"
+        :current-cover-id="props.initial?.cover_id ?? null"
+        :current-cover-url="props.initial?.cover_url ?? null"
         @selected="onCoverSelected"
-        @cleared="onCoverCleared"
         @updated="onCoverUpdated"
+        @cleared="onCoverCleared"
       />
-      <CampaignDocumentsUploader
-        :campaign-id="isEdit ? props.initial?.id : undefined"
-        :initial-docs="initialDocs"
+      <CampaignDocsUploader
+        :campaign-id="props.initial?.id"
+        :initial-docs="props.initial?.documents ?? []"
         @changed="onDocsChanged"
         @updated="onDocsUpdated"
       />
-    </div>
+    </section>
 
-    <div class="flex items-center gap-2">
+    <!-- Actions -->
+    <div class="flex items-center gap-3 pt-4">
       <button
         type="submit"
-        :disabled="saving"
-        class="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60"
+        :disabled="disabled"
+        class="rounded-xl px-5 py-2.5 text-sm text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
       >
-        <span>{{ submitText }}</span>
+        Save
       </button>
       <button
         type="button"
-        class="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm border border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"
+        class="rounded-xl px-5 py-2.5 text-sm border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
         @click="$emit('cancel')"
       >
-        <span>{{ t('campaign.content.actions.cancel') }}</span>
+        Cancel
       </button>
     </div>
   </form>
 </template>
-
-<script setup lang="ts">
-import { reactive, computed, watchEffect } from "vue";
-import { useI18n } from "vue-i18n";
-import CampaignCoverUploader from "@/modules/dashboard/pages/campaigns/components/CampaignCoverUploader.vue";
-import CampaignDocumentsUploader from "@/modules/dashboard/pages/campaigns/components/CampaignDocumentsUploader.vue";
-import type { Campaign, CampaignStatus } from "@/modules/dashboard/pages/campaigns/types";
-
-const { t } = useI18n();
-const props = defineProps<{ initial?: Campaign | null; saving?: boolean; mode: "create" | "edit" }>();
-const emit = defineEmits<{ (e:"submit", payload: any): void; (e:"cancel"): void }>();
-
-const isEdit = computed(() => props.mode === "edit");
-
-const form = reactive({
-  title: "",
-  goal: "",
-  description: "",
-  starts_at_local: "",
-  ends_at_local: "",
-  status: "draft" as CampaignStatus,
-  donation_enabled: false
-});
-
-const initialCoverUrl = computed(() => {
-  if (!props.initial) return null;
-  return (props.initial as any).cover_url || (props.initial as any).covers?.[0]?.url || null;
-});
-
-const initialDocs = computed(() => {
-  if (!props.initial || !(props.initial as any).documents) return [];
-  return (props.initial as any).documents.map((d: any) => ({ id: d.id, url: d.url ?? null }));
-});
-
-let pendingCoverId: number | null = null;
-let pendingDocs: Array<{ id:number; url:string|null }> = [];
-
-function onCoverSelected(v: { id:number; url:string|null }) {
-  pendingCoverId = v.id;
-}
-function onCoverCleared() {
-  pendingCoverId = null;
-}
-function onCoverUpdated() {}
-
-function onDocsChanged(v: Array<{ id:number; url:string|null }>) {
-  pendingDocs = v.slice();
-}
-function onDocsUpdated() {}
-
-watchEffect(() => {
-  const c = props.initial;
-  if (!c) return;
-  form.title = c.title || "";
-  form.goal = (c as any).goal || "";
-  form.description = c.description || "";
-  form.status = c.status as CampaignStatus;
-  form.donation_enabled = !!(c as any).donation_enabled;
-  form.starts_at_local = c.starts_at ? toLocalInput(c.starts_at as any) : "";
-  form.ends_at_local = c.ends_at ? toLocalInput(c.ends_at as any) : "";
-});
-
-const submitText = computed(() => props.mode === "create" ? t("campaign.create.submit") : t("campaign.actions.save"));
-
-function toLocalInput(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function submit() {
-  const payload: any = {
-    title: form.title.trim(),
-    goal: form.goal || null,
-    description: form.description || null,
-    starts_at: form.starts_at_local ? new Date(form.starts_at_local).toISOString() : null,
-    ends_at: form.ends_at_local ? new Date(form.ends_at_local).toISOString() : null,
-    status: form.status,
-    donation_enabled: !!form.donation_enabled
-  };
-  if (!isEdit.value) {
-    if (pendingCoverId && pendingCoverId > 0) payload.cover_id = pendingCoverId;
-    if (pendingDocs.length) payload.documents = pendingDocs.map((d, i) => ({ id: d.id, order: i }));
-  }
-  emit("submit", payload);
-}
-</script>

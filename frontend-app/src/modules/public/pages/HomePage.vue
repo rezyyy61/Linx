@@ -29,7 +29,7 @@ const loaders: Record<TabKey, () => Promise<any>> = {
   parties: () => import("@/modules/public/tabs/parties/PartiesPage.vue"),
   books: () => import("@/modules/public/tabs/books/BookPage.vue"),
   media: () => import("@/modules/public/tabs/media/MediaPage.vue"),
-  campaigns: () => import("@/modules/public/tabs/campaigns/CampaignsPage.vue"),
+  campaigns: () => import("@/modules/public/tabs/campaigns/pages/CampaignsPage.vue"),
   profiles: () => import("@/modules/public/tabs/profiles/ProfilePage.vue"),
   events: () => import("@/modules/public/tabs/events/pages/EventPage.vue"),
   announcements: () =>

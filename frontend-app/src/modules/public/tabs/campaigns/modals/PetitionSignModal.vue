@@ -1,0 +1,56 @@
+<script setup lang="ts">
+import { ref, watch } from "vue"
+const props = defineProps<{ open:boolean }>()
+defineEmits<{(e:"close"):void,(e:"submit",v:{name:string;email:string}):void}>()
+const name = ref("")
+const email = ref("")
+watch(() => props.open, v => { if (!v) { name.value=""; email.value="" } })
+</script>
+
+<template>
+  <div
+    v-if="open"
+    class="fixed inset-0 z-[70]"
+  >
+    <div
+      class="absolute inset-0 bg-black/50"
+      @click="$emit('close')"
+    />
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 p-5 ring-1 ring-black/5 dark:ring-white/10">
+        <h3 class="text-lg font-semibold">
+          Sign petition
+        </h3>
+        <div class="mt-4 space-y-3">
+          <input
+            v-model="name"
+            type="text"
+            placeholder="Name"
+            class="w-full rounded-xl border px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+          <input
+            v-model="email"
+            type="email"
+            placeholder="Email"
+            class="w-full rounded-xl border px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+        </div>
+        <div class="mt-5 flex items-center justify-end gap-2">
+          <button
+            class="rounded-xl border px-3 py-2 text-sm dark:border-neutral-700"
+            @click="$emit('close')"
+          >
+            Cancel
+          </button>
+          <button
+            class="rounded-xl bg-emerald-600 text-white px-3 py-2 text-sm disabled:opacity-50"
+            :disabled="!name || !email"
+            @click="$emit('submit',{name,email})"
+          >
+            Sign
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

@@ -169,6 +169,17 @@
     @close="isRepostOpen = false"
     @done="onRepostDone"
   />
+
+  <RepostModalCampaign
+    v-else-if="isRepostOpen && isCampaign"
+    :key="`repost-camp-${shareableId}-${isRepostOpen?1:0}`"
+    :open="true"
+    :campaign-id="shareableId"
+    :campaign-slug="props.campaign?.slug"
+    :initial-campaign="props.campaign"
+    @close="isRepostOpen = false"
+    @done="onRepostDone"
+  />
 </template>
 
 <script setup lang="ts">
@@ -179,6 +190,7 @@ import { useShare } from '../composables/useShare'
 import RepostModalPost from './RepostModal.vue'
 import RepostModalEvent from "@/modules/share/components/event/RepostModalEvent.vue";
 import RepostModalAnnouncement from "@/modules/public/tabs/announcements/components/RepostModalAnnouncement.vue";
+import RepostModalCampaign from "@/modules/public/tabs/campaigns/components/RepostModalCampaign.vue";
 
 interface Props {
   open: boolean
@@ -190,6 +202,7 @@ interface Props {
   post?: any
   event?: any
   announcement?: any
+  campaign?: any
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: 'close'): void; (e: 'shared'): void; (e: 'done', r: { id: number; url: string }): void }>()
@@ -198,6 +211,9 @@ const isPost = computed(() => props.shareableAlias === 'post' || (props.shareabl
 const isEvent = computed(() => props.shareableAlias === 'event' || (props.shareableType || '').includes('Event'))
 const isAnnouncement = computed(() =>
   props.shareableAlias === 'announcement' || (props.shareableType || '').includes('Announcement')
+)
+const isCampaign = computed(() =>
+  props.shareableAlias === 'campaign' || (props.shareableType || '').includes('Campaign')
 )
 
 const copied = ref(false)
