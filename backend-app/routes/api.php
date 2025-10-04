@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\Announcement\AnnouncementController;
 use App\Http\Controllers\Api\Campaign\CampaignController;
-use App\Http\Controllers\Api\Campaign\CampaignDonationController;
 use App\Http\Controllers\Api\Event\EventController;
 use App\Http\Controllers\Api\Event\EventJoinController;
 use App\Http\Controllers\Api\Follow\FollowController;
@@ -119,15 +118,6 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
     Route::post('read-all', [NotificationController::class, 'readAll']);
     Route::delete('{id}', [NotificationController::class, 'destroy'])->whereNumber('id');
 });
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::apiResource('campaigns', CampaignController::class);
-
-    Route::get('campaigns/{campaign}/donation-intents', [CampaignDonationController::class, 'index']);
-    Route::post('campaigns/{campaign}/donation-intents/{intent}/mark-paid', [CampaignDonationController::class, 'markPaid']);
-    Route::post('campaigns/{campaign}/donation-intents/{intent}/schedule-email', [CampaignDonationController::class, 'scheduleEmail']);
-});
-
 Route::middleware('auth:sanctum')->apiResource('announcements', AnnouncementController::class);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -169,4 +159,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/share', [ShareController::class, 'store'])->name('share.store');
+});
+
+Route::middleware('auth:sanctum')->apiResource('campaigns', CampaignController::class)->names('campaigns');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('campaigns/{campaign}/publish', [CampaignController::class, 'publish'])->name('campaigns.publish');
 });

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Comment\CommentController;
 use App\Http\Controllers\Api\Comment\CommentLikeController;
 use App\Http\Controllers\Api\Public\Announcement\PublicAnnouncementController;
+use App\Http\Controllers\Api\Public\Campaign\PublicCampaignController;
 use App\Http\Controllers\Api\Public\Event\PublicEventController;
 use App\Http\Controllers\Api\Public\Post\PostActionController;
 use App\Http\Controllers\Api\Public\Post\PublicPostController;
@@ -24,6 +25,9 @@ Route::prefix('v1')->group(function () {
 
     Route::get('announcements', [PublicAnnouncementController::class, 'index']);
     Route::get('announcements/{slug}', [PublicAnnouncementController::class, 'show']);
+
+    Route::get('campaigns', [PublicCampaignController::class, 'index']);
+    Route::get('campaigns/{slug}', [PublicCampaignController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/posts/{post}/like', [PostActionController::class, 'toggleLike']);

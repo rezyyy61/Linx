@@ -31,7 +31,7 @@
         </div>
       </div>
       <RouterLink
-        :to="{ name:'audience.followers' }"
+        :to="{ name:'dashboard.audience.followers' }"
         class="bg-white border rounded-xl p-4 block hover:bg-gray-50 transition"
       >
         <div class="text-sm text-gray-500">

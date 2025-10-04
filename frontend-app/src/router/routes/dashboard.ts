@@ -15,17 +15,17 @@ const EventsListPage = () => import('@/modules/dashboard/pages/events/EventsList
 const EventsCreatePage = () => import('@/modules/dashboard/pages/events/EventsCreatePage.vue')
 const EventsEditPage = () => import('@/modules/dashboard/pages/events/EventsEditPage.vue')
 
-const CampaignsListPage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsListPage.vue')
-const CampaignsCreatePage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsCreatePage.vue')
-const CampaignsEditPage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsEditPage.vue')
+const CampaignsListPage   = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignsListPage.vue')
+const CampaignsCreatePage = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignCreatePage.vue')
+const CampaignsEditPage   = () => import('@/modules/dashboard/pages/campaigns/pages/CampaignEditPage.vue')
 
-const AnnouncementsListPage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsListPage.vue')
+const AnnouncementsListPage   = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsListPage.vue')
 const AnnouncementsCreatePage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsCreatePage.vue')
-const AnnouncementsEditPage = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsEditPage.vue')
+const AnnouncementsEditPage   = () => import('@/modules/dashboard/pages/announcements/pages/AnnouncementsEditPage.vue')
 
 const AudienceLayout = () => import('@/modules/dashboard/pages/audience/AudienceLayout.vue')
 const FollowersListPage = () => import('@/modules/dashboard/pages/audience/pages/friends/FriendsListPage.vue')
-const MembersListPage = () => import('@/modules/dashboard/pages/audience/pages/members/MembersListPage.vue')
+const MembersListPage   = () => import('@/modules/dashboard/pages/audience/pages/members/MembersListPage.vue')
 
 const ProfileEditPage = () => import('@/modules/dashboard/pages/profile/ProfileEditPage.vue')
 
@@ -41,37 +41,37 @@ export default {
       component: PostsLayout,
       meta: { permission: 'posts.view' },
       children: [
-        { path: '', name: 'posts.list', component: PostsListPage, meta: { permission: 'posts.view' } },
-        { path: 'create', name: 'posts.create', component: PostsCreatePage, meta: { permission: 'posts.create' } },
-        { path: ':id/edit', name: 'posts.edit', component: PostsEditPage, meta: { permission: 'posts.edit' } },
-        { path: ':id', name: 'posts.detail', component: PostsDetailPage, meta: { permission: 'posts.view' } }
+        { path: '',        name: 'dashboard.posts.list',   component: PostsListPage,   meta: { permission: 'posts.view' } },
+        { path: 'create',  name: 'dashboard.posts.create', component: PostsCreatePage,  meta: { permission: 'posts.create' } },
+        { path: ':id/edit',name: 'dashboard.posts.edit',   component: PostsEditPage,   meta: { permission: 'posts.edit' } },
+        { path: ':id',     name: 'dashboard.posts.detail', component: PostsDetailPage, meta: { permission: 'posts.view' } },
       ]
     },
 
-    { path: 'events', name: 'events.list', component: EventsListPage, meta: { permission: 'events.view' } },
-    { path: 'events/create', name: 'events.create', component: EventsCreatePage, meta: { permission: 'events.create' } },
-    { path: 'events/:id/edit', name: 'events.edit', component: EventsEditPage, meta: { permission: 'events.edit' } },
+    { path: 'events',           name: 'dashboard.events.list',   component: EventsListPage,   meta: { permission: 'events.view' } },
+    { path: 'events/create',    name: 'dashboard.events.create', component: EventsCreatePage, meta: { permission: 'events.create' } },
+    { path: 'events/:id/edit',  name: 'dashboard.events.edit',   component: EventsEditPage,   meta: { permission: 'events.edit' } },
 
-    { path: 'campaigns', name: 'campaigns.list', component: CampaignsListPage, meta: { permission: 'campaigns.view' } },
-    { path: 'campaigns/create', name: 'campaigns.create', component: CampaignsCreatePage, meta: { permission: 'campaigns.create' } },
-    { path: 'campaigns/:id/edit', name: 'campaigns.edit', component: CampaignsEditPage, meta: { permission: 'campaigns.edit' } },
+    { path: 'campaigns',           name: 'dashboard.campaigns.list',   component: CampaignsListPage,   meta: { permission: 'campaigns.view' } },
+    { path: 'campaigns/create',    name: 'dashboard.campaigns.create', component: CampaignsCreatePage, meta: { permission: 'campaigns.create' } },
+    { path: 'campaigns/:id/edit',  name: 'dashboard.campaigns.edit',   component: CampaignsEditPage,   meta: { permission: 'campaigns.edit' } },
 
-    { path: 'announcements', name: 'announcements.list', component: AnnouncementsListPage, meta: { permission: 'announcements.view' } },
-    { path: 'announcements/create', name: 'announcements.create', component: AnnouncementsCreatePage, meta: { permission: 'announcements.create' } },
-    { path: 'announcements/:id/edit', name: 'announcements.edit', component: AnnouncementsEditPage, meta: { permission: 'announcements.edit' } },
+    { path: 'announcements',           name: 'dashboard.announcements.list',   component: AnnouncementsListPage,   meta: { permission: 'announcements.view' } },
+    { path: 'announcements/create',    name: 'dashboard.announcements.create', component: AnnouncementsCreatePage, meta: { permission: 'announcements.create' } },
+    { path: 'announcements/:id/edit',  name: 'dashboard.announcements.edit',   component: AnnouncementsEditPage,   meta: { permission: 'announcements.edit' } },
 
     {
       path: 'audience',
       component: AudienceLayout,
       meta: { permission: 'audience.view' },
       children: [
-        { path: '', redirect: { name: 'audience.followers' } },
-        { path: 'followers', name: 'audience.followers', component: FollowersListPage, meta: { permission: 'audience.view' } },
-        { path: 'members', name: 'audience.members', component: MembersListPage, meta: { permission: 'audience.view' } },
-        { path: 'members', name: 'audience.MyMemberships', component: MyMembershipsListPage, meta: { permission: 'audience.view' } }
+        { path: '',           redirect: { name: 'dashboard.audience.followers' } },
+        { path: 'followers',  name: 'dashboard.audience.followers',   component: FollowersListPage,    meta: { permission: 'audience.view' } },
+        { path: 'members',    name: 'dashboard.audience.members',     component: MembersListPage,      meta: { permission: 'audience.view' } },
+        { path: 'my-memberships', name: 'dashboard.audience.myMemberships', component: MyMembershipsListPage, meta: { permission: 'audience.view' } },
       ]
     },
 
-    { path: 'profile', name: 'profile.edit', component: ProfileEditPage }
+    { path: 'profile', name: 'dashboard.profile.edit', component: ProfileEditPage }
   ]
 } as RouteRecordRaw

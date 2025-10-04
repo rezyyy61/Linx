@@ -1,348 +1,254 @@
+<!-- /src/modules/dashboard/pages/campaigns/pages/CampaignsListPage.vue -->
+<script setup lang="ts">
+import { ref, watch } from "vue"
+import { Icon } from "@iconify/vue"
+import { useRouter } from "vue-router"
+import FiltersBar from "../components/FiltersBar.vue"
+import { useCampaigns } from "../composables/useCampaigns"
+import type { CampaignQuery, CampaignRow } from "../api/types"
+import { deleteCampaign } from "../api/campaigns"
+import { useToast } from "@/modules/toast/useToast"
+import ShareModal from "@/modules/share/components/ShareModal.vue"
+
+const router = useRouter()
+const toast = useToast()
+
+const { items, meta, q, loading, fetchList, setPage, reset } = useCampaigns()
+
+function debounce<T extends (...args: any[]) => any>(fn: T, ms = 300) {
+  let t: number | null = null
+  return (...args: Parameters<T>) => {
+    if (t) window.clearTimeout(t)
+    t = window.setTimeout(() => fn(...args), ms)
+  }
+}
+const triggerFetch = debounce(() => fetchList(), 300)
+
+watch(q, () => { triggerFetch() }, { deep: true, immediate: true })
+
+function sanitizeQuery(v: CampaignQuery): CampaignQuery {
+  const next: CampaignQuery = { ...v }
+  if (!next.q) delete next.q
+  if (!next.kind) delete next.kind
+  if (!next.visibility) delete next.visibility
+  if (!next.status) delete next.status
+  if (!next.order_by) delete next.order_by
+  if (!next.order_dir) delete next.order_dir
+  if (!next.page) next.page = 1
+  return next
+}
+function onUpdateFilters(v: CampaignQuery) {
+  q.value = sanitizeQuery(v)
+}
+
+function toggleOrder() {
+  q.value = sanitizeQuery({ ...q.value, order_dir: q.value.order_dir === "asc" ? "desc" : "asc", page: 1 })
+}
+
+const deletingId = ref<number | null>(null)
+async function removeConfirmed(row: CampaignRow) {
+  deletingId.value = row.id
+  try {
+    await deleteCampaign(row.id)
+    toast.success("Campaign deleted")
+    if (!items.value.length && meta.value.page > 1) {
+      setPage(meta.value.page - 1)
+    } else {
+      fetchList()
+    }
+  } catch {
+    toast.error("Failed to delete campaign")
+  } finally {
+    deletingId.value = null
+  }
+}
+function remove(row: CampaignRow) {
+  toast.confirm(`Delete "${row.title}"?`, {
+    confirmLabel: "Remove",
+    cancelLabel: "Cancel",
+    destructive: true,
+    onConfirm: () => removeConfirmed(row),
+  })
+}
+
+const shareOpenId = ref<number | null>(null)
+const shareOpenItem = ref<CampaignRow | null>(null)
+const shareTitle = ref<string>("")
+const shareText = ref<string>("")
+function openShare(row: CampaignRow) {
+  shareOpenId.value = row.id
+  shareOpenItem.value = row
+  shareTitle.value = row.title || ""
+  shareText.value = row.description || ""
+}
+function closeShare() {
+  shareOpenId.value = null
+  shareOpenItem.value = null
+  shareTitle.value = ""
+  shareText.value = ""
+}
+</script>
+
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+  <section class="max-w-7xl mx-auto px-4 py-6 space-y-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
-        {{ t("campaign.list.title") }}
+      <h1 class="text-2xl font-semibold text-red-500">
+        Campaigns
       </h1>
-      <router-link
-        :to="{ name:'campaigns.create' }"
-        class="rounded-xl px-3 py-2 text-sm bg-primary-600 text-white hover:bg-primary-700"
+      <button
+        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+        @click="router.push({name:'dashboard.campaigns.create'})"
       >
-        {{ t("campaign.list.create") }}
-      </router-link>
+        <Icon
+          icon="mdi:plus-circle"
+          class="w-5 h-5"
+        />
+        <span>Create</span>
+      </button>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <div class="flex-1 min-w-[240px]">
-        <input
-          v-model="search"
-          type="text"
-          :placeholder="t('campaign.list.searchPlaceholder')"
-          class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        >
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+      <FiltersBar
+        :model-value="q"
+        :loading="loading"
+        @update:model-value="onUpdateFilters"
+        @toggle-order="toggleOrder"
+        @reset="reset"
+      />
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+      <div
+        v-if="loading"
+        class="p-4 space-y-2"
+      >
+        <div class="h-10 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+        <div class="h-10 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
       </div>
 
-      <button
-        type="button"
-        :class="onlyRunning ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'"
-        class="px-3 py-1.5 rounded-lg text-xs"
-        @click="toggleOnlyRunning"
+      <table
+        v-else
+        class="min-w-full text-sm"
       >
-        {{ t('campaign.list.onlyRunning') }}
-      </button>
-
-      <button
-        v-if="hasActiveFilters"
-        type="button"
-        class="px-3 py-1.5 rounded-lg text-xs bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-        @click="clearFilters"
-      >
-        {{ t('campaign.list.clear') }}
-      </button>
-
-      <select
-        v-model="orderBy"
-        class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        style="min-width: 120px"
-      >
-        <option value="starts_at">
-          {{ t('campaign.list.sort.starts') }}
-        </option>
-        <option value="created_at">
-          {{ t('campaign.list.sort.created') }}
-        </option>
-        <option value="updated_at">
-          {{ t('campaign.list.sort.updated') }}
-        </option>
-      </select>
-
-      <select
-        v-model="orderDir"
-        class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        style="min-width: 100px"
-      >
-        <option value="desc">
-          ▼ DESC
-        </option>
-        <option value="asc">
-          ▲ ASC
-        </option>
-      </select>
-
-      <select
-        v-model.number="perPage"
-        class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700"
-        style="min-width: 80px"
-      >
-        <option :value="10">
-          10
-        </option>
-        <option :value="15">
-          15
-        </option>
-        <option :value="25">
-          25
-        </option>
-        <option :value="50">
-          50
-        </option>
-      </select>
-    </div>
-
-    <div
-      v-if="loading"
-      class="text-slate-500 dark:text-slate-400"
-    >
-      {{ t('campaign.loading') }}
-    </div>
-
-    <div
-      v-else-if="items.length === 0"
-      class="rounded-2xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700"
-    >
-      <p class="text-slate-700 dark:text-slate-200 font-medium">
-        {{ t('campaign.empty.noCampaigns') }}
-      </p>
-      <router-link
-        :to="{ name:'campaigns.create' }"
-        class="mt-3 inline-block rounded-xl px-3 py-2 text-sm bg-primary-600 text-white hover:bg-primary-700"
-      >
-        {{ t('campaign.empty.createFirst') }}
-      </router-link>
-    </div>
-
-    <div
-      v-else
-      class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700"
-    >
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-        <thead class="bg-slate-50 dark:bg-slate-800/50">
+        <thead class="bg-gray-50 dark:bg-gray-800/60">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.cover') }}
+            <th class="px-4 py-3 text-left font-semibold">
+              Title
             </th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.title') }}
+            <th class="px-4 py-3 text-left font-semibold">
+              Kind
             </th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.start') }}
+            <th class="px-4 py-3 text-left font-semibold">
+              Status
             </th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.status') }}
+            <th class="px-4 py-3 text-left font-semibold">
+              Visibility
             </th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.donation') }}
-            </th>
-            <th class="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-              {{ t('campaign.table.actions') }}
+            <th class="px-4 py-3 text-right font-semibold">
+              Actions
             </th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-700 bg-white dark:bg-slate-900">
+        <tbody>
           <tr
-            v-for="c in items"
-            :key="c.id"
+            v-for="r in items"
+            :key="r.id"
+            class="border-t border-gray-100 dark:border-gray-800"
           >
             <td class="px-4 py-3">
-              <div class="h-9 w-9 rounded bg-slate-200 dark:bg-slate-800 overflow-hidden flex items-center justify-center">
-                <img
-                  v-if="coverThumb(c)"
-                  :src="coverThumb(c)"
-                  alt=""
-                  class="h-full w-full object-cover"
-                >
-                <Icon
-                  v-else
-                  icon="mdi:image-off"
-                  class="w-5 h-5 text-slate-500"
-                />
-              </div>
+              {{ r.title }}
             </td>
-            <td class="px-4 py-3 text-sm text-slate-900 dark:text-slate-100">
-              <div class="font-medium truncate max-w-[280px]">
-                {{ c.title }}
-              </div>
-              <div class="text-xs text-slate-500 dark:text-slate-400">
-                @{{ c.slug || '—' }}
-              </div>
+            <td class="px-4 py-3 capitalize">
+              {{ r.kind }}
             </td>
-            <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-              {{ fmtDateTime(c.starts_at) || '—' }}
+            <td class="px-4 py-3 capitalize">
+              {{ r.status }}
             </td>
-            <td class="px-4 py-3 text-sm">
-              <span
-                class="px-2 py-0.5 text-xs rounded-full border"
-                :class="statusClass(c.status)"
-              >
-                {{ t('campaign.status.' + c.status) }}
-              </span>
+            <td class="px-4 py-3 capitalize">
+              {{ r.visibility }}
             </td>
-            <td class="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
-              {{ c.donation_enabled ? t('campaign.table.enabled') : t('campaign.table.disabled') }}
-            </td>
-            <td class="px-4 py-3 text-sm">
-              <div class="flex justify-end gap-2">
-                <router-link
-                  :to="{ name:'campaigns.edit', params:{ id:c.id } }"
-                  class="rounded-xl px-2.5 py-1.5 text-xs border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700"
-                >
-                  {{ t('campaign.actions.view') }}
-                </router-link>
-                <router-link
-                  :to="{ name:'campaigns.edit', params:{ id:c.id } }"
-                  class="rounded-xl px-2.5 py-1.5 text-xs border border-slate-200 bg-white dark:bg-slate-900 dark:border-slate-700"
-                >
-                  {{ t('campaign.actions.edit') }}
-                </router-link>
+            <td class="px-4 py-3 text-right">
+              <div class="inline-flex items-center gap-2">
                 <button
-                  class="rounded-xl px-2.5 py-1.5 text-xs bg-red-600 text-white hover:bg-red-700"
-                  @click="destroy(c.id)"
+                  class="inline-flex items-center justify-center rounded-lg border px-2.5 py-1.5 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  @click="openShare(r)"
                 >
-                  {{ t('campaign.actions.delete') }}
+                  <Icon
+                    icon="mdi:share-variant"
+                    class="w-4 h-4"
+                  />
+                </button>
+                <button
+                  class="rounded-lg border px-2.5 py-1.5 text-xs dark:border-gray-700"
+                  @click="router.push({name:'dashboard.campaigns.edit', params:{id:r.id}})"
+                >
+                  Edit
+                </button>
+                <button
+                  class="rounded-lg border px-2.5 py-1.5 text-xs text-red-600 border-red-300 dark:text-red-400 dark:border-red-800/60 disabled:opacity-60"
+                  :disabled="deletingId === r.id"
+                  @click="remove(r)"
+                >
+                  <span v-if="deletingId === r.id">Deleting…</span>
+                  <span v-else>Delete</span>
                 </button>
               </div>
+            </td>
+          </tr>
+          <tr v-if="!items.length">
+            <td
+              colspan="5"
+              class="px-4 py-10 text-center text-gray-500"
+            >
+              No results
             </td>
           </tr>
         </tbody>
       </table>
 
-      <div class="flex items-center justify-between px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
-        <div>
-          {{ t('campaign.list.pageInfo', { page: meta.current_page, last: lastPage, total: meta.total }) }}
+      <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+        <div class="text-xs text-gray-600 dark:text-gray-400">
+          Page {{ meta.page }} of {{ meta.last_page }} • Total {{ meta.total }}
         </div>
         <div class="flex items-center gap-2">
           <button
-            class="rounded-lg border px-2.5 py-1 dark:border-slate-700 disabled:opacity-50"
-            :disabled="meta.current_page <= 1"
-            @click="goPrev"
+            class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm dark:border-gray-700 disabled:opacity-50"
+            :disabled="meta.page<=1"
+            @click="setPage(meta.page-1)"
           >
-            {{ t('common.prev') }}
+            <Icon
+              icon="mdi:chevron-left"
+              class="w-5 h-5"
+            />
+            <span>Prev</span>
           </button>
           <button
-            class="rounded-lg border px-2.5 py-1 dark:border-slate-700 disabled:opacity-50"
-            :disabled="meta.current_page >= lastPage"
-            @click="goNext"
+            class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm dark:border-gray-700 disabled:opacity-50"
+            :disabled="meta.page>=meta.last_page"
+            @click="setPage(meta.page+1)"
           >
-            {{ t('common.next') }}
+            <span>Next</span>
+            <Icon
+              icon="mdi:chevron-right"
+              class="w-5 h-5"
+            />
           </button>
         </div>
       </div>
     </div>
-  </div>
+
+    <ShareModal
+      v-if="shareOpenId"
+      :key="shareOpenId"
+      :open="true"
+      shareable-type="App\\Models\\Campaign\\Campaign"
+      shareable-alias="campaign"
+      :shareable-id="shareOpenId"
+      :campaign="shareOpenItem"
+      :title="shareTitle"
+      :text="shareText"
+      @close="closeShare"
+      @shared="closeShare"
+    />
+  </section>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, watch, computed } from "vue";
-import { useI18n } from "vue-i18n";
-import { Icon } from "@iconify/vue";
-import type { Campaign } from "@/modules/dashboard/pages/campaigns/types";
-import { listCampaigns, deleteCampaign } from "@/modules/dashboard/pages/campaigns/api";
-
-const { t } = useI18n();
-
-const items = ref<Campaign[]>([]);
-const loading = ref(false);
-
-const search = ref("");
-const onlyRunning = ref(false);
-const orderBy = ref<"starts_at" | "created_at" | "updated_at">("starts_at");
-const orderDir = ref<"asc" | "desc">("desc");
-const perPage = ref(15);
-const page = ref(1);
-
-const meta = ref({ current_page: 1, per_page: 15, total: 0, last_page: 1 });
-const lastPage = computed(() => meta.value.last_page || Math.ceil((meta.value.total || 0) / (meta.value.per_page || perPage.value)) || 1);
-const hasActiveFilters = computed(() => !!search.value.trim() || onlyRunning.value || orderBy.value !== "starts_at" || orderDir.value !== "desc" || perPage.value !== 15);
-
-let searchDebounce: number | undefined;
-
-async function fetchList() {
-  loading.value = true;
-  try {
-    await listCampaigns(page.value);
-    const { data } = await (await import("@/lib/http")).api.get("/campaigns", {
-      params: {
-        page: page.value,
-        per_page: perPage.value,
-        q: (search.value.trim() || undefined),
-        status: (onlyRunning.value ? "running" : undefined),
-        order_by: orderBy.value,
-        order_dir: orderDir.value
-      }
-    });
-    items.value = data.data as Campaign[];
-    meta.value = data.meta || { current_page: 1, per_page: perPage.value, total: items.value.length, last_page: 1 };
-  } finally {
-    loading.value = false;
-  }
-}
-
-function coverThumb(c: Campaign): string | undefined {
-  const url = (c as any).cover_url ?? (c as any).covers?.[0]?.url;
-  return (typeof url === "string" && url.length) ? url : undefined;
-}
-
-function fmtDateTime(iso: string | null): string | undefined {
-  if (!iso) return undefined;
-  try {
-    const d = new Date(iso);
-    return d.toLocaleString();
-  } catch {
-    return undefined;
-  }
-}
-
-function statusClass(s: string) {
-  const base = "text-xs";
-  if (s === "running") return base + " bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800";
-  if (s === "paused") return base + " bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800";
-  if (s === "ended") return base + " bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
-  return base + " bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800";
-}
-
-function toggleOnlyRunning() {
-  onlyRunning.value = !onlyRunning.value;
-  page.value = 1;
-  fetchList();
-}
-
-function clearFilters() {
-  search.value = "";
-  onlyRunning.value = false;
-  orderBy.value = "starts_at";
-  orderDir.value = "desc";
-  perPage.value = 15;
-  page.value = 1;
-  fetchList();
-}
-
-async function destroy(id: number) {
-  if (!confirm(t("campaign.confirm.delete"))) return;
-  await deleteCampaign(id);
-  if (items.value.length === 1 && page.value > 1) page.value -= 1;
-  await fetchList();
-}
-
-function goPrev() {
-  if (page.value <= 1) return;
-  page.value -= 1;
-  fetchList();
-}
-function goNext() {
-  if (page.value >= lastPage.value) return;
-  page.value += 1;
-  fetchList();
-}
-
-watch(perPage, () => { page.value = 1; fetchList(); });
-watch([orderBy, orderDir], () => { page.value = 1; fetchList(); });
-watch(search, () => {
-  window.clearTimeout(searchDebounce);
-  searchDebounce = window.setTimeout(() => {
-    page.value = 1;
-    fetchList();
-  }, 400);
-});
-
-onMounted(fetchList);
-</script>
