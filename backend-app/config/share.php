@@ -24,5 +24,6 @@ return [
         'event' => \App\Models\Event\Event::class,
         'announcement' => \App\Models\Announcement\Announcement::class,
         'campaign' => \App\Models\Campaign\Campaign::class,
+        'publication' => \App\Models\Publication\Publication::class,
     ],
 ];

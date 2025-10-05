@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { Icon } from "@iconify/vue";
 import { createAnnouncement, updateAnnouncement } from "../api";
 import type { Announcement } from "../types";
 import RichTextEditor from "@/modules/dashboard/pages/posts/components/text/RichTextEditor.vue";
@@ -30,7 +31,6 @@ const bodyModel = computed<string | undefined>({
   set: (v) => { form.body = v ?? null; }
 });
 
-
 const form = reactive({
   title: "",
   body: "" as string | null,
@@ -39,6 +39,97 @@ const form = reactive({
   publish_at_local: undefined as string | undefined,
 });
 
+// --- Pretty Published control (NOW / SCHEDULE / DRAFT)
+type PublishMode = "now" | "schedule" | "draft";
+const publishMode = ref<PublishMode>("now");
+
+function toUtcIso(local?: string | null) {
+  if (!local) return null;
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return null;
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+}
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+function nowPlus(minutes = 30) {
+  const d = new Date(Date.now() + minutes * 60000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const mi = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function computeInitialPublishMode() {
+  const local = form.publish_at_local;
+  const isPublic = form.visibility === "public";
+  if (!isPublic) return "draft";
+  if (local) {
+    const dt = new Date(local);
+    if (!Number.isNaN(dt.getTime()) && dt.getTime() > Date.now()) return "schedule";
+  }
+  return "now";
+}
+
+watch(publishMode, (m) => {
+  if (m === "now") {
+    form.visibility = "public";
+    form.publish_at_local = undefined;
+  } else if (m === "schedule") {
+    form.visibility = "public";
+    if (!form.publish_at_local) form.publish_at_local = nowPlus(30);
+  } else {
+    form.visibility = "private";
+    // نگه‌داشتن زمان schedul شده ایرادی ندارد؛ انتشار نهایی به visibility وابسته است.
+  }
+});
+
+watch(
+  () => [form.visibility, form.publish_at_local] as const,
+  ([vis, when]) => {
+    // اگر کاربر visibility یا datetime را دستی تغییر داد، Mode را sync کن
+    if (vis !== "public") {
+      publishMode.value = "draft";
+      return;
+    }
+    if (when) {
+      const dt = new Date(when);
+      publishMode.value = (!Number.isNaN(dt.getTime()) && dt.getTime() > Date.now()) ? "schedule" : "now";
+    } else {
+      publishMode.value = "now";
+    }
+  },
+  { immediate: false }
+);
+
+const publishStatus = computed<"published" | "scheduled" | "draft">(() => {
+  if (publishMode.value === "draft") return "draft";
+  if (publishMode.value === "schedule") return "scheduled";
+  return "published";
+});
+const publishBadgeText = computed(() => {
+  if (publishStatus.value === "draft") return t("announcement.status.draft") || "Draft";
+  if (publishStatus.value === "scheduled") return t("announcement.status.scheduled") || "Scheduled";
+  return t("announcement.status.published") || "Published";
+});
+const publishBadgeClass = computed(() => {
+  if (publishStatus.value === "draft") return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+  if (publishStatus.value === "scheduled") return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40";
+  return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40";
+});
+
+// --- media state
 const coverMediaId = ref<number | null>(null);
 const coverMediaUrl = ref<string | null>(null);
 const coverCleared = ref(false);
@@ -54,10 +145,11 @@ function hydrateFromInitial(a?: Partial<Announcement> | null) {
   coverMediaId.value = (a as any).cover_id ?? a?.covers?.[0]?.id ?? null;
   coverMediaUrl.value = (a as any).cover_url ?? null;
   docsLocal.value = Array.isArray(a?.documents) ? a!.documents!.map(d => ({ id: d.id, url: d.url ?? null })) : [];
+  publishMode.value = computeInitialPublishMode();
 }
-
 onMounted(() => hydrateFromInitial(props.initial || null));
 
+// --- validation
 const touched = reactive<{ [k: string]: boolean }>({});
 const errors = reactive<Record<string, string | undefined>>({ title: undefined, body: undefined, visibility: undefined });
 
@@ -90,6 +182,7 @@ const bodyPlainText = computed(() => {
 });
 const bodyPlainLength = computed(() => bodyPlainText.value.length);
 
+// legacy visibility badge (می‌ماند)
 const visibilityLabel = computed(() => {
   if (form.visibility === "members") return t("announcement.visibility.members");
   if (form.visibility === "supporters") return t("announcement.visibility.supporters");
@@ -103,29 +196,7 @@ const badgeClass = computed(() => {
   return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40";
 });
 
-function toUtcIso(local?: string | null) {
-  if (!local) return null;
-  const d = new Date(local);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
-}
-function toLocalInput(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function handleTitleInput() {
-  if (!touched.title) return;
-  validate();
-}
-
+// media events
 function onCoverSelected(v: { id: number; url: string | null } | null) {
   if (v) {
     coverMediaId.value = v.id;
@@ -142,13 +213,8 @@ function onCoverCleared() {
   coverMediaUrl.value = null;
   coverCleared.value = isEdit.value;
 }
-function onCoverUpdated() {
-  coverCleared.value = false;
-}
-
-function onDocsChanged(v: Array<{ id: number; url: string | null }>) {
-  docsLocal.value = Array.isArray(v) ? v : [];
-}
+function onCoverUpdated() { coverCleared.value = false; }
+function onDocsChanged(v: Array<{ id: number; url: string | null }>) { docsLocal.value = Array.isArray(v) ? v : []; }
 function onDocsUpdated() {}
 
 const submitText = computed(() =>
@@ -194,13 +260,115 @@ async function onSubmit() {
     novalidate
     @submit.prevent="onSubmit"
   >
-    <div class="flex items-start justify-between gap-4">
+    <!-- وضعیت کلی انتشار -->
+    <div class="flex items-center justify-between gap-4">
+      <span
+        class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+        :class="publishBadgeClass"
+      >
+        <Icon
+          :icon="publishStatus==='published' ? 'mdi:check-decagram' : (publishStatus==='scheduled' ? 'mdi:calendar-clock' : 'mdi:file-document-edit-outline')"
+          class="w-4 h-4"
+        />
+        {{ publishBadgeText }}
+      </span>
+
+      <!-- نشان‌ قدیمی visibility (اگر دوست داشتی حذفش کن) -->
       <span
         class="inline-flex items-center rounded-full border px-3 py-1 text-xs"
         :class="badgeClass"
       >
         {{ visibilityLabel }}
       </span>
+    </div>
+
+    <!-- کنترل زیبای Published -->
+    <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-sm font-medium">
+          <Icon
+            icon="mdi:rocket-launch-outline"
+            class="w-5 h-5 text-emerald-600 dark:text-emerald-400"
+          />
+          <span>{{ t('announcement.form.publish.title') || 'Publish' }}</span>
+        </div>
+
+        <div class="inline-flex items-center rounded-full border p-1 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs rounded-full"
+            :class="publishMode==='now' ? 'bg-emerald-600 text-white shadow' : 'text-gray-700 dark:text-gray-200'"
+            @click="publishMode='now'"
+          >
+            <span class="inline-flex items-center gap-1">
+              <Icon
+                icon="mdi:check-circle-outline"
+                class="w-4 h-4"
+              />
+              {{ t('announcement.form.publish.now') || 'Publish now' }}
+            </span>
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs rounded-full"
+            :class="publishMode==='schedule' ? 'bg-amber-500 text-white shadow' : 'text-gray-700 dark:text-gray-200'"
+            @click="publishMode='schedule'"
+          >
+            <span class="inline-flex items-center gap-1">
+              <Icon
+                icon="mdi:calendar-clock"
+                class="w-4 h-4"
+              />
+              {{ t('announcement.form.publish.schedule') || 'Schedule' }}
+            </span>
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs rounded-full"
+            :class="publishMode==='draft' ? 'bg-gray-900 text-white shadow dark:bg-gray-700' : 'text-gray-700 dark:text-gray-200'"
+            @click="publishMode='draft'"
+          >
+            <span class="inline-flex items-center gap-1">
+              <Icon
+                icon="mdi:file-document-edit-outline"
+                class="w-4 h-4"
+              />
+              {{ t('announcement.form.publish.draft') || 'Draft' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="publishMode==='schedule'"
+        class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        <div class="space-y-1">
+          <label
+            for="publish_at"
+            class="block text-xs font-medium"
+          >
+            {{ t('announcement.form.publishAt.label') || 'Publish at' }}
+          </label>
+          <input
+            id="publish_at"
+            v-model="form.publish_at_local"
+            type="datetime-local"
+            class="mt-1 w-full rounded-xl border p-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+          >
+          <p class="text-xs text-muted-foreground">
+            {{ t('announcement.form.publishAt.help') || 'Optional. Leave empty to publish immediately. Uses your local time.' }}
+          </p>
+        </div>
+        <div class="space-y-1">
+          <label class="block text-xs font-medium">
+            {{ t('announcement.form.publish.note') || 'Note' }}
+          </label>
+          <p class="text-xs text-gray-600 dark:text-gray-400">
+            {{ t('announcement.form.publish.noteText') || 'Scheduled posts are visible once the time is reached.' }}
+          </p>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -219,7 +387,7 @@ async function onSubmit() {
             :placeholder="t('announcement.form.title.placeholder')"
             :aria-invalid="!!errors.title || undefined"
             :aria-describedby="errors.title ? 'title-error' : undefined"
-            @input="handleTitleInput"
+            @input="() => { if (!touched.title) return; validate(); }"
             @blur="touch('title')"
           >
           <div class="flex items-center justify-between text-xs">
@@ -261,6 +429,7 @@ async function onSubmit() {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- visibility dropdown (اختیاری؛ می‌تونی نگه داری) -->
           <div class="space-y-1">
             <label
               for="visibility"
@@ -285,22 +454,6 @@ async function onSubmit() {
                 {{ t('announcement.visibility.private') }}
               </option>
             </select>
-          </div>
-
-          <div class="space-y-1">
-            <label
-              for="publish_at"
-              class="block text-sm font-medium"
-            >{{ t('announcement.form.publishAt.label') }}</label>
-            <input
-              id="publish_at"
-              v-model="form.publish_at_local"
-              type="datetime-local"
-              class="mt-1 w-full rounded-xl border p-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-            >
-            <p class="text-xs text-muted-foreground">
-              {{ t('announcement.form.publishAt.help') }}
-            </p>
           </div>
 
           <div class="space-y-1 md:pt-6">

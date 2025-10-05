@@ -19,6 +19,8 @@ class PublicEventController extends Controller
             'q' => $request->string('q')->toString(),
             'starts_from' => $request->input('starts_from'),
             'starts_to' => $request->input('starts_to'),
+            'date_range' => $request->input('date_range'),
+            'status' => $request->input('status'),
             'order_by' => $request->input('order_by'),
             'order_dir' => $request->input('order_dir'),
             'per_page' => $request->integer('per_page', 15),

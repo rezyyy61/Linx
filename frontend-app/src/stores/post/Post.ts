@@ -22,6 +22,20 @@ export type Post = {
   created_at?: string
   updated_at?: string
   media: MediaItem[]
+  repost_of_id?: number | null
+  postable_type?: string | null
+  postable_id?: number | null
+  postable_alias?: 'event' | 'announcement' | 'campaign' | 'publication' | null
+  postable_slug?: string | null
+  postable?: any | null
+  original?: any | null
+  counts?: {
+    likes: number
+    comments: number
+    shares: number
+    saves: number
+    views?: number
+  }
 }
 
 export type PostPayload = {
@@ -39,6 +53,7 @@ type ListFilters = {
   date_to?: string
   sort?: 'newest' | 'oldest'
 }
+
 
 function normalizePost(raw: any): Post {
   const media: MediaItem[] = Array.isArray(raw?.media)
@@ -64,6 +79,16 @@ function normalizePost(raw: any): Post {
     created_at: raw.created_at,
     updated_at: raw.updated_at,
     media,
+
+    repost_of_id: raw.repost_of_id ?? raw.repostOfId ?? null,
+    postable_type: raw.postable_type ?? raw.postableType ?? null,
+    postable_id: raw.postable_id ?? raw.postableId ?? null,
+    postable_alias: raw.postable_alias ?? raw.postableAlias ?? raw.postable?.alias ?? null,
+    postable_slug: raw.postable_slug ?? raw.postableSlug ?? raw.postable?.slug ?? null,
+    postable: raw.postable ?? null,
+
+    original: raw.original ?? null,
+    counts: raw.counts ?? undefined,
   }
 }
 

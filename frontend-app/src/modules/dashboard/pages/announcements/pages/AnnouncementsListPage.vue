@@ -123,7 +123,7 @@ function closeShare() {
         </h1>
         <!-- match EventsListPage: emerald CTA -->
         <router-link
-          :to="{ name:'announcements.create' }"
+          :to="{ name:'dashboard.announcements.create' }"
           class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
         >
           <Icon
@@ -354,7 +354,7 @@ function closeShare() {
                           />
                         </button>
                         <router-link
-                          :to="{ name:'announcements.edit', params:{ id:a.id } }"
+                          :to="{ name:'dashboard.announcements.edit', params:{ id:a.id } }"
                           class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
                         >
                           <Icon
@@ -422,7 +422,7 @@ function closeShare() {
                       />
                     </button>
                     <router-link
-                      :to="{ name:'announcements.edit', params:{ id:a.id } }"
+                      :to="{ name:'dashboard.announcements.edit', params:{ id:a.id } }"
                       class="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs dark:border-gray-700"
                     >
                       <Icon

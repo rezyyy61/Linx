@@ -30,14 +30,19 @@ type ServerPost = {
   media?: any[] | null
   counts?: ServerCounts | null
   liked?: boolean
+  postable_alias?: string | null
+  postable_slug?: string | null
+  postable_type?: string | null
+  postable_id?: number | null
+  postable?: any | null
 }
 
 function packImagesAsGallery(list: AnyMedia[] | null | undefined): AnyMedia[] {
-  if (!list || !list.length) return [];
-  if (list.some(m => m.type === 'gallery')) return list;
-  const images: ImageMedia[] = list.filter(m => m.type === 'image') as ImageMedia[];
-  const others: AnyMedia[] = list.filter(m => m.type !== 'image');
-  if (images.length <= 1 || others.length > 0) return list;
+  if (!list || !list.length) return []
+  if (list.some(m => m.type === 'gallery')) return list
+  const images: ImageMedia[] = list.filter(m => m.type === 'image') as ImageMedia[]
+  const others: AnyMedia[] = list.filter(m => m.type !== 'image')
+  if (images.length <= 1 || others.length > 0) return list
 
   const items: GalleryItem[] = images.map(img => ({
     id: img.id,
@@ -46,15 +51,14 @@ function packImagesAsGallery(list: AnyMedia[] | null | undefined): AnyMedia[] {
     width: img.width,
     height: img.height,
     aspectRatio: img.aspectRatio || '1/1',
-  }));
-  const gallery: GalleryMedia = { id: `gallery_${items.map(i => i.id).join('_')}`, type: 'gallery', items };
-  return [gallery];
+  }))
+  const gallery: GalleryMedia = { id: `gallery_${items.map(i => i.id).join('_')}`, type: 'gallery', items }
+  return [gallery]
 }
 
-
 export function mapServerPost(p: ServerPost): Post {
-  const raw = Array.isArray(p.media) ? p.media.map(mapServerMedia).filter(Boolean) as AnyMedia[] : [];
-  const media = packImagesAsGallery(raw);
+  const raw = Array.isArray(p.media) ? p.media.map(mapServerMedia).filter(Boolean) as AnyMedia[] : []
+  const media = packImagesAsGallery(raw)
   const a: ServerAuthor = p.author ?? { id: '', name: 'Unknown', slug: '', avatar: null }
   const visibility: Post['visibility'] =
     p.visibility === 'friends' ? 'followers'
@@ -86,5 +90,10 @@ export function mapServerPost(p: ServerPost): Post {
     isRepost: false,
     originalPostId: null,
     liked: !!p.liked,
+    postableAlias: p.postable_alias ?? null,
+    postableSlug: p.postable_slug ?? null,
+    postableType: p.postable_type ?? null,
+    postableId: p.postable_id ?? null,
+    postable: p.postable ?? null,
   }
 }

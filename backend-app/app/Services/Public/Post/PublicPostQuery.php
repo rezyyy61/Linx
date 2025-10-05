@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Public\Post;
 
 use App\Models\Announcement\Announcement;
+use App\Models\Campaign\Campaign;
 use App\Models\Event\Event;
 use App\Models\Post\Post as PostModel;
+use App\Models\Publication\Publication;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -88,6 +90,8 @@ class PublicPostQuery
                         $relation->morphWith([
                             Event::class => ['organizer.profile.logo'],
                             Announcement::class => ['owner.profile.logo'],
+                            Publication::class => ['owner.profile.logo'],
+                            Campaign::class => ['owner.profile.logo'],
                         ]);
                     }
                 },

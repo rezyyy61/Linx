@@ -1,163 +1,89 @@
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
-const props = defineProps<{
-  modelValue: {
-    q?: string
-    kind?: "" | "fundraising" | "petition" | "volunteer" | "awareness"
-    visibility?: "" | "public" | "members" | "private"
-    order_by?: "publish_at" | "created_at" | "ends_at" | "progress"
-    order_dir?: "asc" | "desc"
-    page?: number
-    per_page?: number
-    status?: string
-  }
-  loading?: boolean
-}>()
-const emit = defineEmits<{
-  (e:"update:modelValue", v:any): void
-  (e:"apply"): void
-  (e:"clear"): void
-}>()
-function set<K extends keyof typeof props.modelValue>(k:K, v:any){
-  emit("update:modelValue", { ...props.modelValue, [k]: v })
+import { Icon } from "@iconify/vue";
+
+const DATE_RANGES = ["all","today","this_week","this_month"] as const
+type Range = (typeof DATE_RANGES)[number]
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const KINDS = ["","fundraising","petition","volunteer","awareness"] as const
+type Kind = (typeof KINDS)[number]
+
+const query = defineModel<string>("q", { default: "" })
+const dateRange = defineModel<Range>("date_range", { default: "all" })
+const kind = defineModel<Kind>("kind", { default: "" })
+
+const emit = defineEmits<{ (e:"apply"): void }>()
+let t: number | null = null
+function triggerApply(immediate = false) {
+  if (t) window.clearTimeout(t)
+  if (immediate) { emit("apply"); return }
+  t = window.setTimeout(() => emit("apply"), 300)
 }
-function toggleOrder(){
-  const dir = props.modelValue.order_dir === "asc" ? "desc" : "asc"
-  emit("update:modelValue", { ...props.modelValue, order_dir: dir, page: 1 })
+
+function labelizeRange(s: string) {
+  return s.replace("_"," ").replace(/\b\w/g, c => c.toUpperCase())
 }
-function apply(){ emit("apply") }
-function clear(){ emit("clear") }
 </script>
 
 <template>
-  <div class="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
-      <div class="lg:col-span-4">
-        <div class="relative h-10">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
-            <Icon
-              icon="mdi:magnify"
-              class="w-5 h-5"
-            />
-          </span>
-          <input
-            :value="modelValue.q || ''"
-            type="text"
-            placeholder="Search campaigns"
-            :disabled="loading"
-            class="h-10 w-full rounded-xl border border-neutral-300 pl-10 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-            @input="set('q', ($event.target as HTMLInputElement).value)"
-          >
-          <span class="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400">⌘K</span>
-        </div>
-      </div>
+  <div class="w-full grid grid-cols-1 md:[grid-template-columns:1fr_auto] items-center gap-3 mb-6">
+    <div class="relative h-10 w-full">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400">
+        <Icon
+          icon="mdi:magnify"
+          class="w-5 h-5"
+        />
+      </span>
 
-      <div class="lg:col-span-3 grid grid-cols-2 gap-2">
-        <select
-          :value="modelValue.kind || ''"
-          :disabled="loading"
-          class="h-10 w-full rounded-xl border border-neutral-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-          @change="set('kind', ($event.target as HTMLSelectElement).value as any)"
-        >
-          <option value="">
-            All kinds
-          </option>
-          <option value="fundraising">
-            Fundraising
-          </option>
-          <option value="petition">
-            Petition
-          </option>
-          <option value="volunteer">
-            Volunteer
-          </option>
-          <option value="awareness">
-            Awareness
-          </option>
-        </select>
+      <input
+        v-model="query"
+        type="text"
+        placeholder="Search campaigns..."
+        class="h-10 w-[80%] rounded-xl border border-neutral-300 px-10 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 dark:border-neutral-700 dark:bg-neutral-800"
+        @input="triggerApply(false)"
+      >
 
-        <select
-          :value="modelValue.visibility || ''"
-          :disabled="loading"
-          class="h-10 w-full rounded-xl border border-neutral-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-          @change="set('visibility', ($event.target as HTMLSelectElement).value as any)"
-        >
-          <option value="">
-            All visibility
-          </option>
-          <option value="public">
-            Public
-          </option>
-          <option value="members">
-            Members
-          </option>
-          <option value="private">
-            Private
-          </option>
-        </select>
-      </div>
+      <span class="absolute right-[20%] top-1/2 px-4 -translate-y-1/2 text-neutral-400">⌘K</span>
+    </div>
 
-      <div class="lg:col-span-3 grid grid-cols-2 gap-2">
-        <select
-          :value="modelValue.order_by || 'publish_at'"
-          :disabled="loading"
-          class="h-10 w-full rounded-xl border border-neutral-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-neutral-700 dark:bg-neutral-800"
-          @change="set('order_by', ($event.target as HTMLSelectElement).value as any)"
-        >
-          <option value="publish_at">
-            Publish date
-          </option>
-          <option value="created_at">
-            Created date
-          </option>
-          <option value="ends_at">
-            Ending soon
-          </option>
-          <option value="progress">
-            Progress
-          </option>
-        </select>
-
+    <div class="flex items-center justify-start md:justify-end gap-3 text-sm shrink-0">
+      <div class="flex gap-2">
         <button
-          type="button"
-          class="h-10 w-full inline-flex items-center justify-center gap-1 rounded-xl border px-3 text-sm dark:border-neutral-700"
-          :disabled="loading"
-          @click="toggleOrder"
+          v-for="r in DATE_RANGES"
+          :key="r"
+          :class="[
+            'px-3 py-1 rounded-full transition-colors',
+            dateRange === r
+              ? 'bg-indigo-600 text-white'
+              : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600'
+          ]"
+          @click="dateRange = r; triggerApply(true)"
         >
-          <Icon
-            :icon="modelValue.order_dir==='asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
-            class="w-4 h-4"
-          />
-          <span class="uppercase">{{ modelValue.order_dir }}</span>
+          {{ labelizeRange(r) }}
         </button>
       </div>
 
-      <div class="lg:col-span-2 flex items-center gap-2">
-        <button
-          type="button"
-          class="h-10 inline-flex items-center gap-2 rounded-xl px-3 text-sm border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-          :disabled="loading"
-          @click="apply"
-        >
-          <Icon
-            icon="mdi:filter"
-            class="w-4 h-4"
-          />
-          <span>Apply</span>
-        </button>
-        <button
-          type="button"
-          class="h-10 inline-flex items-center gap-2 rounded-xl px-3 text-sm border border-neutral-300 dark:border-neutral-700"
-          :disabled="loading"
-          @click="clear"
-        >
-          <Icon
-            icon="mdi:close"
-            class="w-4 h-4"
-          />
-          <span>Clear</span>
-        </button>
-      </div>
+      <select
+        v-model="kind"
+        class="rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+        @change="triggerApply(true)"
+      >
+        <option value="">
+          All kinds
+        </option>
+        <option value="fundraising">
+          Fundraising
+        </option>
+        <option value="petition">
+          Petition
+        </option>
+        <option value="volunteer">
+          Volunteer
+        </option>
+        <option value="awareness">
+          Awareness
+        </option>
+      </select>
     </div>
   </div>
 </template>

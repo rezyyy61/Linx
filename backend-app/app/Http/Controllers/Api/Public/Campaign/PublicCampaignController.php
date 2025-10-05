@@ -1,7 +1,5 @@
 <?php
 
-// app/Http/Controllers/Api/Public/Campaign/PublicCampaignController.php
-
 declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\Public\Campaign;
@@ -17,15 +15,19 @@ class PublicCampaignController extends Controller
 
     public function index(Request $request)
     {
-        $items = $this->service->list([
-            'q' => $request->string('q')->toString(),
-            'kind' => $request->input('kind'),
-            'starts_from' => $request->input('starts_from'),
-            'starts_to' => $request->input('starts_to'),
-            'order_by' => $request->input('order_by'),
-            'order_dir' => $request->input('order_dir'),
-            'per_page' => $request->integer('per_page', 15),
+        $filters = $request->validate([
+            'q' => ['nullable', 'string'],
+            'kind' => ['nullable', 'in:fundraising,petition,volunteer,awareness'],
+            'date_range' => ['nullable', 'in:all,today,this_week,this_month'],
+            'order_by' => ['nullable', 'in:publish_at,starts_at,created_at,updated_at,title'],
+            'order_dir' => ['nullable', 'in:asc,desc'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'status' => ['nullable', 'in:published'],
+            'visibility' => ['nullable', 'in:public,members,private'],
         ]);
+
+        $items = $this->service->list($filters);
 
         return CampaignResource::collection($items);
     }

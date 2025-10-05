@@ -24,7 +24,7 @@ const barPct = computed(() => {
 <template>
   <div class="w-full h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
     <div
-      class="h-2 rounded-full bg-emerald-500 transition-all"
+      class="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all"
       :style="{ width: barPct + '%' }"
     />
   </div>

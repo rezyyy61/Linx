@@ -8,6 +8,7 @@ use App\Enums\Share\ShareChannel;
 use App\Models\Announcement\Announcement;
 use App\Models\Event\Event;
 use App\Models\Post\Post;
+use App\Models\Publication\Publication;
 use App\Models\User;
 use App\Services\Share\Contracts\ShareGuard;
 use Illuminate\Database\Eloquent\Model;
@@ -66,6 +67,17 @@ class DefaultShareGuard implements ShareGuard
                 return false;
             }
             if ($status && ! in_array($status, ['published', 'active'], true)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        if ($shareable instanceof Publication) {
+            if ($shareable->is_published !== true) {
+                return false;
+            }
+            if ($shareable->publish_at && $shareable->publish_at->isFuture()) {
                 return false;
             }
 

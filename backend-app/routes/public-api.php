@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Public\Campaign\PublicCampaignController;
 use App\Http\Controllers\Api\Public\Event\PublicEventController;
 use App\Http\Controllers\Api\Public\Post\PostActionController;
 use App\Http\Controllers\Api\Public\Post\PublicPostController;
+use App\Http\Controllers\Api\Public\Publication\PublicPublicationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -19,6 +20,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/comments', [CommentController::class, 'index']);
     Route::get('/comments/{parentId}/children', [CommentController::class, 'children']);
     Route::get('/comments/{commentId}/likes', [CommentLikeController::class, 'index']);
+
+    Route::get('publications', [PublicPublicationController::class, 'index']);
+    Route::get('publications/{slug}', [PublicPublicationController::class, 'show']);
 
     Route::get('events', [PublicEventController::class, 'index']);
     Route::get('events/{slug}', [PublicEventController::class, 'show']);

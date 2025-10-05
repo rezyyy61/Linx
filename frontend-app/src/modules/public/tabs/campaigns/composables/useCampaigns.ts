@@ -9,14 +9,15 @@ export function useCampaigns(initial: CampaignQuery = {}) {
   const loadingMore = ref(false)
 
   const q = ref<CampaignQuery>({
-    q: initial.q || "",
-    kind: initial.kind || "",
-    status: initial.status || "published",
-    visibility: initial.visibility || "",
-    order_by: initial.order_by || "publish_at",
-    order_dir: initial.order_dir || "desc",
-    page: initial.page || 1,
-    per_page: initial.per_page || 12
+    q: initial.q ?? "",
+    kind: initial.kind ?? "",
+    date_range: initial.date_range ?? "all",
+    status: initial.status ?? "published",
+    visibility: initial.visibility ?? "",
+    order_by: initial.order_by ?? "publish_at",
+    order_dir: initial.order_dir ?? "desc",
+    page: initial.page ?? 1,
+    per_page: initial.per_page ?? 12
   })
 
   async function fetchList(reset = true) {
@@ -33,15 +34,18 @@ export function useCampaigns(initial: CampaignQuery = {}) {
     }
   }
 
-  function setPage(p: number, append = false) {
-    q.value.page = p
-    fetchList(!append)
+  async function fetchMore() {
+    if (loading.value || loadingMore.value) return
+    if (!hasMore.value) return
+    q.value.page = (q.value.page || 1) + 1
+    await fetchList(false)
   }
 
   function reset() {
     q.value = {
       q: "",
       kind: "",
+      date_range: "all",
       status: "published",
       visibility: "",
       order_by: "publish_at",
@@ -54,18 +58,5 @@ export function useCampaigns(initial: CampaignQuery = {}) {
 
   const hasMore = computed(() => (meta.value.page || 1) < (meta.value.last_page || 1))
 
-  async function fetchMore() {
-    if (loading.value || loadingMore.value) return
-    if (!hasMore.value) return
-    q.value.page = (q.value.page || 1) + 1
-    await fetchList(false)
-  }
-
-  return {
-    items, meta, q,
-    loading, loadingMore,
-    fetchList, fetchMore, setPage, reset,
-    hasMore,
-    totalPages: computed(() => meta.value.last_page)
-  }
+  return { items, meta, q, loading, loadingMore, fetchList, fetchMore, reset, hasMore }
 }

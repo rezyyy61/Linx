@@ -7,7 +7,7 @@ import CampaignsFilterHeader from "../components/CampaignsFilterHeader.vue"
 import intersect from "@/directives/intersect"
 
 const { items, meta, q, loading, loadingMore, fetchList, fetchMore, reset, hasMore } =
-  useCampaigns({ status: "published", per_page: 12, order_by: "publish_at", order_dir: "desc" })
+  useCampaigns({ status: "published", per_page: 12, order_by: "publish_at", order_dir: "desc", date_range: "all", kind: "" })
 
 function applyFilters() { q.value.page = 1; fetchList(true) }
 function clearFilters() { reset() }
@@ -22,10 +22,11 @@ onMounted(fetchList)
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 py-6 space-y-6">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-semibold text-emerald-600">
-        Campaigns
+  <section class="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div class="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h1 class="text-2xl font-semibold text-rose-600 tracking-tight relative">
+        <span class="relative z-10">Campaigns</span>
+        <span class="absolute left-0 bottom-0 w-12 h-1 bg-rose-500 rounded-full" />
       </h1>
       <div class="text-sm text-neutral-500">
         Total: {{ meta.total }}
@@ -33,7 +34,10 @@ onMounted(fetchList)
     </div>
 
     <CampaignsFilterHeader
-      v-model="q"
+      v-model:q="q.q"
+      v-model:date_range="q.date_range"
+      v-model:kind="q.kind"
+      class="w-full"
       :loading="loading"
       @apply="applyFilters"
       @clear="clearFilters"

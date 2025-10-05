@@ -33,4 +33,9 @@ export interface Post {
   isRepost?: boolean
   originalPostId?: string | null
   liked?: boolean
+  postableAlias?: string | null
+  postableSlug?: string | null
+  postableType?: string | null
+  postableId?: number | null
+  postable?: any | null
 }
