@@ -12,6 +12,7 @@ use App\Models\Post\Post as PostModel;
 use App\Models\Post\PostLike;
 use App\Models\Post\PostSave;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,12 +20,16 @@ class PublicPostResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        /** @var PostModel|Model $post */
         $post = $this->resource;
         if (! $post instanceof PostModel) {
             return [];
         }
 
-        $post->loadMissing(['postable']);
+        $post->loadMissing([
+            'postable',
+            'original.postable',
+        ]);
 
         $authUser = $request->user();
 
@@ -76,11 +81,26 @@ class PublicPostResource extends JsonResource
         $postableAlias = null;
         $postableSlug = null;
         $postablePayload = null;
+        $postableTypeOut = $post->postable_type;
+        $postableIdOut = $post->postable_id;
 
-        if ($post->postable instanceof PostableResourceable) {
-            $postableAlias = $post->postable->getPostableAlias();
-            $postableSlug = $post->postable->getPostableSlug();
-            $postablePayload = $post->postable->toPostableResource();
+        $shareable = $post->getRelationValue('postable');
+
+        if (! ($shareable instanceof PostableResourceable)) {
+            $original = $post->getRelationValue('original');
+            $origShareable = $original instanceof Model ? $original->getRelationValue('postable') : null;
+
+            if ($origShareable instanceof PostableResourceable) {
+                $shareable = $origShareable;
+                $postableTypeOut = get_class($shareable);
+                $postableIdOut = $shareable instanceof Model ? $shareable->getKey() : null;
+            }
+        }
+
+        if ($shareable instanceof PostableResourceable) {
+            $postableAlias = $shareable->getPostableAlias();
+            $postableSlug = $shareable->getPostableSlug();
+            $postablePayload = $shareable->toPostableResource();
         }
 
         return [
@@ -109,8 +129,8 @@ class PublicPostResource extends JsonResource
                 'views' => 0,
             ],
             'media' => MediaResource::collection($this->whenLoaded('media')),
-            'postable_type' => $post->postable_type,
-            'postable_id' => $post->postable_id,
+            'postable_type' => $postableTypeOut,
+            'postable_id' => $postableIdOut,
             'postable_alias' => $postableAlias,
             'postable_slug' => $postableSlug,
             'postable' => $postablePayload,

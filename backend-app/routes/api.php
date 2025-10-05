@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Post\RepostController;
 use App\Http\Controllers\Api\Profile\LinkController;
 use App\Http\Controllers\Api\Profile\ProfileController;
 use App\Http\Controllers\Api\Profile\ValueController;
+use App\Http\Controllers\Api\Publication\PublicationController;
 use App\Http\Controllers\Api\Share\ShareController;
 use App\Http\Controllers\Api\User\UserSearchController;
 use Illuminate\Support\Facades\Route;
@@ -118,6 +119,7 @@ Route::middleware('auth:sanctum')->prefix('notifications')->group(function () {
     Route::post('read-all', [NotificationController::class, 'readAll']);
     Route::delete('{id}', [NotificationController::class, 'destroy'])->whereNumber('id');
 });
+
 Route::middleware('auth:sanctum')->apiResource('announcements', AnnouncementController::class);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -166,3 +168,5 @@ Route::middleware('auth:sanctum')->apiResource('campaigns', CampaignController::
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('campaigns/{campaign}/publish', [CampaignController::class, 'publish'])->name('campaigns.publish');
 });
+
+Route::middleware('auth:sanctum')->apiResource('publications', PublicationController::class);

@@ -60,6 +60,27 @@
       </div>
     </div>
 
+    <AttachmentEventPreview
+      v-if="isEvent"
+      :preview="postablePreview"
+      :slug="postableSlug"
+    />
+    <AttachmentAnnouncementPreview
+      v-else-if="isAnnouncement"
+      :preview="postablePreview"
+      :slug="postableSlug"
+    />
+    <AttachmentCampaignPreview
+      v-else-if="isCampaign"
+      :preview="postablePreview"
+      :slug="postableSlug"
+    />
+    <AttachmentPublicationPreview
+      v-else-if="isPublication"
+      :preview="postablePreview"
+      :slug="postableSlug"
+    />
+
     <div
       v-else-if="original"
       class="mt-3"
@@ -69,11 +90,6 @@
         :to="originalTo"
       />
     </div>
-
-    <AttachmentEventPreview :post="post" />
-    <AttachmentAnnouncementPreview :post="post" />
-    <AttachmentCampaignPreview :post="post" />
-
 
 
     <LikesPreview :post-id="post.id" />
@@ -146,6 +162,8 @@ import AttachmentEventPreview from "@/modules/public/postCard/attachments/EventR
 import AttachmentAnnouncementPreview from "@/modules/public/postCard/attachments/AnnouncementRepost/AttachmentAnnouncementPreview.vue";
 import AttachmentCampaignPreview
   from "@/modules/public/postCard/attachments/CampaignRepost/AttachmentCampaignPreview.vue";
+import AttachmentPublicationPreview
+  from "@/modules/public/postCard/attachments/PublicationRepost/AttachmentPublicationPreview.vue";
 
 const props = defineProps<{ post: Post }>()
 
@@ -298,6 +316,16 @@ function onDelete() {
     }
   )
 }
+
+const postableAlias   = computed(() => props.post.postableAlias || null)
+const postableSlug    = computed(() => props.post.postableSlug || null)
+const postablePreview = computed(() => props.post.postable || null)
+
+const isEvent        = computed(() => postableAlias.value === 'event')
+const isAnnouncement = computed(() => postableAlias.value === 'announcement')
+const isCampaign     = computed(() => postableAlias.value === 'campaign')
+const isPublication  = computed(() => postableAlias.value === 'publication')
+
 </script>
 
 <style scoped>

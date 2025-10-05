@@ -62,12 +62,22 @@
         "label": "Title",
         "placeholder": "Announcement title"
       },
+      "publish": {
+        "title": "Publish",
+        "now": "Publish now",
+        "schedule": "Schedule",
+        "draft": "Draft",
+        "note": "Note",
+        "noteText": "Scheduled posts are visible once the time is reached."
+      },
       "body": {
         "label": "Body",
-        "placeholder": "Write the announcement content"
+        "placeholder": "Write the announcement content",
+        "tooLong": "Body is too long"
       },
       "visibility": {
-        "label": "Visibility"
+        "label": "Visibility",
+        "required": "Visibility is required"
       },
       "publishAt": {
         "label": "Publish at",
@@ -90,6 +100,11 @@
       "chooseFile": "Any supported files",
       "uploadHint": "Upload documents by clicking here"
     }
+  },
+  "status": {
+    "draft": "Draft",
+    "scheduled": "Scheduled",
+    "published": "Published"
   },
   "toast": {
     "announcement": {

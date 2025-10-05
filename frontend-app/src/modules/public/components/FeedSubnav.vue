@@ -7,7 +7,7 @@ const modelValue = defineModel<string>({ required: true });
 
 const items = computed(() => [
   { key: "feed" },
-  { key: "parties" },
+  { key: "publication" },
   { key: "books" },
   { key: "media" },
   { key: "campaigns" },

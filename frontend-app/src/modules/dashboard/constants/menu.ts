@@ -18,6 +18,11 @@ export const dashboardMenu: MenuItem[] = [
     permission: "posts.view",
   },
   {
+    label: "Publications",
+    icon: "mdi:newspaper-variant-outline",
+    toName: "dashboard.publications.list",
+    permission: "publications.view" },
+  {
     label: "Events",
     icon: "solar:calendar-linear",
     toName: "dashboard.events.list",

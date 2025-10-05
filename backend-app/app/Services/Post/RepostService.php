@@ -9,6 +9,7 @@ use App\Models\Announcement\Announcement;
 use App\Models\Campaign\Campaign;
 use App\Models\Event\Event;
 use App\Models\Post\Post;
+use App\Models\Publication\Publication;
 use App\Models\Share\Contracts\Shareable as ShareableContract;
 use App\Models\User;
 use App\Services\Share\Contracts\ShareGuard;
@@ -135,6 +136,33 @@ class RepostService
                     [
                         'utm_source' => 'repost',
                         'utm_campaign' => 'campaign_'.$target->getKey(),
+                    ],
+                    null,
+                    true
+                );
+
+                return $post;
+            }
+
+            if ($target instanceof Publication) {
+                $post = new Post;
+                $post->user_id = $actor->getKey();
+                $post->content = $text ?? '';
+                $post->visibility = $visibility ?? 'public';
+                $post->status = Post::STATUS_PUBLISHED;
+                $post->published_at = now();
+                $post->save();
+
+                $post->postable()->associate($target);
+                $post->save();
+
+                $this->shareService->create(
+                    $target,
+                    ShareChannel::REPOST,
+                    $actor->getKey(),
+                    [
+                        'utm_source' => 'repost',
+                        'utm_campaign' => 'publication_'.$target->getKey(),
                     ],
                     null,
                     true

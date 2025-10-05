@@ -7,7 +7,7 @@ import RightDock from "@/components/rightDock/RightDock.vue";
 
 type TabKey =
   | "feed"
-  | "parties"
+  | "publication"
   | "books"
   | "media"
   | "campaigns"
@@ -26,7 +26,7 @@ const current = ref<TabKey>(
 
 const loaders: Record<TabKey, () => Promise<any>> = {
   feed: () => import("@/modules/public/tabs/feed/FeedPage.vue"),
-  parties: () => import("@/modules/public/tabs/parties/PartiesPage.vue"),
+  publication: () => import("@/modules/public/tabs/publication/pages/PublicationsTabPage.vue"),
   books: () => import("@/modules/public/tabs/books/BookPage.vue"),
   media: () => import("@/modules/public/tabs/media/MediaPage.vue"),
   campaigns: () => import("@/modules/public/tabs/campaigns/pages/CampaignsPage.vue"),

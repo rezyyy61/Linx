@@ -3,6 +3,8 @@ export type CampaignStatus = "draft" | "published" | "paused" | "completed" | "f
 export type CampaignKind = "fundraising" | "petition" | "volunteer" | "awareness"
 export type CampaignOwner = { id: number; name: string; slug?: string | null; avatar?: string | null }
 
+export type DateRange = "all" | "today" | "this_week" | "this_month"
+
 type BaseCampaign = {
   id: number
   slug: string
@@ -57,6 +59,7 @@ export type CampaignQuery = {
   kind?: CampaignKind | ""
   status?: CampaignStatus | ""
   visibility?: CampaignVisibility | ""
+  date_range?: DateRange
   order_by?: "publish_at" | "created_at" | "ends_at" | "progress"
   order_dir?: "asc" | "desc"
   page?: number

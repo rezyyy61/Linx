@@ -7,6 +7,7 @@ namespace App\Services\Campaign;
 use App\Models\Campaign\Campaign;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PublicCampaignService
 {
@@ -35,11 +36,26 @@ class PublicCampaignService
             $q->where('kind', $filters['kind']);
         }
 
-        if (! empty($filters['starts_from'])) {
-            $q->where('starts_at', '>=', $filters['starts_from']);
-        }
-        if (! empty($filters['starts_to'])) {
-            $q->where('starts_at', '<=', $filters['starts_to']);
+        if (! empty($filters['date_range']) && $filters['date_range'] !== 'all') {
+            $start = null;
+            $end = $now->copy();
+            switch ($filters['date_range']) {
+                case 'today':
+                    $start = $now->copy()->startOfDay();
+                    $end = $now->copy()->endOfDay();
+                    break;
+                case 'this_week':
+                    $start = $now->copy()->startOfWeek();
+                    $end = $now->copy()->endOfWeek();
+                    break;
+                case 'this_month':
+                    $start = $now->copy()->startOfMonth();
+                    $end = $now->copy()->endOfMonth();
+                    break;
+            }
+            if ($start) {
+                $q->whereBetween(DB::raw('COALESCE(publish_at, created_at)'), [$start, $end]);
+            }
         }
 
         $allowedOrder = ['publish_at', 'starts_at', 'created_at', 'updated_at', 'title'];
@@ -56,7 +72,7 @@ class PublicCampaignService
     {
         $now = Carbon::now('UTC');
 
-        $campaign = Campaign::query()
+        return Campaign::query()
             ->with(['covers', 'documents', 'owner'])
             ->where('status', 'published')
             ->where('visibility', 'public')
@@ -64,8 +80,6 @@ class PublicCampaignService
                 $qq->whereNull('publish_at')->orWhere('publish_at', '<=', $now);
             })
             ->where('slug', $slug)
-            ->first();
-
-        return $campaign ?: null;
+            ->first() ?: null;
     }
 }

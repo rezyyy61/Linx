@@ -137,7 +137,7 @@ const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" })
 
       <router-link
         :to="{ name: 'campaigns.details', params: { slug: campaign.slug } }"
-        class="mt-2 inline-flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+        class="mt-2 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
       >
         <span>Details</span>
         <Icon

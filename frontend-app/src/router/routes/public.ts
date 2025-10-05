@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from "vue-router"
 import eventsRoutes from "@/modules/public/tabs/events"
 import announcementsRoutes from "@/modules/public/tabs/announcements"
 import campaignsRoutes from "@/modules/public/tabs/campaigns"
+import publicationsRoutes from "@/modules/public/tabs/publication"
 
 const PublicLayout = () => import("@/layouts/PublicLayout.vue")
 const HomePage = () => import("@/modules/public/pages/HomePage.vue")
@@ -56,5 +57,6 @@ export default {
     ...eventsRoutes,
     ...announcementsRoutes,
     ...campaignsRoutes,
+    ...publicationsRoutes,
   ],
 } as RouteRecordRaw

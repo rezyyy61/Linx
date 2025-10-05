@@ -3,29 +3,32 @@
     v-if="loading"
     class="mt-3"
   >
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 animate-pulse">
-      <div class="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-700 mb-3" />
+    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 animate-pulse">
+      <div class="h-4 w-44 rounded bg-zinc-200 dark:bg-zinc-700 mb-3" />
       <div class="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
       <div class="h-3 w-5/6 rounded bg-zinc-200 dark:bg-zinc-700" />
     </div>
   </div>
 
   <EventAttachmentCard
-    v-else-if="eventPreview"
-    :event="eventPreview"
+    v-else-if="model"
+    :event="model"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { api } from '@/lib/http'
-import EventAttachmentCard from "@/modules/public/postCard/attachments/EventRepost/EventAttachmentCard.vue";
+import EventAttachmentCard from '@/modules/public/postCard/attachments/EventRepost/EventAttachmentCard.vue'
 
-const props = defineProps<{ post: any }>()
+const props = defineProps<{
+  preview?: any | null
+  slug?: string | null
+  post?: any
+}>()
 
 const loading = ref(false)
-const eventPreview = ref<any | null>(null)
-const fullPost = ref<any | null>(null)
+const model = ref<any | null>(props.preview ?? null)
 
 function pick<T = any>(...vals: any[]): T | null {
   for (const v of vals) if (v !== undefined && v !== null && v !== '') return v as T
@@ -56,12 +59,11 @@ function normalizeEvent(raw: any) {
   }
 }
 
-async function fetchEventBySlug(slug: string) {
+async function fetchBySlug(slug: string) {
   try {
     const { data } = await api.get(`/public/v1/events/${slug}`, { params: { with: 'organizer' } })
     return (data?.data ?? data) as any
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (e) {
+  } catch {
     const { data } = await api.get(`/public/v1/events/${slug}`)
     return (data?.data ?? data) as any
   }
@@ -91,86 +93,36 @@ async function ensureOrganizer(evt: any) {
       id: org.id || evt.organizer?.id || null,
     }
     return evt
-  } catch (e) {
-    console.debug('[AttachmentPreview] organizer fetch failed for slug:', slug, e)
+  } catch {
     return evt
   }
 }
 
-const postLooksLikeEvent = (p: any) => {
-  if (!p) return false
-  return (
-    p?.postable_alias === 'event' ||
-    (typeof p?.postable_type === 'string' && p.postable_type.includes('Event')) ||
-    p?.postable?.kind === 'event'
-  )
-}
-
-const isEventAttachment = computed(() => {
-  return postLooksLikeEvent(props.post) || postLooksLikeEvent(fullPost.value)
-})
-
-const eventSlug = computed<string | null>(() => {
-  const p: any = props.post || {}
-  const fp: any = fullPost.value || {}
-
-  if (!(postLooksLikeEvent(p) || postLooksLikeEvent(fp))) return null
-
-  return p?.postable?.slug ?? p?.postable_slug ?? fp?.postable?.slug ?? fp?.postable_slug ?? null
-})
-
-
-async function ensureFullPostOnce() {
-  if (fullPost.value || !props.post?.id) return
-  try {
-    const res = await api.get(`/public/v1/posts/${props.post.id}`)
-    fullPost.value = res.data?.data ?? res.data ?? null
-  } catch (e) {
-    console.debug('[AttachmentPreview] full post fetch failed', e)
-    fullPost.value = null
-  }
-}
-
 watchEffect(async () => {
-  eventPreview.value = null
+  if (props.preview) {
+    model.value = props.preview
+    return
+  }
 
-  const p: any = props.post || {}
-  if (!postLooksLikeEvent(p)) await ensureFullPostOnce()
-  if (!isEventAttachment.value) return
-
+  const p: any = props.post
   if (p?.postable && (p.postable.slug || p.postable.title)) {
     let evt = normalizeEvent(p.postable)
-    if (!evt.organizer?.name && evt.organizer?.slug) {
-      evt = await ensureOrganizer(evt)
-    }
-    eventPreview.value = evt
+    if (!evt.organizer?.name && evt.organizer?.slug) evt = await ensureOrganizer(evt)
+    model.value = evt
     return
   }
 
-  const fp: any = fullPost.value || {}
-  if (fp?.postable && (fp.postable.slug || fp.postable.title)) {
-    let evt = normalizeEvent(fp.postable)
-    if (!evt.organizer?.name && evt.organizer?.slug) {
-      evt = await ensureOrganizer(evt)
-    }
-    eventPreview.value = evt
-    return
-  }
-
-  const slug = eventSlug.value
+  const slug = props.slug ?? p?.postable_slug ?? p?.postable?.slug ?? null
   if (!slug) return
 
   loading.value = true
   try {
-    let raw = await fetchEventBySlug(slug)
+    let raw = await fetchBySlug(slug)
     let evt = normalizeEvent(raw)
-    if (!evt.organizer?.name && evt.organizer?.slug) {
-      evt = await ensureOrganizer(evt)
-    }
-    eventPreview.value = evt
-  } catch (e) {
-    console.debug('[AttachmentPreview] event fetch failed for slug:', slug, e)
-    eventPreview.value = null
+    if (!evt.organizer?.name && evt.organizer?.slug) evt = await ensureOrganizer(evt)
+    model.value = evt
+  } catch {
+    model.value = null
   } finally {
     loading.value = false
   }

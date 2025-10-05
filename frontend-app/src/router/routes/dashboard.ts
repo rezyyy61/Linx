@@ -11,6 +11,11 @@ const PostsCreatePage = () => import('@/modules/dashboard/pages/posts/pages/Crea
 const PostsEditPage = () => import('@/modules/dashboard/pages/posts/pages/EditPage.vue')
 const PostsDetailPage = () => import('@/modules/dashboard/pages/posts/pages/DetailPage.vue')
 
+const PublicationsListPage   = () => import('@/modules/dashboard/pages/publications/pages/PublicationsListPage.vue')
+const PublicationsCreatePage = () => import('@/modules/dashboard/pages/publications/pages/PublicationsCreatePage.vue')
+const PublicationsEditPage   = () => import('@/modules/dashboard/pages/publications/pages/PublicationsEditPage.vue')
+
+
 const EventsListPage = () => import('@/modules/dashboard/pages/events/EventsListPage.vue')
 const EventsCreatePage = () => import('@/modules/dashboard/pages/events/EventsCreatePage.vue')
 const EventsEditPage = () => import('@/modules/dashboard/pages/events/EventsEditPage.vue')
@@ -47,6 +52,11 @@ export default {
         { path: ':id',     name: 'dashboard.posts.detail', component: PostsDetailPage, meta: { permission: 'posts.view' } },
       ]
     },
+
+    { path: 'publications',           name: 'dashboard.publications.list',   component: PublicationsListPage,   meta: { permission: 'publications.view' } },
+    { path: 'publications/create',    name: 'dashboard.publications.create', component: PublicationsCreatePage, meta: { permission: 'publications.create' } },
+    { path: 'publications/:id/edit',  name: 'dashboard.publications.edit',   component: PublicationsEditPage,   meta: { permission: 'publications.edit' } },
+
 
     { path: 'events',           name: 'dashboard.events.list',   component: EventsListPage,   meta: { permission: 'events.view' } },
     { path: 'events/create',    name: 'dashboard.events.create', component: EventsCreatePage, meta: { permission: 'events.create' } },

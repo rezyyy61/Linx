@@ -1,14 +1,12 @@
 <template>
-  <section class="grid gap-6">
-    <div class="rounded-2xl border border-gray-200 bg-white p-5 md:p-8 shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+  <section class="max-w-7xl mx-auto px-4 py-6 space-y-6 grid gap-6">
+    <div class="">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
-            Announcements
-          </h2>
-          <p class="mt-1 text-sm md:text-base text-gray-600 dark:text-zinc-300">
-            Latest public updates and statements
-          </p>
+          <h1 class="text-2xl font-semibold text-rose-600 tracking-tight relative">
+            <span class="relative z-10">Announcements</span>
+            <span class="absolute left-0 bottom-0 w-12 h-1 bg-rose-500 rounded-full" />
+          </h1>
         </div>
       </div>
 

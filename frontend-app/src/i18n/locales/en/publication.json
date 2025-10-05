@@ -1,0 +1,135 @@
+{
+  "publication": {
+    "loading": "Loading...",
+    "common": {
+      "saving": "Saving...",
+      "prev": "prev",
+      "next": "next"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete",
+      "create": "Create publication",
+      "update": "Update publication"
+    },
+    "list": {
+      "title": "Publications",
+      "create": "New publication",
+      "searchPlaceholder": "Search by title or issue...",
+      "noResults": "No results found",
+      "sort": {
+        "publish": "Publish time",
+        "created": "Created",
+        "updated": "Updated"
+      },
+      "pageInfo": "Page {page} of {last} — Total: {total}"
+    },
+    "filter": {
+      "all": "All",
+      "published": "Published",
+      "unpublished": "Unpublished"
+    },
+    "empty": {
+      "noItems": "No publications yet",
+      "createFirst": "Create your first publication"
+    },
+    "create": {
+      "title": "Create publication",
+      "submit": "Create publication"
+    },
+    "edit": {
+      "title": "Edit publication"
+    },
+    "table": {
+      "cover": "Cover",
+      "title": "Title",
+      "issue": "Issue",
+      "publishAt": "Publish at",
+      "actions": "Actions"
+    },
+    "confirm": {
+      "delete": "Are you sure to delete this publication?"
+    },
+    "form": {
+      "editTitle": "Edit publication",
+      "createTitle": "Create publication",
+      "subtitle": "Publish periodicals for parties and people",
+      "publish": {
+        "title": "Publish",
+        "now": "Publish now",
+        "schedule": "Schedule",
+        "draft": "Draft",
+        "note": "Note",
+        "noteText": "Scheduled publications become visible once the time is reached."
+      },
+      "title": {
+        "label": "Title",
+        "placeholder": "Publication title",
+        "required": "Title is required",
+        "tooLong": "Title is too long"
+      },
+      "issue": {
+        "label": "Issue",
+        "placeholder": "e.g., 160 or 1403/07",
+        "required": "Issue is required",
+        "tooLong": "Issue is too long"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Write a short description",
+        "tooLong": "Description is too long"
+      },
+      "publishAt": {
+        "label": "Publish at",
+        "help": "Optional. Leave empty to publish immediately. Uses your local time."
+      },
+      "language": {
+        "label": "Language"
+      },
+      "published": {
+        "label": "Published"
+      }
+    },
+    "cover": {
+      "title": "Cover",
+      "uploading": "Uploading...",
+      "dropOrClick": "Drop a file here or click to upload",
+      "chooseFile": "PNG, JPG up to 10MB"
+    },
+    "docs": {
+      "title": "Documents",
+      "uploading": "Uploading...",
+      "dropOrClick": "Drop files here or click to upload",
+      "chooseFile": "Any supported files",
+      "uploadHint": "Upload documents by clicking here"
+    },
+    "status": {
+      "draft": "Draft",
+      "scheduled": "Scheduled",
+      "published": "Published"
+    }
+  },
+  "toast": {
+    "publication": {
+      "created": "Publication created successfully.",
+      "updated": "Publication updated successfully.",
+      "deleted": "Publication deleted successfully.",
+      "createFailed": "Failed to create the publication.",
+      "updateFailed": "Failed to update the publication.",
+      "deleteFailed": "Failed to delete the publication."
+    }
+  },
+  "common": {
+    "saving": "Saving...",
+    "prev": "prev",
+    "next": "next"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "min": "Must be at least {n} characters.",
+    "max": "Must be at most {n} characters.",
+    "invalid": "The provided value is invalid."
+  }
+}

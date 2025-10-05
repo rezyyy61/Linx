@@ -4,28 +4,31 @@
     class="mt-3"
   >
     <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 p-4 animate-pulse">
-      <div class="h-4 w-40 rounded bg-zinc-200 dark:bg-zinc-700 mb-3" />
+      <div class="h-4 w-44 rounded bg-zinc-200 dark:bg-zinc-700 mb-3" />
       <div class="h-3 w-full rounded bg-zinc-200 dark:bg-zinc-700 mb-2" />
       <div class="h-3 w-5/6 rounded bg-zinc-200 dark:bg-zinc-700" />
     </div>
   </div>
 
   <AnnouncementAttachmentCard
-    v-else-if="preview"
-    :announcement="preview"
+    v-else-if="model"
+    :announcement="model"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { api } from '@/lib/http'
 import AnnouncementAttachmentCard, { type AnnouncementPreview } from './AnnouncementAttachmentCard.vue'
 
-const props = defineProps<{ post: any }>()
+const props = defineProps<{
+  preview?: AnnouncementPreview | null
+  slug?: string | null
+  post?: any
+}>()
 
 const loading = ref(false)
-const preview = ref<AnnouncementPreview | null>(null)
-const fullPost = ref<any | null>(null)
+const model = ref<AnnouncementPreview | null>(props.preview ?? null)
 
 function pick<T = any>(...vals: any[]): T | null {
   for (const v of vals) if (v !== undefined && v !== null && v !== '') return v as T
@@ -53,62 +56,32 @@ function normalizeAnnouncement(raw: any): AnnouncementPreview {
   }
 }
 
-const looksLikeAnnouncement = (p: any) =>
-  p?.postable_alias === 'announcement' ||
-  (p?.postable_type && String(p.postable_type).includes('Announcement')) ||
-  (p?.postable && p.postable.kind === 'announcement')
-
-const isAnnouncementAttachment = computed(() => {
-  const p: any = props.post || {}
-  return looksLikeAnnouncement(p) || looksLikeAnnouncement(fullPost.value || {})
-})
-
-const announcementSlug = computed<string | null>(() => {
-  const p: any = props.post || {}
-  const fp: any = fullPost.value || {}
-  return p?.postable_slug ?? fp?.postable_slug ?? p?.postable?.slug ?? fp?.postable?.slug ?? null
-})
-
-async function ensureFullPostOnce() {
-  if (fullPost.value || !props.post?.id) return
-  try {
-    const res = await api.get(`/public/v1/posts/${props.post.id}`)
-    fullPost.value = res.data?.data ?? res.data ?? null
-  } catch { fullPost.value = null }
-}
-
-async function fetchAnnouncementBySlug(slug: string) {
+async function fetchBySlug(slug: string) {
   const { data } = await api.get(`/public/v1/announcements/${slug}`)
   return (data?.data ?? data) as any
 }
 
 watchEffect(async () => {
-  preview.value = null
-  const p: any = props.post || {}
+  if (props.preview) {
+    model.value = props.preview
+    return
+  }
 
-  if (!looksLikeAnnouncement(p)) await ensureFullPostOnce()
-  if (!isAnnouncementAttachment.value) return
-
+  const p: any = props.post
   if (p?.postable && (p.postable.slug || p.postable.title)) {
-    preview.value = normalizeAnnouncement(p.postable)
+    model.value = normalizeAnnouncement(p.postable)
     return
   }
 
-  const fp: any = fullPost.value || {}
-  if (fp?.postable && (fp.postable.slug || fp.postable.title)) {
-    preview.value = normalizeAnnouncement(fp.postable)
-    return
-  }
-
-  const slug = announcementSlug.value
+  const slug = props.slug ?? p?.postable_slug ?? p?.postable?.slug ?? null
   if (!slug) return
 
   loading.value = true
   try {
-    const raw = await fetchAnnouncementBySlug(slug)
-    preview.value = normalizeAnnouncement(raw)
+    const raw = await fetchBySlug(slug)
+    model.value = normalizeAnnouncement(raw)
   } catch {
-    preview.value = null
+    model.value = null
   } finally {
     loading.value = false
   }
